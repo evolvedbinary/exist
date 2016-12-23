@@ -114,7 +114,7 @@ public class MutableCollection implements Collection {
         permissions = PermissionFactory.getDefaultCollectionPermission(broker.getBrokerPool().getSecurityManager());
 
         setPath(path);
-        lock = new ReentrantReadWriteLock(path);
+        lock = new ReentrantReadWriteLock(path.toString());
         this.collectionMetadata = new CollectionMetadata(this);
     }
 
