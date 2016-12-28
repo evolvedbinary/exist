@@ -28,9 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.exist.Database;
@@ -48,6 +47,8 @@ import org.exist.security.internal.SecurityManagerImpl;
 import org.exist.security.realm.Realm;
 import org.exist.security.utils.Utils;
 import org.exist.storage.DBBroker;
+import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.ManagedLock;
 import org.exist.storage.txn.TransactionManager;
 import org.exist.storage.txn.Txn;
 import org.exist.util.LockException;
@@ -495,42 +496,28 @@ public abstract class AbstractRealm implements Realm, Configurable {
     protected static class PrincipalDbByName<V extends Principal> {
         private final Map<String, V> db = new HashMap<>(65);
         private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-        private final ReadLock readLock = lock.readLock();
-        private final WriteLock writeLock = lock.writeLock();
 
         public <R> R read(final Function<Map<String, V>, R> readOp) {
-            readLock.lock();
-            try {
+            try(final ManagedLock<ReadWriteLock> readLock = ManagedLock.acquire(lock, LockMode.READ_LOCK)) {
                 return readOp.apply(db);
-            } finally {
-                readLock.unlock();
             }
         }
 
         public final void modify(final Consumer<Map<String, V>> writeOp) {
-            writeLock.lock();
-            try {
+            try(final ManagedLock<ReadWriteLock> writeLock = ManagedLock.acquire(lock, LockMode.WRITE_LOCK)) {
                 writeOp.accept(db);
-            } finally {
-                writeLock.unlock();
             }
         }
 
         public final <E extends Throwable> void modifyE(final ConsumerE<Map<String, V>, E> writeOp) throws E {
-            writeLock.lock();
-            try {
+            try(final ManagedLock<ReadWriteLock> writeLock = ManagedLock.acquire(lock, LockMode.WRITE_LOCK)) {
                 writeOp.accept(db);
-            } finally {
-                writeLock.unlock();
             }
         }
 
         public final <E1 extends Exception, E2 extends Exception> void modify2E(final Consumer2E<Map<String, V>, E1, E2> writeOp) throws E1, E2 {
-            writeLock.lock();
-            try {
+            try(final ManagedLock<ReadWriteLock> writeLock = ManagedLock.acquire(lock, LockMode.WRITE_LOCK)) {
                 writeOp.accept(db);
-            } finally {
-                writeLock.unlock();
             }
         }
     }

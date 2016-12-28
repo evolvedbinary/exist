@@ -21,7 +21,6 @@
  */
 package org.exist.xmldb;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 

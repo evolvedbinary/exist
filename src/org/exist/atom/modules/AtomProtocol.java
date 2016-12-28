@@ -59,7 +59,9 @@ import org.exist.security.Permission;
 import org.exist.security.PermissionDeniedException;
 import org.exist.security.UUIDGenerator;
 import org.exist.storage.DBBroker;
+import org.exist.storage.lock.Lock;
 import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.ManagedLock;
 import org.exist.storage.txn.TransactionManager;
 import org.exist.storage.txn.Txn;
 import org.exist.util.LockException;
@@ -268,40 +270,40 @@ public class AtomProtocol extends AtomFeeds implements Atom {
                         final ElementImpl feedRoot = (ElementImpl) feedDoc.getDocumentElement();
 
                         // Lock the feed
-                        feedDoc.getUpdateLock().acquire(LockMode.WRITE_LOCK);
+						try(final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
 
-                        // Append the entry
-                        collection = broker.getOrCreateCollection(transaction, pathUri.append(ENTRY_COLLECTION_URI));
-                        setPermissions(broker, root, collection);
-                        broker.saveCollection(transaction, collection);
-                        final XmldbURI entryURI = entryURI(uuid);
-                        final DocumentImpl entryDoc = collection.getDocument(broker, entryURI);
-                        if (entryDoc != null) {
-                            throw new PermissionDeniedException("Entry with " + id
-                                    + " already exists.");
-                        }
-                        final IndexInfo info = collection.validateXMLResource(transaction, broker, entryURI, doc);
-                        setPermissions(broker, root, info.getDocument());
-                        // TODO : We should probably unlock the collection here
-                        collection.store(transaction, broker, info, doc);
+							// Append the entry
+							collection = broker.getOrCreateCollection(transaction, pathUri.append(ENTRY_COLLECTION_URI));
+							setPermissions(broker, root, collection);
+							broker.saveCollection(transaction, collection);
+							final XmldbURI entryURI = entryURI(uuid);
+							final DocumentImpl entryDoc = collection.getDocument(broker, entryURI);
+							if (entryDoc != null) {
+								throw new PermissionDeniedException("Entry with " + id
+										+ " already exists.");
+							}
+							final IndexInfo info = collection.validateXMLResource(transaction, broker, entryURI, doc);
+							setPermissions(broker, root, info.getDocument());
+							// TODO : We should probably unlock the collection here
+							collection.store(transaction, broker, info, doc);
 
-                        // Update the updated element
-                        DOMDB.replaceTextElement(transaction, feedRoot,
-                                Atom.NAMESPACE_STRING, "updated", currentDateTime,
-                                true);
+							// Update the updated element
+							DOMDB.replaceTextElement(transaction, feedRoot,
+									Atom.NAMESPACE_STRING, "updated", currentDateTime,
+									true);
 
-                        // Store the changes
-                        LOG.debug("Storing change...");
-                        broker.storeXMLResource(transaction, feedDoc);
-                        transact.commit(transaction);
+							// Store the changes
+							LOG.debug("Storing change...");
+							broker.storeXMLResource(transaction, feedDoc);
+							transact.commit(transaction);
 
-                        LOG.debug("Done!");
+							LOG.debug("Done!");
 
-                        //XXX: response outside of try-block
-                        response.setStatusCode(201);
-                        response.setHeader("Location", request.getModuleBase()
-                                + request.getPath() + "?id=" + id);
-                        getEntryById(broker, request.getPath(), id, response);
+							//XXX: response outside of try-block
+							response.setStatusCode(201);
+							response.setHeader("Location", request.getModuleBase()
+									+ request.getPath() + "?id=" + id);
+							getEntryById(broker, request.getPath(), id, response);
 					/*
 					 * response.setContentType(Atom.MIME_TYPE+"; charset="+charset
 					 * ); OutputStreamWriter w = new
@@ -311,6 +313,7 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 					 * identity.transform(new DOMSource(doc),new
 					 * StreamResult(w)); w.flush(); w.close();
 					 */
+						}
                     } catch (final IOException ex) {
                         throw new EXistException("IO error: " + ex.getMessage(), ex);
                     } catch (final TriggerException ex) {
@@ -327,10 +330,6 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 					 * ,ex); } catch (TransformerException ex) { throw new
 					 * EXistException("Serialization error.",ex);
 					 */
-                    } finally {
-                        if (feedDoc != null) {
-                            feedDoc.getUpdateLock().release(LockMode.WRITE_LOCK);
-                        }
                     }
                 }
 			} else {
@@ -394,9 +393,8 @@ public class AtomProtocol extends AtomFeeds implements Atom {
                     }
 				}
 
-				try {
-					LOG.debug("Acquiring lock on feed document...");
-					feedDoc.getUpdateLock().acquire(LockMode.WRITE_LOCK);
+				LOG.debug("Acquiring lock on feed document...");
+				try(final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
 					
 					String title = request.getHeader("Title");
 					if (title == null)
@@ -447,10 +445,6 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 					throw new EXistException("Serialization error.", ex);
 				} catch (final LockException ex) {
 					throw new EXistException("Cannot acquire write lock.", ex);
-				} finally {
-					if (feedDoc != null) {
-                        feedDoc.getUpdateLock().release(LockMode.WRITE_LOCK);
-                    }
 				}
 
 			} catch (final IOException ex) {
@@ -561,8 +555,8 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 									+ collection.getURI());}
 
 				final TransactionManager transact = broker.getBrokerPool().getTransactionManager();
-				try(final Txn transaction = transact.beginTransaction()) {
-					feedDoc.getUpdateLock().acquire(LockMode.WRITE_LOCK);
+				try(final Txn transaction = transact.beginTransaction();
+					final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
 					final ElementImpl feedRoot = (ElementImpl) feedDoc.getDocumentElement();
 
 					// Modify the feed by merging the new feed-level elements
@@ -577,10 +571,6 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 					throw new EXistException("Cannot acquire write lock.", ex);
 				} catch (final RuntimeException ex) {
 					throw ex;
-				} finally {
-					if (feedDoc != null) {
-                        feedDoc.getUpdateLock().release(LockMode.WRITE_LOCK);
-                    }
 				}
 
 			} else if ("entry".equals(root.getLocalName())) {
@@ -606,38 +596,39 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 								"Permission denied to update feed "
 										+ collection.getURI());}
 					
-					feedDoc.getUpdateLock().acquire(LockMode.WRITE_LOCK);
+					try(final ManagedLock<Lock> feedDocLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
 
-					// Find the entry
-					final String uuid = id.substring(9);
-					collection = broker.getCollection(pathUri.append(ENTRY_COLLECTION_URI));
-					final XmldbURI entryURI = entryURI(uuid);
-					entryDoc = collection.getDocument(broker, entryURI);
-					if (entryDoc == null)
-						{throw new BadRequestException(
-								"Cannot find entry with id " + id);}
+						// Find the entry
+						final String uuid = id.substring(9);
+						collection = broker.getCollection(pathUri.append(ENTRY_COLLECTION_URI));
+						final XmldbURI entryURI = entryURI(uuid);
+						entryDoc = collection.getDocument(broker, entryURI);
+						if (entryDoc == null) {
+							throw new BadRequestException(
+									"Cannot find entry with id " + id);
+						}
 
-					// Lock the entry
-					entryDoc.getUpdateLock().acquire(LockMode.WRITE_LOCK);
+						// Lock the entry
+						try(final ManagedLock<Lock> entryDocLock = ManagedLock.acquire(entryDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
 
-					final Element entry = entryDoc.getDocumentElement();
+							final Element entry = entryDoc.getDocumentElement();
 
-					mergeEntry(transaction, (ElementImpl) entry, root, currentDateTime);
+							mergeEntry(transaction, (ElementImpl) entry, root, currentDateTime);
 
-					// Update the feed time
-					DOMDB.replaceTextElement(transaction,
-							(ElementImpl) feedDoc.getDocumentElement(),
-							Atom.NAMESPACE_STRING, "updated", currentDateTime,
-							true);
+							// Update the feed time
+							DOMDB.replaceTextElement(transaction,
+									(ElementImpl) feedDoc.getDocumentElement(),
+									Atom.NAMESPACE_STRING, "updated", currentDateTime,
+									true);
 
-					// Store the feed
-					broker.storeXMLResource(transaction, feedDoc);
-					broker.storeXMLResource(transaction, entryDoc);
-					transact.commit(transaction);
+							// Store the feed
+							broker.storeXMLResource(transaction, feedDoc);
+							broker.storeXMLResource(transaction, entryDoc);
+							transact.commit(transaction);
 
-					// Send back the changed entry
-					response.setStatusCode(200);
-					getEntryById(broker, request.getPath(), id, response);
+							// Send back the changed entry
+							response.setStatusCode(200);
+							getEntryById(broker, request.getPath(), id, response);
 					/*
 					 * response.setStatusCode(200);
 					 * response.setContentType(Atom.
@@ -649,6 +640,8 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 					 * identity.transform(new DOMSource(entry),new
 					 * StreamResult(w)); w.flush(); w.close();
 					 */
+						}
+					}
 				} catch (final LockException ex) {
 					throw new EXistException("Cannot acquire write lock.", ex);
 					/*
@@ -657,16 +650,7 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 					 * ,ex); } catch (TransformerException ex) { throw new
 					 * EXistException("Serialization error.",ex);
 					 */
-				} finally {
-					if (feedDoc != null) {
-                        feedDoc.getUpdateLock().release(LockMode.WRITE_LOCK);
-                    }
-
-					if (entryDoc != null) {
-                        entryDoc.getUpdateLock().release(LockMode.WRITE_LOCK);
-                    }
 				}
-
 			} else {
 				throw new BadRequestException(
 						"Unexpected element: {http://www.w3.org/2005/Atom}"
@@ -783,63 +767,61 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 				{throw new PermissionDeniedException(
 						"Permission denied to update feed "
 								+ collection.getURI());}
-			feedDoc.getUpdateLock().acquire(LockMode.WRITE_LOCK);
 
-			// Find the entry
-			final String uuid = id.substring(9);
-			final Collection entryCollection = broker.getCollection(pathUri.append(ENTRY_COLLECTION_URI));
-			final XmldbURI entryURI = entryURI(uuid);
-			final DocumentImpl entryDoc = entryCollection.getDocument(broker, entryURI);
-			if (entryDoc == null)
-				{throw new BadRequestException("Entry with id " + id + " cannot be found.");}
+			try(final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
 
-			final Element entry = entryDoc.getDocumentElement();
+				// Find the entry
+				final String uuid = id.substring(9);
+				final Collection entryCollection = broker.getCollection(pathUri.append(ENTRY_COLLECTION_URI));
+				final XmldbURI entryURI = entryURI(uuid);
+				final DocumentImpl entryDoc = entryCollection.getDocument(broker, entryURI);
+				if (entryDoc == null) {
+					throw new BadRequestException("Entry with id " + id + " cannot be found.");
+				}
 
-			// Remove the media resource if there is one
-			final Element content = DOM.findChild(entry, Atom.NAMESPACE_STRING, "content");
-			if (content != null) {
-				final String src = content.getAttribute("src");
-				LOG.debug("Found content element, checking for resource " + src);
-				if (src != null && src.indexOf('/') < 0) {
-					srcUri = XmldbURI.create(src);
-					final DocumentImpl resource = collection.getDocument(broker, srcUri);
-					if (resource != null) {
-						LOG.debug("Deleting resource " + src + " from " + request.getPath());
-						if (resource.getResourceType() == DocumentImpl.BINARY_FILE) {
-							collection.removeBinaryResource(transaction, broker, srcUri);
-						} else {
-							collection.removeXMLResource(transaction, broker, srcUri);
+				final Element entry = entryDoc.getDocumentElement();
+
+				// Remove the media resource if there is one
+				final Element content = DOM.findChild(entry, Atom.NAMESPACE_STRING, "content");
+				if (content != null) {
+					final String src = content.getAttribute("src");
+					LOG.debug("Found content element, checking for resource " + src);
+					if (src != null && src.indexOf('/') < 0) {
+						srcUri = XmldbURI.create(src);
+						final DocumentImpl resource = collection.getDocument(broker, srcUri);
+						if (resource != null) {
+							LOG.debug("Deleting resource " + src + " from " + request.getPath());
+							if (resource.getResourceType() == DocumentImpl.BINARY_FILE) {
+								collection.removeBinaryResource(transaction, broker, srcUri);
+							} else {
+								collection.removeXMLResource(transaction, broker, srcUri);
+							}
 						}
 					}
 				}
+
+				// Remove the entry
+				entryCollection.removeXMLResource(transaction, broker, entryURI);
+
+				// Update the feed time
+				final ElementImpl feedRoot = (ElementImpl) feedDoc.getDocumentElement();
+				DOMDB.replaceTextElement(transaction, feedRoot,
+						Atom.NAMESPACE_STRING, "updated", currentDateTime, true);
+
+				// Store the change on the feed
+				LOG.debug("Storing change...");
+				broker.storeXMLResource(transaction, feedDoc);
+				transact.commit(transaction);
+
+				LOG.debug("Done!");
+				response.setStatusCode(204);
 			}
-
-			// Remove the entry
-			entryCollection.removeXMLResource(transaction, broker, entryURI);
-
-			// Update the feed time
-			final ElementImpl feedRoot = (ElementImpl) feedDoc.getDocumentElement();
-			DOMDB.replaceTextElement(transaction, feedRoot,
-					Atom.NAMESPACE_STRING, "updated", currentDateTime, true);
-
-			// Store the change on the feed
-			LOG.debug("Storing change...");
-			broker.storeXMLResource(transaction, feedDoc);
-			transact.commit(transaction);
-			LOG.debug("Done!");
-			response.setStatusCode(204);
-
 		} catch (final TriggerException ex) {
 			throw new EXistException("Cannot delete media resource " + srcUri,
 					ex);
 		} catch (final LockException ex) {
 			throw new EXistException("Cannot acquire write lock.", ex);
-		} finally {
-			if (feedDoc != null) {
-				feedDoc.getUpdateLock().release(LockMode.WRITE_LOCK);
-			}
 		}
-
 	}
 
 	public void mergeEntry(final Txn transaction, final ElementImpl target,
