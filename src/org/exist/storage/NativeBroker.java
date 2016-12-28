@@ -685,7 +685,7 @@ public class NativeBroker extends DBBroker {
         final CollectionCache collectionsCache = pool.getCollectionsCache();
 
         boolean created = false;
-        synchronized(collectionsCache) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
             try {
                 //TODO : resolve URIs !
                 final XmldbURI[] segments = name.getPathSegments();
@@ -809,6 +809,8 @@ public class NativeBroker extends DBBroker {
             } catch(final ReadOnlyException e) {
                 throw new PermissionDeniedException(DATABASE_IS_READ_ONLY);
             }
+        } catch(final LockException e) {
+            throw new IOException(e);
         }
     }
 
@@ -870,7 +872,7 @@ public class NativeBroker extends DBBroker {
 
         Collection collection;
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        synchronized(collectionsCache) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
             collection = collectionsCache.get(uri);
             if(collection == null) {
                 try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.READ_LOCK)) {
@@ -904,6 +906,8 @@ public class NativeBroker extends DBBroker {
 
                 collectionsCache.add(collection);
             }
+        } catch(final LockException e) {
+            throw new IllegalStateException(e);
         }
     }
 
@@ -919,7 +923,7 @@ public class NativeBroker extends DBBroker {
         //We *must* declare it here (see below)
         Collection collection;
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        synchronized(collectionsCache) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
             collection = collectionsCache.get(uri);
             if(collection == null) {
                 try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.READ_LOCK)) {
@@ -959,6 +963,8 @@ public class NativeBroker extends DBBroker {
                     throw new PermissionDeniedException("Permission denied to open collection: " + collection.getURI().toString() + " by " + getCurrentSubject().getName());
                 }
             }
+        } catch(final LockException e) {
+            throw new IllegalStateException(e);
         }
 
         //Important : 
@@ -1066,7 +1072,7 @@ public class NativeBroker extends DBBroker {
         }
 
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        synchronized(collectionsCache) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
             try {
                 pool.getProcessMonitor().startJob(ProcessMonitor.ACTION_COPY_COLLECTION, collection.getURI());
                 try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK)) {
@@ -1351,7 +1357,7 @@ public class NativeBroker extends DBBroker {
 
         final XmldbURI uri = collection.getURI();
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        synchronized(collectionsCache) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
 
             final XmldbURI srcURI = collection.getURI();
             final XmldbURI dstURI = destination.getURI().append(newName);
@@ -1475,7 +1481,7 @@ public class NativeBroker extends DBBroker {
             final long start = System.currentTimeMillis();
             final CollectionCache collectionsCache = pool.getCollectionsCache();
 
-            synchronized(collectionsCache) {
+            try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
                 final XmldbURI uri = collection.getURI();
                 final String collName = uri.getRawCollectionPath();
 
@@ -1674,10 +1680,19 @@ public class NativeBroker extends DBBroker {
 
                 return true;
 
+            } catch(final LockException e) {
+                throw new IOException(e);
             }
         } finally {
             pool.getProcessMonitor().endJob();
         }
+    }
+
+    //TODO(AR) temporary measure
+    private ManagedLock<Lock> lockCollectionCache(final CollectionCache collectionCache) throws LockException {
+        //TODO(AR) at the moment we always exclusively lock the CollectionCache, this can be relaxed once hierarchical Collection locking is in place
+        //TODO(AR) once hierarchical locking is in place we don't need to lock the collection cache explicitly i.e. externally, it can become a ConcurrentHashMap or Caffeine
+        return ManagedLock.acquire(collectionCache.getLock(), LockMode.WRITE_LOCK);
     }
 
     /**
@@ -1701,10 +1716,11 @@ public class NativeBroker extends DBBroker {
             throw new IOException(DATABASE_IS_READ_ONLY);
         }
 
-        // TODO(AR) this should likely be locked
-//        try(final ManagedLock managedLock = ManagedLock.acquire(pool.getCollectionCacheLock(), LockMode.WRITE_LOCK)) {
+        final CollectionCache collectionsCache = pool.getCollectionsCache();
+//        try(final ManagedLock collectionsCacheLock = lockCollection(collectionsCache)) {
 
-            pool.getCollectionsCache().add(collection);
+        // TODO(AR) this should likely be locked
+        collectionsCache.add(collection);
 
 //        } catch(final LockException e) {
 //            throw new IOException(e);
@@ -1799,7 +1815,7 @@ public class NativeBroker extends DBBroker {
 
     public void reindexCollection(final Txn transaction, final Collection collection, final IndexMode mode) throws PermissionDeniedException, IOException {
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        synchronized(collectionsCache) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
             if(!collection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.WRITE)) {
                 throw new PermissionDeniedException("Account " + getCurrentSubject().getName() + " have insufficient privileges on collection " + collection.getURI());
             }
@@ -1830,6 +1846,8 @@ public class NativeBroker extends DBBroker {
             } catch(final LockException e) {
                 LOG.error("LockException while reindexing child collections of collection '" + collection.getURI() + ". Skipping...", e);
             }
+        } catch(final LockException e) {
+            throw new IOException(e);
         }
     }
 
@@ -2421,7 +2439,7 @@ public class NativeBroker extends DBBroker {
         }
 
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        synchronized(collectionsCache) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
             try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK)) {
                 final DocumentImpl oldDoc = destination.getDocument(this, newName);
 
