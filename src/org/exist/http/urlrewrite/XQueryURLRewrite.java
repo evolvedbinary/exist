@@ -793,11 +793,11 @@ public class XQueryURLRewrite extends HttpServlet {
                         }
                         
                         if (subColl != null && subColl != collection) {
-                            subColl.getLock().release(LockMode.READ_LOCK);
+                            subColl.release(LockMode.READ_LOCK);
                         }
                     }
                 }
-                collection.getLock().release(LockMode.READ_LOCK);
+                collection.release(LockMode.READ_LOCK);
                 if (controllerDoc == null) {
                     try {
                         final XmldbURI docUri = collection.getURI().append("controller.xql");

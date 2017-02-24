@@ -1487,7 +1487,7 @@ public class RpcConnection implements RpcAPI {
                                 final int overwrite, final Date created, final Date modified) throws EXistException, PermissionDeniedException {
         return this.<Boolean>writeCollection(docUri.removeLastSegment()).apply((collection, broker, transaction) -> {
             // keep a write lock in the transaction
-            transaction.acquireLock(collection.getLock(), LockMode.WRITE_LOCK);
+            transaction.acquireCollectionLock(() -> broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(collection.getURI(), false));
             if (overwrite == 0) {
                 final DocumentImpl old = collection.getDocument(broker, docUri.lastSegment());
                 if (old != null) {
@@ -1881,7 +1881,7 @@ public class RpcConnection implements RpcAPI {
     private boolean remove(final XmldbURI docUri) throws EXistException, PermissionDeniedException {
         return this.<Boolean>writeCollection(docUri.removeLastSegment()).apply((collection, broker, transaction) -> {
             // keep a write lock in the transaction
-            transaction.acquireLock(collection.getLock(), LockMode.WRITE_LOCK);
+            transaction.acquireCollectionLock(() -> broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(collection.getURI(), false));
 
             final DocumentImpl doc = collection.getDocument(broker, docUri.lastSegment());
             if (doc == null) {
@@ -1906,7 +1906,7 @@ public class RpcConnection implements RpcAPI {
         try {
             return this.<Boolean>writeCollection(collURI).apply((collection, broker, transaction) -> {
                 // keep a write lock in the transaction
-                transaction.acquireLock(collection.getLock(), LockMode.WRITE_LOCK);
+                transaction.acquireCollectionLock(() -> broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(collection.getURI(), false));
                 if(LOG.isDebugEnabled()) {
                     LOG.debug("removing collection " + collURI);
                 }

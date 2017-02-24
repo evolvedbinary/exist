@@ -544,7 +544,7 @@ public class SystemImportHandler extends DefaultHandler {
         public void apply() {
             final TransactionManager txnManager = broker.getDatabase().getTransactionManager();
 
-            try(final ManagedLock<Lock> targetLock = ManagedLock.acquire(getTarget().getLock(), LockMode.WRITE_LOCK);
+            try(final ManagedLock<java.util.concurrent.locks.ReadWriteLock> targetLock = ManagedLock.acquire(getTarget().getLock(), LockMode.WRITE_LOCK);
                 final Txn txn = txnManager.beginTransaction()) {
                 final Permission permission = getTarget().getPermissions();
                 permission.setOwner(getOwner());
