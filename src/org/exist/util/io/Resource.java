@@ -305,12 +305,8 @@ public class Resource extends File {
             return false;
         }
 
-        org.exist.collections.Collection destination = null;
-        org.exist.collections.Collection source = null;
-        XmldbURI newName;
-
-        try (final DBBroker broker = db.getBroker()) {
-            source = broker.openCollection(uri.removeLastSegment(), LockMode.WRITE_LOCK);
+        try (final DBBroker broker = db.getBroker();
+             final Collection source = broker.openCollection(uri.removeLastSegment(), LockMode.WRITE_LOCK)) {
             if (source == null) {
                 return false;
             }
@@ -318,29 +314,23 @@ public class Resource extends File {
             if (doc == null) {
                 return false;
             }
-            destination = broker.openCollection(destinationPath.removeLastSegment(), LockMode.WRITE_LOCK);
-            if (destination == null) {
-                return false;
+            try (final Collection destination = broker.openCollection(destinationPath.removeLastSegment(), LockMode.WRITE_LOCK)) {
+                if (destination == null) {
+                    return false;
+                }
+
+                final XmldbURI newName = destinationPath.lastSegment();
+
+                try (final Txn transaction = tm.beginTransaction()) {
+                    broker.moveResource(transaction, doc, destination, newName);
+                    tm.commit(transaction);
+                }
+                return true;
+
             }
-
-            newName = destinationPath.lastSegment();
-
-            try (final Txn transaction = tm.beginTransaction()) {
-                broker.moveResource(transaction, doc, destination, newName);
-                tm.commit(transaction);
-            }
-            return true;
-
         } catch (final Exception e) {
             e.printStackTrace();
             return false;
-        } finally {
-            if (source != null) {
-                source.release(LockMode.WRITE_LOCK);
-            }
-            if (destination != null) {
-                destination.release(LockMode.WRITE_LOCK);
-            }
         }
     }
 
@@ -357,27 +347,23 @@ public class Resource extends File {
             return false;
         }
 
-        try (final DBBroker broker = db.getBroker()) {
+        try (final DBBroker broker = db.getBroker();
+                final Collection source = broker.openCollection(uri.removeLastSegment(), LockMode.WRITE_LOCK)) {
 
-            org.exist.collections.Collection destination = null;
-            org.exist.collections.Collection source = null;
-            XmldbURI newName;
+            if (source == null) {
+                return false;
+            }
+            final DocumentImpl doc = source.getDocument(broker, uri.lastSegment());
+            if (doc == null) {
+                return false;
+            }
 
-            try {
-                source = broker.openCollection(uri.removeLastSegment(), LockMode.WRITE_LOCK);
-                if (source == null) {
-                    return false;
-                }
-                final DocumentImpl doc = source.getDocument(broker, uri.lastSegment());
-                if (doc == null) {
-                    return false;
-                }
-                destination = broker.openCollection(destinationPath.removeLastSegment(), LockMode.WRITE_LOCK);
+            try(final Collection destination = broker.openCollection(destinationPath.removeLastSegment(), LockMode.WRITE_LOCK)) {
                 if (destination == null) {
                     return false;
                 }
 
-                newName = destinationPath.lastSegment();
+                final XmldbURI newName = destinationPath.lastSegment();
 
                 final TransactionManager tm = db.getTransactionManager();
                 try (final Txn transaction = tm.beginTransaction()) {
@@ -391,19 +377,9 @@ public class Resource extends File {
                     tm.commit(transaction);
                     return true;
                 }
-
-            } catch (final Exception e) {
-                e.printStackTrace();
-                return false;
-            } finally {
-                if (source != null) {
-                    source.release(LockMode.WRITE_LOCK);
-                }
-                if (destination != null) {
-                    destination.release(LockMode.WRITE_LOCK);
-                }
             }
-        } catch (final EXistException e) {
+        } catch (final Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -578,9 +554,8 @@ public class Resource extends File {
             return false;
         }
 
-        try (final DBBroker broker = db.getBroker()) {
-
-            collection = broker.openCollection(uri.removeLastSegment(), LockMode.WRITE_LOCK);
+        try (final DBBroker broker = db.getBroker();
+                final Collection collection = broker.openCollection(uri.removeLastSegment(), LockMode.WRITE_LOCK)) {
             if (collection == null) {
                 return false;
             }
@@ -606,10 +581,6 @@ public class Resource extends File {
         } catch (final EXistException | IOException | PermissionDeniedException | LockException | TriggerException e) {
             LOG.error(e);
             return false;
-        } finally {
-            if(collection != null) {
-                collection.release(LockMode.WRITE_LOCK);
-            }
         }
     }
 

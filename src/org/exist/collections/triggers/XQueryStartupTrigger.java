@@ -106,11 +106,8 @@ public class XQueryStartupTrigger implements StartupTrigger {
         List<String> paths = new ArrayList<>();
 
         XmldbURI uri = XmldbURI.create(AUTOSTART_COLLECTION);
-        Collection collection = null;
 
-        try {
-            collection = broker.openCollection(uri, LockMode.READ_LOCK);
-
+        try(final Collection collection = broker.openCollection(uri, LockMode.READ_LOCK)) {
             if (collection == null) {
                 LOG.debug(String.format("Collection '%s' not found.", AUTOSTART_COLLECTION));
                 createAutostartCollection(broker);
@@ -151,12 +148,6 @@ public class XQueryStartupTrigger implements StartupTrigger {
 
         } catch (PermissionDeniedException ex) {
             LOG.error(ex.getMessage());
-
-        } finally {
-            // Clean up resources
-            if (collection != null) {
-                collection.release(LockMode.READ_LOCK);
-            }
         }
 
         return paths;

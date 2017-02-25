@@ -140,19 +140,12 @@ public class MoveResourceTest {
             doc.getUpdateLock().release(LockMode.READ_LOCK);
 
             final TransactionManager transact = pool.getTransactionManager();
-            try(final Txn transaction = transact.beginTransaction()) {
+            try(final Txn transaction = transact.beginTransaction();
+                    final Collection root = broker.openCollection(TestConstants.TEST_COLLECTION_URI, LockMode.WRITE_LOCK)) {
+                assertNotNull(root);
+                transaction.acquireCollectionLock(() -> broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(root.getURI(), false));
+                broker.removeCollection(transaction, root);
 
-                Collection root = null;
-                try {
-                    root = broker.openCollection(TestConstants.TEST_COLLECTION_URI, LockMode.WRITE_LOCK);
-                    assertNotNull(root);
-                    transaction.acquireCollectionLock(() -> broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(root.getURI(), false));
-                    broker.removeCollection(transaction, root);
-                } finally {
-                    if(root != null) {
-                        root.release(LockMode.WRITE_LOCK);
-                    }
-                }
                 transact.commit(transaction);
             }
         }
@@ -207,19 +200,11 @@ public class MoveResourceTest {
             doc.getUpdateLock().release(LockMode.READ_LOCK);
 
             final TransactionManager transact = pool.getTransactionManager();
-            try(final Txn transaction = transact.beginTransaction()) {
-
-                Collection root = null;
-                try {
-                    root = broker.openCollection(TestConstants.TEST_COLLECTION_URI, LockMode.WRITE_LOCK);
-                    assertNotNull(root);
-                    transaction.acquireCollectionLock(() -> broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(root.getURI(), false));
-                    broker.removeCollection(transaction, root);
-                } finally {
-                    if(root != null) {
-                        root.release(LockMode.WRITE_LOCK);
-                    }
-                }
+            try(final Txn transaction = transact.beginTransaction();
+                    final Collection root = broker.openCollection(TestConstants.TEST_COLLECTION_URI, LockMode.WRITE_LOCK)) {
+                assertNotNull(root);
+                transaction.acquireCollectionLock(() -> broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(root.getURI(), false));
+                broker.removeCollection(transaction, root);
 
                 transact.commit(transaction);
             }

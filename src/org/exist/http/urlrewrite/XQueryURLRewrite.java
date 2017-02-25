@@ -744,93 +744,89 @@ public class XQueryURLRewrite extends HttpServlet {
         	}
             try {
                 final XmldbURI locationUri = XmldbURI.xmldbUriFor(basePath);
-                final Collection collection = broker.openCollection(locationUri, LockMode.READ_LOCK);
-                if (collection == null) {
-                    LOG.warn("Controller base collection not found: " + basePath);
-                    return null;
-                }
+                try(final Collection collection = broker.openCollection(locationUri, LockMode.READ_LOCK)) {
+                    if (collection == null) {
+                        LOG.warn("Controller base collection not found: " + basePath);
+                        return null;
+                    }
 
-                Collection subColl = collection;
-                DocumentImpl controllerDoc = null;
-                for (int i = 0; i < components.length; i++) {
-                    DocumentImpl doc = null;
-                    try {
-                        if (components[i].length() > 0 && subColl.hasChildCollection(broker, XmldbURI.createInternal(components[i]))) {
-                            final XmldbURI newSubCollURI = subColl.getURI().append(components[i]);
-                            if (LOG.isTraceEnabled()) {
-                            	LOG.trace("Inspecting sub-collection: " + newSubCollURI);
-                            }
-                            subColl = broker.openCollection(newSubCollURI, LockMode.READ_LOCK);
-                            if (subColl != null) {
-                                if (LOG.isTraceEnabled()) {
-                                	LOG.trace("Looking for controller.xql in " + subColl.getURI());
-                                }
-                                final XmldbURI docUri = subColl.getURI().append("controller.xql");
-                                doc = broker.getXMLResource(docUri, LockMode.READ_LOCK);
-                                if (doc != null) {
-                                	if (controllerDoc != null) {
-                                		controllerDoc.getUpdateLock().release(LockMode.READ_LOCK);
-                                	}
-                                    controllerDoc = doc;
+                    XmldbURI subCollectionUri = locationUri;
+                    DocumentImpl controllerDoc = null;
+                    for (int i = 0; i < components.length; i++) {
+                        DocumentImpl doc = null;
+                        if (LOG.isTraceEnabled()) {
+                            LOG.trace("Inspecting sub-collection: " + subCollectionUri);
+                        }
+                        try(final Collection subColl = broker.openCollection(subCollectionUri, LockMode.READ_LOCK)) {
+                            if (components[i].length() > 0 && subColl.hasChildCollection(broker, XmldbURI.createInternal(components[i]))) {
+                                if (subColl != null) {
+                                    if (LOG.isTraceEnabled()) {
+                                        LOG.trace("Looking for controller.xql in " + subColl.getURI());
+                                    }
+                                    final XmldbURI docUri = subColl.getURI().append("controller.xql");
+                                    doc = broker.getXMLResource(docUri, LockMode.READ_LOCK);
+                                    if (doc != null) {
+                                        if (controllerDoc != null) {
+                                            controllerDoc.getUpdateLock().release(LockMode.READ_LOCK);
+                                        }
+                                        controllerDoc = doc;
+                                    }
+
+                                    subCollectionUri = subColl.getURI().append(components[i]);
+                                } else {
+                                    break;
                                 }
                             } else {
                                 break;
                             }
-                        } else {
+                        } catch (final PermissionDeniedException e) {
+                            LOG.debug("Permission denied while scanning for XQueryURLRewrite controllers: " +
+                                    e.getMessage(), e);
                             break;
-                        }
-                    } catch (final PermissionDeniedException e) {
-                        LOG.debug("Permission denied while scanning for XQueryURLRewrite controllers: " +
-                            e.getMessage(), e);
-                        break;
-                    } catch (final Exception e) {
-                        LOG.debug("Bad collection URI: " + path);
-                        break;
-                    
-                    } finally {
-                        if (doc != null && controllerDoc == null) {
-                            doc.getUpdateLock().release(LockMode.READ_LOCK);
-                        }
-                        
-                        if (subColl != null && subColl != collection) {
-                            subColl.release(LockMode.READ_LOCK);
+                        } catch (final Exception e) {
+                            LOG.debug("Bad collection URI: " + path);
+                            break;
+                        } finally {
+                            if (doc != null && controllerDoc == null) {
+                                doc.getUpdateLock().release(LockMode.READ_LOCK);
+                            }
                         }
                     }
-                }
-                collection.release(LockMode.READ_LOCK);
-                if (controllerDoc == null) {
-                    try {
-                        final XmldbURI docUri = collection.getURI().append("controller.xql");
-                        controllerDoc = broker.getXMLResource(docUri, LockMode.READ_LOCK);
-                    } catch (final PermissionDeniedException e) {
-                        LOG.debug("Permission denied while scanning for XQueryURLRewrite controllers: " +
-                            e.getMessage(), e);
-                    }
-                }
-                if (controllerDoc == null) {
-                    LOG.warn("XQueryURLRewrite controller could not be found for path: " + path);
-                    return null;
-                }
 
-                if(LOG.isTraceEnabled()) {
-                    LOG.trace("Found controller file: " + controllerDoc.getURI());
-                }
-                try {
-                    if (controllerDoc.getResourceType() != DocumentImpl.BINARY_FILE ||
-                                !"application/xquery".equals(controllerDoc.getMetadata().getMimeType())) {
-                        LOG.warn("XQuery resource: " + query + " is not an XQuery or " +
-                                "declares a wrong mime-type");
+                    if (controllerDoc == null) {
+                        try {
+                            final XmldbURI docUri = collection.getURI().append("controller.xql");
+                            controllerDoc = broker.getXMLResource(docUri, LockMode.READ_LOCK);
+                        } catch (final PermissionDeniedException e) {
+                            LOG.debug("Permission denied while scanning for XQueryURLRewrite controllers: " +
+                                    e.getMessage(), e);
+                        }
+                    }
+                    if (controllerDoc == null) {
+                        LOG.warn("XQueryURLRewrite controller could not be found for path: " + path);
                         return null;
                     }
-                    final String controllerPath = controllerDoc.getCollection().getURI().getRawCollectionPath();
-                    
-                    sourceInfo = new SourceInfo(new DBSource(broker, (BinaryDocument) controllerDoc, true), "xmldb:exist://" + controllerPath);
-                    sourceInfo.controllerPath = controllerPath.substring(locationUri.getCollectionPath().length());
 
-                    return sourceInfo;
-                } finally {
-                    if (controllerDoc != null) {
-                        controllerDoc.getUpdateLock().release(LockMode.READ_LOCK);
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Found controller file: " + controllerDoc.getURI());
+                    }
+                    try {
+                        if (controllerDoc.getResourceType() != DocumentImpl.BINARY_FILE ||
+                                !"application/xquery".equals(controllerDoc.getMetadata().getMimeType())) {
+                            LOG.warn("XQuery resource: " + query + " is not an XQuery or " +
+                                    "declares a wrong mime-type");
+                            return null;
+                        }
+                        final String controllerPath = controllerDoc.getCollection().getURI().getRawCollectionPath();
+
+                        sourceInfo = new SourceInfo(new DBSource(broker, (BinaryDocument) controllerDoc, true), "xmldb:exist://" + controllerPath);
+                        sourceInfo.controllerPath = controllerPath.substring(locationUri.getCollectionPath().length());
+
+                        return sourceInfo;
+                    } finally {
+                        if (controllerDoc != null) {
+                            controllerDoc.getUpdateLock().release(LockMode.READ_LOCK);
+                        }
                     }
                 }
             } catch (final URISyntaxException e) {
