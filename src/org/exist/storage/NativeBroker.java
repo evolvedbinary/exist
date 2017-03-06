@@ -686,7 +686,7 @@ public class NativeBroker extends DBBroker {
 
             // 1) optimize for the existence of the Collection in the cache
             try (final ManagedCollectionLock collectionLock = readLockCollection(collectionUri)) {
-                try (final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+                try (final ManagedLock collectionsCacheLock = lockCollectionCache()) {
                     final Collection collection = collectionsCache.get(collectionUri);
                     if (collection != null) {
                         return new Tuple2<>(false, collection);
@@ -698,7 +698,7 @@ public class NativeBroker extends DBBroker {
             try (final ManagedCollectionLock collectionLock = writeLockCollection(null, collectionUri, true)) {
 
                 // check for preemption between READ -> WRITE lock, is the Collection now in the cache?
-                try (final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+                try (final ManagedLock collectionsCacheLock = lockCollectionCache()) {
                     final Collection collection = collectionsCache.get(collectionUri);
                     if (collection != null) {
                         return new Tuple2<>(false, collection);
@@ -927,7 +927,7 @@ public class NativeBroker extends DBBroker {
 
         Collection collection;
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
             collection = collectionsCache.get(uri);
             if(collection == null) {
                 try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.READ_LOCK)) {
@@ -1001,7 +1001,7 @@ public class NativeBroker extends DBBroker {
 
         // 1) optimize for reading from the Collection from the cache
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
             final Collection collection = collectionsCache.get(collectionUri);
             if (collection != null) {
 
@@ -1052,7 +1052,7 @@ public class NativeBroker extends DBBroker {
 
         // if we loaded a Collection add it to the cache (if it isn't already there)
         if(loadedCollection != null) {
-            try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+            try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
                 final Collection collection = collectionsCache.get(collectionUri);
                 if(collection != null) {
                     return new LockedCollection(collectionLock, collection);
@@ -1162,7 +1162,7 @@ public class NativeBroker extends DBBroker {
         }
 
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
             try {
                 pool.getProcessMonitor().startJob(ProcessMonitor.ACTION_COPY_COLLECTION, collection.getURI());
                 try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK)) {
@@ -1441,7 +1441,7 @@ public class NativeBroker extends DBBroker {
 
         final XmldbURI uri = collection.getURI();
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
 
             final XmldbURI srcURI = collection.getURI();
             final XmldbURI dstURI = destination.getURI().append(newName);
@@ -1565,7 +1565,7 @@ public class NativeBroker extends DBBroker {
                     //TODO(AR) invalidating the cache entry and removing from collectionsDb must happen under the same lock... whichever that is
                     // invalidate the cache entry
                     final CollectionCache collectionsCache = pool.getCollectionsCache();
-                    try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+                    try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
                         collectionsCache.remove(collection);
                     }
                 }
@@ -1748,10 +1748,11 @@ public class NativeBroker extends DBBroker {
     }
 
     //TODO(AR) temporary measure
-    private ManagedLock<Lock> lockCollectionCache(final CollectionCache collectionCache) throws LockException {
+    private ManagedLock<Lock> lockCollectionCache() throws LockException {
         //TODO(AR) at the moment we always exclusively lock the CollectionCache, this can be relaxed once hierarchical Collection locking is in place
         //TODO(AR) once hierarchical locking is in place we don't need to lock the collection cache explicitly i.e. externally, it can become a ConcurrentHashMap or Caffeine
-        return ManagedLock.acquire(collectionCache.getLock(), LockMode.WRITE_LOCK);
+        final LockManager lockManager = getBrokerPool().getLockManager();
+        return lockManager.acquireCollectionCacheLock();
     }
 
     /**
@@ -1887,7 +1888,7 @@ public class NativeBroker extends DBBroker {
 
     public void reindexCollection(final Txn transaction, final Collection collection, final IndexMode mode) throws PermissionDeniedException, IOException {
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
             if(!collection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.WRITE)) {
                 throw new PermissionDeniedException("Account " + getCurrentSubject().getName() + " have insufficient privileges on collection " + collection.getURI());
             }
@@ -2508,7 +2509,7 @@ public class NativeBroker extends DBBroker {
         }
 
         final CollectionCache collectionsCache = pool.getCollectionsCache();
-        try(final ManagedLock collectionsCacheLock = lockCollectionCache(collectionsCache)) {
+        try(final ManagedLock collectionsCacheLock = lockCollectionCache()) {
             try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK)) {
                 final DocumentImpl oldDoc = destination.getDocument(this, newName);
 
