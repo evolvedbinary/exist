@@ -680,6 +680,8 @@ public class NativeBroker extends DBBroker {
      */
     private Tuple2<Boolean, Collection> getOrCreateCollectionExplicit(final Txn transaction, final XmldbURI path) throws PermissionDeniedException, IOException, TriggerException {
         final XmldbURI collectionUri = prepend(path.normalizeCollectionPath());
+        final XmldbURI parentCollectionUri = collectionUri.removeLastSegment();
+
         final CollectionCache collectionsCache = pool.getCollectionsCache();
 
         try {
@@ -705,45 +707,9 @@ public class NativeBroker extends DBBroker {
                     }
 
                     // is the parent Collection in the cache?
-                    final XmldbURI parentCollectionUri = collectionUri.removeLastSegment();
                     if (parentCollectionUri == XmldbURI.EMPTY_URI) {
-                        // this is the root collection, so no parent, is the Collection present on disk?
-                        final Collection loadedRootCollection = loadCollection(collectionUri, BFile.UNKNOWN_ADDRESS);
-
-                        if (loadedRootCollection != null) {
-                            // loaded it from disk
-
-                            // add it to the cache and return it
-                            collectionsCache.add(loadedRootCollection);
-                            return new Tuple2<>(false, loadedRootCollection);
-                        } else {
-                            // not on disk, create the root collection
-                            final Collection rootCollection = createCollection(transaction, null, collectionUri, collectionsCache);
-
-                            //import an initial collection configuration
-                            try {
-                                final String initCollectionConfig = readInitCollectionConfig();
-                                if(initCollectionConfig != null) {
-                                    CollectionConfigurationManager collectionConfigurationManager = pool.getConfigurationManager();
-                                    if(collectionConfigurationManager == null) {
-                                        if(pool.getConfigurationManager() == null) {
-                                            throw new IllegalStateException();
-                                            //might not yet have been initialised
-                                            //pool.initCollectionConfigurationManager(this);
-                                        }
-                                        collectionConfigurationManager = pool.getConfigurationManager();
-                                    }
-
-                                    if(collectionConfigurationManager != null) {
-                                        collectionConfigurationManager.addConfiguration(transaction, this, rootCollection, initCollectionConfig);
-                                    }
-                                }
-                            } catch(final CollectionConfigurationException cce) {
-                                LOG.error("Could not load initial collection configuration for /db: " + cce.getMessage(), cce);
-                            }
-
-                            return new Tuple2<>(true, rootCollection);
-                        }
+                        // no parent... so, this is the root collection!
+                        return getOrCreateCollectionExplicit_rootCollection(transaction, collectionUri, collectionsCache);
                     } else {
                         final Collection parentCollection = collectionsCache.get(parentCollectionUri);
                         if (parentCollection != null) {
@@ -763,45 +729,68 @@ public class NativeBroker extends DBBroker {
                             }
 
                         } else {
-                            // no parent collection in cache so we need to call this function for the parent Collection
-                            final Tuple2<Boolean, Collection> newOrExistingParentCollection = getOrCreateCollectionExplicit(transaction, parentCollectionUri);
-
-                            // is our Collection present on disk?
-                            final Collection loadedCollection = loadCollection(collectionUri, BFile.UNKNOWN_ADDRESS);
-                            if (loadedCollection != null) {
-                                // loaded it from disk
-
-                                if (newOrExistingParentCollection._1) {
-                                    // new parent Collection... ideally this should never happen unless a database inconsistency
-                                    LOG.warn("The Collection already existed on disk: {}, but one of the ancestor Collections did not! Will be re-linked...");
-
-                                    // add it to the parent
-                                    parentCollection.addCollection(this, loadedCollection, false);
-                                    saveCollection(transaction, parentCollection);
-
-                                    // add it to the cache and return it
-                                    collectionsCache.add(loadedCollection);
-                                    return new Tuple2<>(false, loadedCollection);
-
-                                } else {
-                                    // existing parent, add it to the cache and return it
-                                    collectionsCache.add(loadedCollection);
-                                    return new Tuple2<>(false, loadedCollection);
-                                }
-
-                            } else {
-                                // not on disk, create the collection
-                                return new Tuple2<>(true, createCollection(transaction, newOrExistingParentCollection._2, collectionUri, collectionsCache));
-                            }
+                            /*
+                             * No parent Collection in the cache so that needs to be loaded/created
+                             * (or will be read from cache if we are pre-empted) before we can create this Collection.
+                             * However to do this, we need to yield the collectionLock, so we will continue outside
+                             * the ManagedCollectionLock at (3)
+                             */
                         }
                     }
                 }
             }
 
+            //TODO(AR) below, should we just fall back to recursive descent creating the collection hierarchy in the same manner that getOrCreateCollection used to do?
+
+            // 3) No parent collection was previously found in cache so we need to call this function for the parent Collection and then ourselves
+            final Tuple2<Boolean, Collection> newOrExistingParentCollection = getOrCreateCollectionExplicit(transaction, parentCollectionUri);
+            return getOrCreateCollectionExplicit(transaction, collectionUri);
+
         } catch(final ReadOnlyException e) {
             throw new PermissionDeniedException(DATABASE_IS_READ_ONLY);
         } catch(final LockException e) {
             throw new IOException(e);
+        }
+    }
+
+    private Tuple2<Boolean, Collection> getOrCreateCollectionExplicit_rootCollection(final Txn transaction, final XmldbURI collectionUri, final CollectionCache collectionsCache) throws PermissionDeniedException, IOException, LockException, ReadOnlyException, TriggerException {
+        // this is the root collection, so no parent, is the Collection present on disk?
+
+        final Collection loadedRootCollection = loadCollection(collectionUri, BFile.UNKNOWN_ADDRESS);
+
+        if (loadedRootCollection != null) {
+            // loaded it from disk
+
+            // add it to the cache and return it
+            collectionsCache.add(loadedRootCollection);
+            return new Tuple2<>(false, loadedRootCollection);
+        } else {
+            // not on disk, create the root collection
+            final Collection rootCollection = createCollection(transaction, null, collectionUri, collectionsCache);
+
+            //import an initial collection configuration
+            try {
+                final String initCollectionConfig = readInitCollectionConfig();
+                if(initCollectionConfig != null) {
+                    CollectionConfigurationManager collectionConfigurationManager = pool.getConfigurationManager();
+                    if(collectionConfigurationManager == null) {
+                        if(pool.getConfigurationManager() == null) {
+                            throw new IllegalStateException();
+                            //might not yet have been initialised
+                            //pool.initCollectionConfigurationManager(this);
+                        }
+                        collectionConfigurationManager = pool.getConfigurationManager();
+                    }
+
+                    if(collectionConfigurationManager != null) {
+                        collectionConfigurationManager.addConfiguration(transaction, this, rootCollection, initCollectionConfig);
+                    }
+                }
+            } catch(final CollectionConfigurationException cce) {
+                LOG.error("Could not load initial collection configuration for /db: " + cce.getMessage(), cce);
+            }
+
+            return new Tuple2<>(true, rootCollection);
         }
     }
 
@@ -1017,9 +1006,11 @@ public class NativeBroker extends DBBroker {
             final Collection collection = collectionsCache.get(collectionUri);
             if (collection != null) {
 
-                if(!collection.getURI().equalsInternal(collectionUri)) {
-                    LOG.error("openCollection: The Collection received from the cache: {} is not the requested: {}", collection.getURI(), collectionUri);
-                }
+            if(!collection.getURI().equalsInternal(collectionUri)) {
+                LOG.error("openCollection: The Collection received from the cache: {} is not the requested: {}", collection.getURI(), collectionUri);
+                unlockFn.run();
+                throw new IllegalStateException();
+            }
 
                 // update the LRU
                 collectionsCache.add(collection);
