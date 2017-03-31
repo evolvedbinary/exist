@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.exist.backup.SystemExport;
+import org.exist.collections.CollectionCache;
 import org.exist.repo.Deployment;
 
 import org.w3c.dom.Document;
@@ -44,7 +45,6 @@ import org.exist.scheduler.JobException;
 import org.exist.security.internal.RealmImpl;
 import org.exist.storage.BrokerFactory;
 import org.exist.storage.BrokerPool;
-import org.exist.storage.CollectionCacheManager;
 import org.exist.storage.DBBroker;
 import org.exist.storage.DefaultCacheManager;
 import org.exist.storage.IndexSpec;
@@ -54,7 +54,6 @@ import org.exist.storage.XQueryPool;
 import org.exist.storage.journal.Journal;
 import org.exist.storage.serializers.CustomMatchListenerFactory;
 import org.exist.storage.serializers.Serializer;
-import org.exist.storage.txn.TransactionManager;
 import org.exist.validation.GrammarPool;
 import org.exist.validation.resolver.eXistXMLCatalogResolver;
 import org.exist.xmldb.DatabaseImpl;
@@ -837,7 +836,7 @@ public class Configuration implements ErrorHandler
             }
         }
 
-        String collectionCache = getConfigAttributeValue(con, CollectionCacheManager.CACHE_SIZE_ATTRIBUTE);
+        String collectionCache = getConfigAttributeValue(con, CollectionCache.CACHE_SIZE_ATTRIBUTE);
         if(collectionCache != null) {
             collectionCache = collectionCache.toLowerCase();
 
@@ -859,10 +858,10 @@ public class Configuration implements ErrorHandler
                     collectionCacheBytes = Integer.valueOf(collectionCache);
                 }
 
-                config.put(CollectionCacheManager.PROPERTY_CACHE_SIZE_BYTES, collectionCacheBytes);
+                config.put(CollectionCache.PROPERTY_CACHE_SIZE_BYTES, collectionCacheBytes);
 
                 if(LOG.isDebugEnabled()) {
-                    LOG.debug("Set config {} = {}", CollectionCacheManager.PROPERTY_CACHE_SIZE_BYTES, config.get(CollectionCacheManager.PROPERTY_CACHE_SIZE_BYTES));
+                    LOG.debug("Set config {} = {}", CollectionCache.PROPERTY_CACHE_SIZE_BYTES, config.get(CollectionCache.PROPERTY_CACHE_SIZE_BYTES));
                 }
             }
             catch( final NumberFormatException nfe ) {
