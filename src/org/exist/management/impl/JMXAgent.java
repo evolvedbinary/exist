@@ -99,7 +99,7 @@ public class JMXAgent implements Agent {
     }
 
     @Override
-    public void initDBInstance(BrokerPool instance) {
+    public void initDBInstance(final BrokerPool instance) {
         try {
             addMBean(instance.getId(), "org.exist.management." + instance.getId() + ":type=Database",
                     new org.exist.management.impl.Database(instance));
@@ -112,6 +112,9 @@ public class JMXAgent implements Agent {
 
             addMBean(instance.getId(), "org.exist.management." + instance.getId() + ":type=ProcessReport",
                     new ProcessReport(instance));
+
+            addMBean(instance.getId(), "org.exist.management." + instance.getId() + ":type=CollectionCache",
+                    new CollectionCache(instance));
                         
         } catch (final DatabaseConfigurationException e) {
             LOG.warn("Exception while registering database mbean.", e);
