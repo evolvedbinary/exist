@@ -63,6 +63,7 @@ import org.exist.storage.io.VariableByteOutputStream;
 import org.exist.storage.journal.*;
 import org.exist.storage.lock.*;
 import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.Lock.LockType;
 import org.exist.storage.serializers.NativeSerializer;
 import org.exist.storage.serializers.Serializer;
 import org.exist.storage.sync.Sync;
@@ -842,7 +843,7 @@ public class NativeBroker extends DBBroker {
      * and at least a READ_LOCK on parentCollection (if it is not null)
      */
     private Collection createCollectionObject(final Txn transaction, @Nullable final Collection parentCollection,
-            final XmldbURI collectionUri) throws ReadOnlyException, PermissionDeniedException {
+            final XmldbURI collectionUri) throws ReadOnlyException, PermissionDeniedException, LockException {
         final Collection collection = new MutableCollection(this, collectionUri);
         collection.setId(getNextCollectionId(transaction));
         collection.setCreationTime(System.currentTimeMillis());
@@ -1741,23 +1742,13 @@ public class NativeBroker extends DBBroker {
 
     }
 
-    /**
-     * Saves the specified collection to storage. Collections are usually cached in
-     * memory. If a collection is modified, this method needs to be called to make
-     * the changes persistent.
-     *
-     * Note: appending a new document to a collection does not require a save.
-     *
-     * @throws PermissionDeniedException
-     * @throws IOException
-     * @throws TriggerException
-     */
     @Override
-    public void saveCollection(final Txn transaction, final Collection collection) throws PermissionDeniedException, IOException, TriggerException {
+    public void saveCollection(final Txn transaction, final Collection collection) throws IOException {
         if(collection == null) {
             LOG.error("NativeBroker.saveCollection called with collection == null! Aborting.");
             return;
         }
+
         if(isReadOnly()) {
             throw new IOException(DATABASE_IS_READ_ONLY);
         }
@@ -1765,26 +1756,25 @@ public class NativeBroker extends DBBroker {
         final CollectionCache collectionsCache = pool.getCollectionsCache();
         collectionsCache.put(collection);
 
-        try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK)) {
+        try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK, LockType.COLLECTIONS_DBX)) {
 
             if(collection.getId() == Collection.UNKNOWN_COLLECTION_ID) {
                 collection.setId(getNextCollectionId(transaction));
             }
+
             final Value name = new CollectionStore.CollectionKey(collection.getURI().toString());
             try(final VariableByteOutputStream os = new VariableByteOutputStream(8)) {
                 collection.serialize(os);
                 final long address = collectionsDb.put(transaction, name, os.data(), true);
                 if (address == BFile.UNKNOWN_ADDRESS) {
-                    //TODO : exception !!! -pb
-                    LOG.warn("could not store collection data for '" + collection.getURI() + "'");
-                    return;
+                    throw new IOException("Could not store collection data for '" + collection.getURI() + "', address=BFile.UNKNOWN_ADDRESS");
                 }
                 collection.setAddress(address);
             }
         } catch(final ReadOnlyException e) {
-            LOG.warn(DATABASE_IS_READ_ONLY);
+            throw new IOException(DATABASE_IS_READ_ONLY, e);
         } catch(final LockException e) {
-            LOG.warn("Failed to acquire lock on " + FileUtils.fileName(collectionsDb.getFile()), e);
+            throw new IOException(e);
         }
     }
 
@@ -1794,12 +1784,12 @@ public class NativeBroker extends DBBroker {
      * @return next available unique collection id
      * @throws ReadOnlyException
      */
-    public int getNextCollectionId(final Txn transaction) throws ReadOnlyException {
+    public int getNextCollectionId(final Txn transaction) throws ReadOnlyException, LockException {
         int nextCollectionId = collectionsDb.getFreeCollectionId();
         if(nextCollectionId != Collection.UNKNOWN_COLLECTION_ID) {
             return nextCollectionId;
         }
-        try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK)) {
+        try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK, Lock.LockType.COLLECTIONS_DBX)) {
             final Value key = new CollectionStore.CollectionKey(CollectionStore.NEXT_COLLECTION_ID_KEY);
             final Value data = collectionsDb.get(key);
             if(data != null) {
@@ -1810,10 +1800,6 @@ public class NativeBroker extends DBBroker {
             ByteConversion.intToByte(nextCollectionId, d, OFFSET_COLLECTION_ID);
             collectionsDb.put(transaction, key, d, true);
             return nextCollectionId;
-        } catch(final LockException e) {
-            LOG.warn("Failed to acquire lock on " + FileUtils.fileName(collectionsDb.getFile()), e);
-            return Collection.UNKNOWN_COLLECTION_ID;
-            //TODO : rethrow ? -pb
         }
     }
 
