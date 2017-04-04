@@ -169,7 +169,7 @@ public class MutableCollection implements Collection {
     }
 
     @Override
-    public List<CollectionEntry> getEntries(final DBBroker broker) throws PermissionDeniedException, LockException {
+    public List<CollectionEntry> getEntries(final DBBroker broker) throws PermissionDeniedException, LockException, IOException {
         if(!getPermissionsNoLock().validate(broker.getCurrentSubject(), Permission.READ)) {
             throw new PermissionDeniedException("Permission denied to read collection: " + path);
         }
@@ -197,7 +197,7 @@ public class MutableCollection implements Collection {
 
     @Override
     public CollectionEntry getChildCollectionEntry(final DBBroker broker, final String name)
-            throws PermissionDeniedException {
+            throws PermissionDeniedException, LockException, IOException {
         if(!getPermissionsNoLock().validate(broker.getCurrentSubject(), Permission.READ)) {
             throw new PermissionDeniedException("Permission denied to read collection: " + path);
         }
@@ -210,7 +210,7 @@ public class MutableCollection implements Collection {
 
     @Override
     public CollectionEntry getResourceEntry(final DBBroker broker, final String name)
-            throws PermissionDeniedException, LockException {
+            throws PermissionDeniedException, LockException, IOException {
         if(!getPermissionsNoLock().validate(broker.getCurrentSubject(), Permission.READ)) {
             throw new PermissionDeniedException("Permission denied to read collection: " + path);
         }

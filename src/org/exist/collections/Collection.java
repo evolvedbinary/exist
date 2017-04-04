@@ -347,7 +347,7 @@ public interface Collection extends Resource, Comparable<Collection>, AutoClosea
      * @return A list of entries in this Collection
      */
     List<CollectionEntry> getEntries(DBBroker broker)
-            throws PermissionDeniedException, LockException;
+            throws PermissionDeniedException, LockException, IOException;
 
     /**
      * Get the entry for a child Collection
@@ -356,7 +356,8 @@ public interface Collection extends Resource, Comparable<Collection>, AutoClosea
      * @param name   The name of the child Collection
      * @return The child Collection entry
      */
-    CollectionEntry getChildCollectionEntry(DBBroker broker, String name) throws PermissionDeniedException;
+    CollectionEntry getChildCollectionEntry(DBBroker broker, String name)
+            throws PermissionDeniedException, LockException, IOException;
 
     /**
      * Get the entry for a resource
@@ -366,7 +367,7 @@ public interface Collection extends Resource, Comparable<Collection>, AutoClosea
      * @return The resource entry
      */
     CollectionEntry getResourceEntry(DBBroker broker, String name)
-            throws PermissionDeniedException, LockException;
+            throws PermissionDeniedException, LockException, IOException;
 
     /**
      * Update the specified child Collection
@@ -885,7 +886,7 @@ public interface Collection extends Resource, Comparable<Collection>, AutoClosea
             this.permissions = permissions;
         }
 
-        public abstract void readMetadata(DBBroker broker);
+        public abstract void readMetadata(DBBroker broker) throws IOException, LockException;
 
         public abstract void read(VariableByteInput is) throws IOException;
 
@@ -916,7 +917,7 @@ public interface Collection extends Resource, Comparable<Collection>, AutoClosea
         }
 
         @Override
-        public void readMetadata(final DBBroker broker) {
+        public void readMetadata(final DBBroker broker) throws IOException, LockException {
             broker.readCollectionEntry(this);
         }
 
@@ -948,7 +949,7 @@ public interface Collection extends Resource, Comparable<Collection>, AutoClosea
         }
 
         @Override
-        public void read(final VariableByteInput is) throws IOException {
+        public void read(final VariableByteInput is) {
         }
     }
 }
