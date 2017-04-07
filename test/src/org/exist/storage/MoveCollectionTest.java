@@ -85,6 +85,28 @@ public class MoveCollectionTest {
     }
 
     @Test
+    public void moveDeep() throws DatabaseConfigurationException, EXistException, XMLDBException, IOException, PermissionDeniedException, TriggerException, LockException {
+        final BrokerPool pool = startDb();
+
+        final TransactionManager transact = pool.getTransactionManager();
+        try(final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
+            final Txn transaction = transact.beginTransaction()) {
+
+            final Collection src = broker.getOrCreateCollection(transaction, XmldbURI.create("/db/a/b/c/d/e/f/g/h/i/j/k"));
+            assertNotNull(src);
+            broker.saveCollection(transaction, src);
+
+            final Collection dst = broker.getOrCreateCollection(transaction, XmldbURI.create("/db/z/y/x/w/v/u"));
+            assertNotNull(dst);
+            broker.saveCollection(transaction, dst);
+
+            broker.moveCollection(transaction, src, dst, src.getURI().lastSegment());
+
+            transact.commit(transaction);
+        }
+    }
+
+    @Test
     public void storeAndRead() throws EXistException, DatabaseConfigurationException, LockException, PermissionDeniedException, SAXException, IOException, XMLDBException {
         BrokerPool.FORCE_CORRUPTION = true;
         BrokerPool pool = startDb();
