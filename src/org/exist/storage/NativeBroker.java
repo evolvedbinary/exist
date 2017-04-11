@@ -2671,100 +2671,90 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    /**
-     * @param doc         src document
-     * @param destination destination collection
-     * @param newName     the new name for the document
-     */
     @Override
-    public void copyResource(final Txn transaction, final DocumentImpl doc, final Collection destination, XmldbURI newName) throws PermissionDeniedException, LockException, EXistException, IOException {
+    public void copyResource(final Txn transaction, final DocumentImpl sourceDocument, final Collection targetCollection, final XmldbURI newName) throws PermissionDeniedException, LockException, IOException, TriggerException, EXistException {
+        assert(sourceDocument != null);
+        assert(targetCollection != null);
+        assert(newName != null);
 
         if(isReadOnly()) {
             throw new IOException(DATABASE_IS_READ_ONLY);
         }
 
-        final Collection collection = doc.getCollection();
-
-        if(!collection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.EXECUTE)) {
-            throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' has insufficient privileges to copy the resource '" + doc.getFileURI() + "'.");
+        if(newName.numSegments() != 1) {
+            throw new IOException("newName name must be just a name i.e. an XmldbURI with one segment!");
         }
 
-        if(!doc.getPermissions().validate(getCurrentSubject(), Permission.READ)) {
-            throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' has insufficient privileges to copy the resource '" + doc.getFileURI() + "'.");
+        final XmldbURI sourceDocumentUri = sourceDocument.getURI();
+        final XmldbURI targetCollectionUri = targetCollection.getURI();
+        final XmldbURI destinationDocumentUri = targetCollectionUri.append(newName);
+
+        if(!sourceDocument.getPermissions().validate(getCurrentSubject(), Permission.READ)) {
+            throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' has insufficient privileges to copy the resource '" + sourceDocumentUri + "'.");
         }
 
-        if(newName == null) {
-            newName = doc.getFileURI();
+        // we assume the caller holds a READ_LOCK (or better) on sourceDocument#getCollection()
+        final Collection sourceCollection = sourceDocument.getCollection();
+        if (!sourceCollection.getPermissions().validate(getCurrentSubject(), Permission.EXECUTE)) {
+            throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' has insufficient privileges to copy the resource '" + sourceDocumentUri + "'.");
         }
 
-        try(final ManagedLock<Lock> collectionsDbLock = ManagedLock.acquire(collectionsDb.getLock(), LockMode.WRITE_LOCK, LockType.COLLECTIONS_DBX)) {
-            final DocumentImpl oldDoc = destination.getDocument(this, newName);
+        if(!targetCollection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.EXECUTE)) {
+            throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' does not have execute access on the destination collection '" + targetCollectionUri + "'.");
+        }
 
-            if(!destination.getPermissionsNoLock().validate(getCurrentSubject(), Permission.EXECUTE)) {
-                throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' does not have execute access on the destination collection '" + destination.getURI() + "'.");
-            }
+        if(targetCollection.hasChildCollection(this, newName.lastSegment())) {
+            throw new EXistException("The collection '" + targetCollectionUri + "' already has a sub-collection named '" + newName.lastSegment() + "', you cannot create a Document with the same name as an existing collection.");
+        }
 
-            if(destination.hasChildCollection(this, newName.lastSegment())) {
-                throw new EXistException(
-                    "The collection '" + destination.getURI() + "' already has a sub-collection named '" + newName.lastSegment() + "', you cannot create a Document with the same name as an existing collection."
-                );
-            }
+        DocumentImpl oldDoc = null;
+        try {
+            oldDoc = targetCollection.getDocumentWithLock(this, newName, LockMode.WRITE_LOCK);
 
-            final XmldbURI newURI = destination.getURI().append(newName);
-            final XmldbURI oldUri = doc.getURI();
+            final DocumentTrigger trigger = new DocumentTriggers(this, targetCollection);
 
-            final DocumentTrigger trigger = new DocumentTriggers(this, collection);
-
-            if(oldDoc == null) {
-                if(!destination.getPermissionsNoLock().validate(getCurrentSubject(), Permission.WRITE)) {
-                    throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' does not have write access on the destination collection '" + destination.getURI() + "'.");
+            if (oldDoc == null) {
+                if (!targetCollection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.WRITE)) {
+                    throw new PermissionDeniedException("Account '" + getCurrentSubject().getName() + "' does not have write access on the destination collection '" + targetCollectionUri + "'.");
                 }
             } else {
                 //overwrite existing document
 
-                if(doc.getDocId() == oldDoc.getDocId()) {
-                    throw new EXistException("Cannot copy resource to itself '" + doc.getURI() + "'.");
+                if (sourceDocument.getDocId() == oldDoc.getDocId()) {
+                    throw new PermissionDeniedException("Cannot copy resource to itself '" + sourceDocumentUri + "'.");
                 }
 
-                if(!oldDoc.getPermissions().validate(getCurrentSubject(), Permission.WRITE)) {
+                if (!oldDoc.getPermissions().validate(getCurrentSubject(), Permission.WRITE)) {
                     throw new PermissionDeniedException("A resource with the same name already exists in the target collection '" + oldDoc.getURI() + "', and you do not have write access on that resource.");
                 }
 
                 trigger.beforeDeleteDocument(this, transaction, oldDoc);
-                trigger.afterDeleteDocument(this, transaction, newURI);
+                trigger.afterDeleteDocument(this, transaction, destinationDocumentUri);
             }
 
-            trigger.beforeCopyDocument(this, transaction, doc, newURI);
+            trigger.beforeCopyDocument(this, transaction, sourceDocument, destinationDocumentUri);
 
-            DocumentImpl newDocument = null;
-            if(doc.getResourceType() == DocumentImpl.BINARY_FILE) {
-                InputStream is = null;
-                try {
-                    is = getBinaryResource((BinaryDocument) doc);
-                    newDocument = destination.addBinaryResource(transaction, this, newName, is, doc.getMetadata().getMimeType(), -1);
-                } finally {
-                    if(is != null) {
-                        is.close();
-                    }
+            final DocumentImpl newDocument;
+            if (sourceDocument.getResourceType() == DocumentImpl.BINARY_FILE) {
+                try (final InputStream is = getBinaryResource((BinaryDocument) sourceDocument)) {
+                    newDocument = targetCollection.addBinaryResource(transaction, this, newName, is, sourceDocument.getMetadata().getMimeType(), -1);
                 }
             } else {
-                final DocumentImpl newDoc = new DocumentImpl(pool, destination, newName);
-                newDoc.copyOf(doc, oldDoc != null);
-                newDoc.setDocId(getNextResourceId(transaction));
-                try(final ManagedLock<Lock> newDocLock = ManagedLock.acquire(newDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
-                    copyXMLResource(transaction, doc, newDoc);
-                    destination.addDocument(transaction, this, newDoc);
-                    storeXMLResource(transaction, newDoc);
+                newDocument = new DocumentImpl(pool, targetCollection, newName);
+                try (final ManagedLock<Lock> newDocLock = ManagedLock.acquire(newDocument.getUpdateLock(), LockMode.WRITE_LOCK)) {
+                    newDocument.copyOf(sourceDocument, oldDoc != null);
+                    newDocument.setDocId(getNextResourceId(transaction));
+                    copyXMLResource(transaction, sourceDocument, newDocument);
+                    targetCollection.addDocument(transaction, this, newDocument);
+                    storeXMLResource(transaction, newDocument);
                 }
-                newDocument = newDoc;
             }
 
-            trigger.afterCopyDocument(this, transaction, newDocument, oldUri);
-
-        } catch(final IOException e) {
-            LOG.warn("An error occurred while copying resource", e);
-        } catch(final TriggerException e) {
-            throw new PermissionDeniedException(e.getMessage(), e);
+            trigger.afterCopyDocument(this, transaction, newDocument, sourceDocumentUri);
+        } finally {
+            if(oldDoc != null) {
+                oldDoc.getUpdateLock().release(LockMode.WRITE_LOCK);
+            }
         }
     }
 

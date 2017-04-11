@@ -651,22 +651,26 @@ public abstract class DBBroker extends Observable implements AutoCloseable {
 			throws PermissionDeniedException, LockException, IOException, TriggerException, EXistException;
 
 	/**
-	 * Copy a resource to the destination collection and rename it.
-	 * 
-	 * @param doc
-	 *            the resource to copy
-	 * @param destination
-	 *            the destination collection
-	 * @param newName
-	 *            the new name the resource should have in the destination
-	 *            collection
-	 * @throws PermissionDeniedException
-	 * @throws LockException
-	 * @throws EXistException 
+	 * Copy a resource to the target Collection and rename it.
+	 *
+     * NOTE: It is assumed that the caller holds a {@link LockMode#READ_LOCK} on the
+     *     `sourceDocument` and its parent Collection,
+     *     and a {@link LockMode#WRITE_LOCK} on the `targetCollection`
+     *
+     * @param transaction The current transaction
+	 * @param sourceDocument The document to copy
+     * @param targetCollection The target Collection to copy the sourceDocument into
+     * @param newName The new name the sourceDocument should have in the targetCollection
+     *
+     * @throws PermissionDeniedException If the current user does not have appropriate permissions
+     * @throws LockException If an exception occurs whilst acquiring locks
+     * @throws IOException If an error occurs whilst copying the Document on disk
+     * @throws TriggerException If a CollectionTrigger throws an exception
+     * @throws EXistException If no more Document IDs are available
 	 */
-	public abstract void copyResource(Txn transaction, DocumentImpl doc,
-			Collection destination, XmldbURI newName)
-            throws PermissionDeniedException, LockException, EXistException, IOException;
+	public abstract void copyResource(Txn transaction, DocumentImpl sourceDocument,
+			Collection targetCollection, XmldbURI newName)
+            throws PermissionDeniedException, LockException, IOException, TriggerException, EXistException;
 
 	/**
 	 * Defragment pages of this document. This will minimize the number of split
