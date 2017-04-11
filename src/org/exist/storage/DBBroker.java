@@ -367,7 +367,7 @@ public abstract class DBBroker extends Observable implements AutoCloseable {
      * Get a new document id that does not yet exist within the collection.
      * @throws EXistException 
      */
-    public abstract int getNextResourceId(Txn transaction, Collection collection) throws EXistException;
+    public abstract int getNextResourceId(Txn transaction) throws EXistException, LockException;
 
     /**
      * Get the string value of the specified node.
@@ -625,21 +625,24 @@ public abstract class DBBroker extends Observable implements AutoCloseable {
 			throws PermissionDeniedException, LockException, IOException, TriggerException;
 
 	/**
-	 * Copy a collection to the destination collection and rename it.
-	 * 
-	 * @param transaction The transaction, which registers the acquired write locks. The locks should be released on commit/abort.
-	 * @param collection The origin collection
-	 * @param destination The destination parent collection
-	 * @param newName The new name of the collection
-	 * 
-	 * @throws PermissionDeniedException
-	 * @throws LockException
-	 * @throws IOException
-	 * @throws TriggerException 
-	 * @throws EXistException 
+	 * Copy a collection and all its sub-Collections to another Collection and rename it.
+     *
+     * NOTE: It is assumed that the caller holds a {@link LockMode#READ_LOCK}
+     *     `sourceCollection` and a {@link LockMode#WRITE_LOCK} on the `targetCollection`
+	 *
+     * @param transaction The current transaction
+     * @param sourceCollection The Collection to copy
+     * @param targetCollection The target Collection to copy the sourceCollection into
+     * @param newName The new name the sourceCollection should have in the targetCollection
+	 *
+     * @throws PermissionDeniedException If the current user does not have appropriate permissions
+     * @throws LockException If an exception occurs whilst acquiring locks
+     * @throws IOException If an error occurs whilst copying the Collection on disk
+     * @throws TriggerException If a CollectionTrigger throws an exception
+     * @throws EXistException If no more Document IDs are available
 	 */
-	public abstract void copyCollection(Txn transaction, Collection collection,
-			Collection destination, XmldbURI newName)
+	public abstract void copyCollection(Txn transaction, Collection sourceCollection,
+			Collection targetCollection, XmldbURI newName)
 			throws PermissionDeniedException, LockException, IOException, TriggerException, EXistException;
 
 	/**
