@@ -234,7 +234,7 @@ public abstract class DBBroker extends Observable implements AutoCloseable {
      *            are added.
      * 
      */
-    public abstract MutableDocumentSet getAllXMLResources(MutableDocumentSet docs) throws PermissionDeniedException;
+    public abstract MutableDocumentSet getAllXMLResources(MutableDocumentSet docs) throws PermissionDeniedException, LockException;
 
     public abstract void getResourcesFailsafe(BTreeCallback callback, boolean fullScan) throws TerminatedException;
 
@@ -775,7 +775,7 @@ public abstract class DBBroker extends Observable implements AutoCloseable {
 	/**
 	 * 
 	 */
-	public abstract MutableDocumentSet getXMLResourcesByDoctype(String doctype, MutableDocumentSet result) throws PermissionDeniedException;
+	public abstract MutableDocumentSet getXMLResourcesByDoctype(String doctype, MutableDocumentSet result) throws PermissionDeniedException, LockException;
 
 	public int getReferenceCount() {
 		return referenceCount;

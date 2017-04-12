@@ -329,7 +329,7 @@ public class BasicNodeSetTest {
     }
 	
     @Test
-    public void testOptimizations() throws XPathException, SAXException, PermissionDeniedException {
+    public void testOptimizations() throws XPathException, SAXException, PermissionDeniedException, LockException {
             
         Serializer serializer = broker.getSerializer();
         serializer.reset();
