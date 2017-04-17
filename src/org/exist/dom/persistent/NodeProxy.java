@@ -21,6 +21,7 @@ package org.exist.dom.persistent;
 
 import org.exist.EXistException;
 import org.exist.collections.Collection;
+import org.exist.collections.ManagedLocks;
 import org.exist.dom.QName;
 import org.exist.dom.memtree.DocumentBuilderReceiver;
 import org.exist.numbering.NodeId;
@@ -30,6 +31,8 @@ import org.exist.storage.RangeIndexSpec;
 import org.exist.storage.StorageAddress;
 import org.exist.storage.lock.Lock;
 import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.LockManager;
+import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.storage.serializers.Serializer;
 import org.exist.util.LockException;
 import org.exist.xmldb.XmldbURI;
@@ -50,6 +53,7 @@ import org.xml.sax.ext.LexicalHandler;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Properties;
@@ -1420,19 +1424,15 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
     }
 
     @Override
-    public void lock(final DBBroker broker, final boolean exclusive, final boolean checkExisting) throws LockException {
-        final Lock docLock = doc.getUpdateLock();
-        docLock.acquire(exclusive ? LockMode.WRITE_LOCK : LockMode.READ_LOCK);
-    }
-
-    @Override
-    public void unlock(final boolean exclusive) {
-        final Lock docLock = doc.getUpdateLock();
+    public ManagedLocks<ManagedDocumentLock> lock(final DBBroker broker, final boolean exclusive, final boolean checkExisting) throws LockException {
+        final LockManager lockManager = broker.getBrokerPool().getLockManager();
+        final ManagedDocumentLock docLock;
         if(exclusive) {
-            docLock.release(LockMode.WRITE_LOCK);
-        } else if(docLock.isLockedForRead(Thread.currentThread())) {
-            docLock.release(LockMode.READ_LOCK);
+            docLock = lockManager.acquireDocumentWriteLock(doc.getURI());
+        } else {
+            docLock = lockManager.acquireDocumentReadLock(doc.getURI());
         }
+        return new ManagedLocks<>(docLock);
     }
 
     @Override

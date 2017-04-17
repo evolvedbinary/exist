@@ -22,10 +22,11 @@
 package org.exist.dom.persistent;
 
 import org.exist.collections.Collection;
+import org.exist.collections.ManagedLocks;
 import org.exist.numbering.NodeId;
 import org.exist.storage.DBBroker;
-import org.exist.storage.lock.Lock;
-import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.LockManager;
+import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.util.ArrayUtils;
 import org.exist.util.FastQSort;
 import org.exist.util.LockException;
@@ -457,26 +458,20 @@ public class ExtArrayNodeSet extends AbstractArrayNodeSet implements DocumentSet
     }
 
     @Override
-    public void lock(final DBBroker broker, final boolean exclusive, final boolean checkExisting) throws LockException {
+    public ManagedLocks<ManagedDocumentLock> lock(final DBBroker broker, final boolean exclusive, final boolean checkExisting) throws LockException {
+        final LockManager lockManager = broker.getBrokerPool().getLockManager();
+        final ManagedDocumentLock[] managedDocumentLocks = new ManagedDocumentLock[partCount];
         for (int i = 0; i < partCount; i++) {
             final DocumentImpl doc = parts[i].getOwnerDocument();
-            final Lock docLock = doc.getUpdateLock();
-            docLock.acquire(exclusive ? LockMode.WRITE_LOCK : LockMode.READ_LOCK);
-        }
-    }
-
-    @Override
-    public void unlock(final boolean exclusive) {
-        final Thread thread = Thread.currentThread();
-        for (int i = 0; i < partCount; i++) {
-            final DocumentImpl doc = parts[i].getOwnerDocument();
-            final Lock docLock = doc.getUpdateLock();
+            final ManagedDocumentLock docLock;
             if(exclusive) {
-                docLock.release(LockMode.WRITE_LOCK);
-            } else if(docLock.isLockedForRead(thread)) {
-                docLock.release(LockMode.READ_LOCK);
+                docLock = lockManager.acquireDocumentWriteLock(doc.getURI());
+            } else {
+                docLock = lockManager.acquireDocumentReadLock(doc.getURI());
             }
+            managedDocumentLocks[i] = docLock;
         }
+        return new ManagedLocks<>(managedDocumentLocks);
     }
 
     private class DocumentIterator implements Iterator<DocumentImpl> {

@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import org.exist.collections.Collection;
 import org.exist.collections.triggers.TriggerException;
 import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
 import org.exist.storage.lock.Lock.LockMode;
@@ -117,25 +118,23 @@ public class PermissionFactory {
         try(final Txn transaction = transact.beginTransaction()) {
             try(final Collection collection = broker.openCollection(pathUri, LockMode.WRITE_LOCK)) {
                 if (collection == null) {
-                    DocumentImpl doc = null;
-                    try {
-                        doc = broker.getXMLResource(pathUri, LockMode.WRITE_LOCK);
-                        if (doc == null) {
+                    try(final LockedDocument lockedDoc = broker.getXMLResource(pathUri, LockMode.WRITE_LOCK)) {
+
+                        if (lockedDoc == null) {
                             transact.abort(transaction);
                             throw new XPathException("Resource or collection '" + pathUri.toString() + "' does not exist.");
                         }
 
+                        final DocumentImpl doc = lockedDoc.getDocument();
+
                         // keep a write lock in the transaction
-                        transaction.acquireLock(doc.getUpdateLock(), LockMode.WRITE_LOCK);
+                        transaction.acquireDocumentLock(() -> brokerPool.getLockManager().acquireDocumentWriteLock(doc.getURI()));
+
 
                         final Permission permissions = doc.getPermissions();
                         permissionModifier.accept(permissions);
 
                         broker.storeXMLResource(transaction, doc);
-                    } finally {
-                        if(doc != null) {
-                            doc.getUpdateLock().release(LockMode.WRITE_LOCK);
-                        }
                     }
                 } else {
                     // keep a write lock in the transaction

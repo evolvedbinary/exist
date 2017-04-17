@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.exist.collections.Collection;
 import org.exist.dom.persistent.BinaryDocument;
 import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.protocolhandler.xmldb.XmldbURL;
 import org.exist.security.Subject;
 import org.exist.storage.BrokerPool;
@@ -108,23 +109,22 @@ public class EmbeddedDownload {
 
             try (final DBBroker broker = pool.get(Optional.of(user))) {
 
-                DocumentImpl resource = null;
-                Collection collection = null;
-                try {
-                    resource = broker.getXMLResource(path, LockMode.READ_LOCK);
-                    if (resource == null) {
+                try(final LockedDocument lockedResource = broker.getXMLResource(path, LockMode.READ_LOCK)) {
+                    if (lockedResource == null) {
                         // Test for collection
-                        collection = broker.openCollection(path, LockMode.READ_LOCK);
-                        if (collection == null) {
-                            // No collection, no document
-                            throw new IOException("Resource " + xmldbURL.getPath() + " not found.");
+                        try(final Collection collection = broker.openCollection(path, LockMode.READ_LOCK)) {
+                            if (collection == null) {
+                                // No collection, no document
+                                throw new IOException("Resource " + xmldbURL.getPath() + " not found.");
 
-                        } else {
-                            // Collection
-                            throw new IOException("Resource " + xmldbURL.getPath() + " is a collection.");
+                            } else {
+                                // Collection
+                                throw new IOException("Resource " + xmldbURL.getPath() + " is a collection.");
+                            }
                         }
 
                     } else {
+                        final DocumentImpl resource = lockedResource.getDocument();
                         if (resource.getResourceType() == DocumentImpl.XML_FILE) {
                             final Serializer serializer = broker.getSerializer();
                             serializer.reset();
@@ -140,14 +140,6 @@ public class EmbeddedDownload {
                         }
                     }
                 } finally {
-                    if (collection != null) {
-                        collection.close();
-                    }
-
-                    if (resource != null) {
-                        resource.getUpdateLock().release(LockMode.READ_LOCK);
-                    }
-
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("End document download");
                     }

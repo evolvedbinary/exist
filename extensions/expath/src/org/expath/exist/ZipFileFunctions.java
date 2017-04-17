@@ -7,6 +7,7 @@ import org.exist.dom.persistent.BinaryDocument;
 import org.exist.dom.QName;
 import org.exist.dom.persistent.DocumentImpl;
 import org.exist.dom.memtree.MemTreeBuilder;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.security.PermissionDeniedException;
 import org.exist.xmldb.XmldbURI;
 import org.exist.xquery.*;
@@ -234,13 +235,12 @@ public class ZipFileFunctions extends BasicFunction {
 
     // copied from
     public interface ZipFileSource {
-        public ZipInputStream getStream() throws IOException, PermissionDeniedException;
-
-        public void close();
+        ZipInputStream getStream() throws IOException, PermissionDeniedException;
+        void close();
     }
 
     private class ZipFileFromDb implements ZipFileSource {
-        private BinaryDocument binaryDoc = null;
+        private LockedDocument binaryDoc = null;
         private final XmldbURI uri;
 
         public ZipFileFromDb(XmldbURI uri) {
@@ -249,33 +249,32 @@ public class ZipFileFunctions extends BasicFunction {
 
         @Override
         public ZipInputStream getStream() throws IOException, PermissionDeniedException {
-
             if (binaryDoc == null) {
                 binaryDoc = getBinaryDoc();
             }
 
-            return new ZipInputStream(context.getBroker().getBinaryResource(binaryDoc));
+            return new ZipInputStream(context.getBroker().getBinaryResource((BinaryDocument)binaryDoc.getDocument()));
         }
 
         @Override
         public void close() {
             if (binaryDoc != null) {
-                binaryDoc.getUpdateLock().release(LockMode.READ_LOCK);
+                binaryDoc.close();
             }
         }
 
-        private BinaryDocument getBinaryDoc() throws PermissionDeniedException {
-            final DocumentImpl doc = context.getBroker().getXMLResource(uri, LockMode.READ_LOCK);
-            if (doc == null) {
+        private LockedDocument getBinaryDoc() throws PermissionDeniedException {
+            final LockedDocument lockedDocment = context.getBroker().getXMLResource(uri, LockMode.READ_LOCK);
+            if (lockedDocment == null) {
                 return null;
             }
 
-            if(doc.getResourceType() != DocumentImpl.BINARY_FILE) {
-                doc.getUpdateLock().release(LockMode.READ_LOCK);
+            if(lockedDocment.getDocument().getResourceType() != DocumentImpl.BINARY_FILE) {
+                lockedDocment.close();
                 return null;
             }
 
-            return (BinaryDocument) doc;
+            return lockedDocment;
         }
     }
 

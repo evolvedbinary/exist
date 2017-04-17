@@ -31,6 +31,7 @@ import org.exist.EXistException;
 import org.exist.collections.Collection;
 import org.exist.dom.persistent.BinaryDocument;
 import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.protocolhandler.xmldb.XmldbURL;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
@@ -60,11 +61,9 @@ public class InMemoryInputStream {
     try (DBBroker broker = db.getBroker()) {
       final XmldbURI path = XmldbURI.create(xmldbURL.getPath());
 
-      DocumentImpl resource = null;
       Collection collection = null;
-      try {
-        resource = broker.getXMLResource(path, LockMode.READ_LOCK);
-        if (resource == null) {
+      try (final LockedDocument lockedDocument = broker.getXMLResource(path, LockMode.READ_LOCK)) {
+        if (lockedDocument == null) {
           // Test for collection
           collection = broker.openCollection(path, LockMode.READ_LOCK);
           if (collection == null) {
@@ -77,27 +76,24 @@ public class InMemoryInputStream {
           }
 
         } else {
-          if (resource.getResourceType() == DocumentImpl.XML_FILE) {
+          final DocumentImpl document = lockedDocument.getDocument();
+          if (document.getResourceType() == DocumentImpl.XML_FILE) {
             final Serializer serializer = broker.getSerializer();
             serializer.reset();
 
             // Preserve doctype
             serializer.setProperty(EXistOutputKeys.OUTPUT_DOCTYPE, "yes");
             try(final Writer w = new OutputStreamWriter(os, "UTF-8")) {
-              serializer.serialize(resource, w);
+              serializer.serialize(document, w);
             }
 
           } else {
-            broker.readBinaryResource((BinaryDocument) resource, os);
+            broker.readBinaryResource((BinaryDocument) document, os);
           }
         }
       } finally {
         if (collection != null) {
           collection.close();
-        }
-
-        if (resource != null) {
-          resource.getUpdateLock().release(LockMode.READ_LOCK);
         }
       }
     } catch (final IOException ex) {

@@ -37,6 +37,7 @@ import org.exist.atom.OutgoingMessage;
 import org.exist.collections.Collection;
 import org.exist.dom.persistent.BinaryDocument;
 import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.http.BadRequestException;
 import org.exist.http.NotFoundException;
 import org.exist.security.Permission;
@@ -94,13 +95,10 @@ public class AtomFeeds extends AtomModuleBase implements Atom {
 			IncomingMessage request, OutgoingMessage response)
 			throws BadRequestException, PermissionDeniedException,
 			NotFoundException, EXistException {
-		DocumentImpl resource = null;
 		final XmldbURI pathUri = XmldbURI.create(request.getPath());
-		try {
+		try(final LockedDocument lockedResource = broker.getXMLResource(pathUri, LockMode.READ_LOCK);) {
 
-			resource = broker.getXMLResource(pathUri, LockMode.READ_LOCK);
-
-			if (resource == null) {
+			if (lockedResource == null) {
 
 				String id = request.getParameter("id");
 				if (id != null) {
@@ -147,6 +145,7 @@ public class AtomFeeds extends AtomModuleBase implements Atom {
 				}
 
 			} else {
+				final DocumentImpl resource = lockedResource == null ? null : lockedResource.getDocument();
 				// Do we have permission to read the resource
 				if (!resource.getPermissions().validate(broker.getCurrentSubject(),
 						Permission.READ)) {
@@ -207,10 +206,6 @@ public class AtomFeeds extends AtomModuleBase implements Atom {
 				}
 			}
 
-		} finally {
-			if (resource != null) {
-				resource.getUpdateLock().release(LockMode.READ_LOCK);
-			}
 		}
 	}
 

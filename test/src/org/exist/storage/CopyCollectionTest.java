@@ -30,6 +30,7 @@ import org.exist.TestUtils;
 import org.exist.collections.Collection;
 import org.exist.collections.IndexInfo;
 import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.security.PermissionDeniedException;
 import org.exist.storage.lock.Lock.LockMode;
 import org.exist.storage.serializers.Serializer;
@@ -151,16 +152,11 @@ public class CopyCollectionTest {
         try(final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()))) {
             final Serializer serializer = broker.getSerializer();
             serializer.reset(); 
-            
-            DocumentImpl doc = null;
-            try {
-                doc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("destination/test3/test.xml"), LockMode.READ_LOCK);
-                assertNotNull("Document should not be null", doc);
-                final String data = serializer.serialize(doc);
-            } finally {
-                if(doc != null) {
-                    doc.getUpdateLock().release(LockMode.READ_LOCK);
-                }
+
+            try(final LockedDocument lockedDoc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("destination/test3/test.xml"), LockMode.READ_LOCK);) {
+
+                assertNotNull("Document should not be null", lockedDoc);
+                final String data = serializer.serialize(lockedDoc.getDocument());
             }
         }
     }
@@ -205,8 +201,9 @@ public class CopyCollectionTest {
         try(final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()))) {
             final Serializer serializer = broker.getSerializer();
             serializer.reset();
-            final DocumentImpl doc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("destination/test3/test.xml"), LockMode.READ_LOCK);
-            assertNotNull("Document should be null", doc);
+            try(final LockedDocument lockedDoc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("destination/test3/test.xml"), LockMode.READ_LOCK)) {
+                assertNotNull("Document should be null", lockedDoc);
+            }
         }
     }
 

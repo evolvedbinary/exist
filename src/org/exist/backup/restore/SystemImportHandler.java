@@ -23,10 +23,7 @@ package org.exist.backup.restore;
 
 import java.io.IOException;
 
-import org.exist.storage.lock.Lock;
-import org.exist.storage.lock.LockManager;
-import org.exist.storage.lock.ManagedCollectionLock;
-import org.exist.storage.lock.ManagedLock;
+import org.exist.storage.lock.*;
 import org.w3c.dom.DocumentType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -579,8 +576,9 @@ public class SystemImportHandler extends DefaultHandler {
 
         @Override
         public void apply() {
+            final LockManager lockManager = broker.getBrokerPool().getLockManager();
             final TransactionManager txnManager = broker.getDatabase().getTransactionManager();
-            try(final ManagedLock<Lock> targetLock = ManagedLock.acquire(getTarget().getUpdateLock(), LockMode.WRITE_LOCK);
+            try(final ManagedDocumentLock targetLock = lockManager.acquireDocumentWriteLock(getTarget().getURI());
                     final Txn txn = txnManager.beginTransaction()) {
                 final Permission permission = getTarget().getPermissions();
                 permission.setOwner(getOwner());

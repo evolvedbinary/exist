@@ -61,6 +61,7 @@ import org.exist.security.UUIDGenerator;
 import org.exist.storage.DBBroker;
 import org.exist.storage.lock.Lock;
 import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.storage.lock.ManagedLock;
 import org.exist.storage.txn.TransactionManager;
 import org.exist.storage.txn.Txn;
@@ -270,7 +271,7 @@ public class AtomProtocol extends AtomFeeds implements Atom {
                         final ElementImpl feedRoot = (ElementImpl) feedDoc.getDocumentElement();
 
                         // Lock the feed
-						try(final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
+						try(final ManagedDocumentLock freedDocLock = broker.getBrokerPool().getLockManager().acquireDocumentWriteLock(feedDoc.getURI())) {
 
 							// Append the entry
 							collection = broker.getOrCreateCollection(transaction, pathUri.append(ENTRY_COLLECTION_URI));
@@ -394,7 +395,7 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 				}
 
 				LOG.debug("Acquiring lock on feed document...");
-				try(final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
+				try(final ManagedDocumentLock freedDocLock = broker.getBrokerPool().getLockManager().acquireDocumentWriteLock(feedDoc.getURI())) {
 					
 					String title = request.getHeader("Title");
 					if (title == null)
@@ -556,7 +557,7 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 
 				final TransactionManager transact = broker.getBrokerPool().getTransactionManager();
 				try(final Txn transaction = transact.beginTransaction();
-					final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
+					final ManagedDocumentLock freedDocLock = broker.getBrokerPool().getLockManager().acquireDocumentWriteLock(feedDoc.getURI())) {
 					final ElementImpl feedRoot = (ElementImpl) feedDoc.getDocumentElement();
 
 					// Modify the feed by merging the new feed-level elements
@@ -595,8 +596,8 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 						{throw new PermissionDeniedException(
 								"Permission denied to update feed "
 										+ collection.getURI());}
-					
-					try(final ManagedLock<Lock> feedDocLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
+
+					try(final ManagedDocumentLock freedDocLock = broker.getBrokerPool().getLockManager().acquireDocumentWriteLock(feedDoc.getURI())) {
 
 						// Find the entry
 						final String uuid = id.substring(9);
@@ -609,7 +610,7 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 						}
 
 						// Lock the entry
-						try(final ManagedLock<Lock> entryDocLock = ManagedLock.acquire(entryDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
+						try(final ManagedDocumentLock entryDocLock = broker.getBrokerPool().getLockManager().acquireDocumentWriteLock(entryDoc.getURI())) {
 
 							final Element entry = entryDoc.getDocumentElement();
 
@@ -768,7 +769,7 @@ public class AtomProtocol extends AtomFeeds implements Atom {
 						"Permission denied to update feed "
 								+ collection.getURI());}
 
-			try(final ManagedLock<Lock> managedLock = ManagedLock.acquire(feedDoc.getUpdateLock(), LockMode.WRITE_LOCK)) {
+			try(final ManagedDocumentLock freedDocLock = broker.getBrokerPool().getLockManager().acquireDocumentWriteLock(feedDoc.getURI())) {
 
 				// Find the entry
 				final String uuid = id.substring(9);

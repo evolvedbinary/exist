@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.exist.Namespaces;
 import org.exist.EXistException;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.security.PermissionDeniedException;
 import org.exist.dom.persistent.DocumentImpl;
 import org.exist.xmldb.XmldbURI;
@@ -191,20 +192,14 @@ public class RewriteConfig {
 
 
             try (final DBBroker broker = urlRewrite.pool.get(Optional.ofNullable(urlRewrite.defaultUser))) {
-                DocumentImpl doc = null;
-                try {
-                    doc = broker.getXMLResource(XmldbURI.create(controllerConfig), LockMode.READ_LOCK);
+
+                try(final LockedDocument lockedDocument = broker.getXMLResource(XmldbURI.create(controllerConfig), LockMode.READ_LOCK)) {
+                    final DocumentImpl doc = lockedDocument == null ? null : lockedDocument.getDocument();
                     if (doc != null) {
                         parse(doc);
                     }
-                } finally {
-                    if (doc != null) {
-                        doc.getUpdateLock().release(LockMode.READ_LOCK);
-                    }
                 }
-            } catch (final EXistException e) {
-                throw new ServletException("Failed to parse controller.xml: " + e.getMessage(), e);
-            } catch (final PermissionDeniedException e) {
+            } catch (final EXistException | PermissionDeniedException e) {
                 throw new ServletException("Failed to parse controller.xml: " + e.getMessage(), e);
             }
         } else {
@@ -215,11 +210,7 @@ public class RewriteConfig {
                     final Document doc = parseConfig(configFile);
                     parse(doc);
                 }
-            } catch (final ParserConfigurationException e) {
-                throw new ServletException("Failed to parse controller.xml: " + e.getMessage(), e);
-            } catch (final SAXException e) {
-                throw new ServletException("Failed to parse controller.xml: " + e.getMessage(), e);
-            } catch (final IOException e) {
+            } catch (final ParserConfigurationException | SAXException | IOException e) {
                 throw new ServletException("Failed to parse controller.xml: " + e.getMessage(), e);
             }
         }

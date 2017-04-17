@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import org.exist.EXistException;
 import org.exist.dom.persistent.BinaryDocument;
 import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.security.PermissionDeniedException;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
@@ -199,18 +200,10 @@ public class SourceFactory {
         
         /* xmldb: */
         else if (location.startsWith(XmldbURI.XMLDB_URI_PREFIX)) {
-            DocumentImpl resource = null;
-            try {
-                final XmldbURI pathUri = XmldbURI.create(location);
-                resource = broker.getXMLResource(pathUri, LockMode.READ_LOCK);
-                if (resource != null) {
-                    source = new DBSource(broker, (BinaryDocument) resource, true);
-                }
-            } finally {
-                //TODO: this is nasty!!! as we are unlocking the resource whilst there
-                //is still a source
-                if (resource != null) {
-                    resource.getUpdateLock().release(LockMode.READ_LOCK);
+            final XmldbURI pathUri = XmldbURI.create(location);
+            try(final LockedDocument lockedResource = broker.getXMLResource(pathUri, LockMode.READ_LOCK)) {
+                if (lockedResource != null) {
+                    source = new DBSource(broker, (BinaryDocument) lockedResource.getDocument(), true);
                 }
             }
         }

@@ -23,7 +23,9 @@
 package org.exist.dom.persistent;
 
 import org.exist.collections.Collection;
+import org.exist.collections.ManagedLocks;
 import org.exist.storage.DBBroker;
+import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.util.LockException;
 import org.exist.xmldb.XmldbURI;
 
@@ -51,9 +53,7 @@ public interface DocumentSet {
 
     NodeSet docsToNodeSet();
 
-    void lock(DBBroker broker, boolean exclusive, boolean checkExisting) throws LockException;
-
-    void unlock(boolean exclusive);
+    ManagedLocks<ManagedDocumentLock> lock(DBBroker broker, boolean exclusive, boolean checkExisting) throws LockException;
 
     boolean equalDocs(DocumentSet other);
 }

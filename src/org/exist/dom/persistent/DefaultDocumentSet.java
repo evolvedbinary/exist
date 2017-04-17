@@ -23,10 +23,13 @@ package org.exist.dom.persistent;
 
 import net.jcip.annotations.NotThreadSafe;
 import org.exist.collections.Collection;
+import org.exist.collections.ManagedLocks;
 import org.exist.numbering.NodeId;
 import org.exist.storage.DBBroker;
 import org.exist.storage.lock.Lock;
 import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.LockManager;
+import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.util.LockException;
 import org.exist.xmldb.XmldbURI;
 import org.w3c.dom.Node;
@@ -126,10 +129,6 @@ public class DefaultDocumentSet implements MutableDocumentSet {
     @Override
     public int getDocumentCount() {
         return docs.size();
-    }
-
-    public int getCollectionCount() {
-        return collections.size();
     }
 
     @Override
@@ -264,39 +263,27 @@ public class DefaultDocumentSet implements MutableDocumentSet {
     }
 
     @Override
-    public void lock(final DBBroker broker, final boolean exclusive, final boolean checkExisting) throws LockException {
+    public ManagedLocks<ManagedDocumentLock> lock(final DBBroker broker, final boolean exclusive, final boolean checkExisting) throws LockException {
+        final LockManager lockManager = broker.getBrokerPool().getLockManager();
+        final List<ManagedDocumentLock> managedDocumentLocks = new ArrayList<>();
         final Iterator<DocumentImpl> documentIterator = getDocumentIterator();
         while (documentIterator.hasNext()) {
             final DocumentImpl document = documentIterator.next();
-            final Lock dlock = document.getUpdateLock();
+            final ManagedDocumentLock managedDocumentLock;
             if (exclusive) {
-                dlock.acquire(LockMode.WRITE_LOCK);
+                managedDocumentLock = lockManager.acquireDocumentWriteLock(document.getURI());
             } else {
-                dlock.acquire(LockMode.READ_LOCK);
+                managedDocumentLock = lockManager.acquireDocumentReadLock(document.getURI());
             }
+            managedDocumentLocks.add(managedDocumentLock);
         }
+        return new ManagedLocks<>(managedDocumentLocks);
     }
 
     private Iterator<DocumentImpl> getReverseDocumentIterator() {
         final List<DocumentImpl> values = new ArrayList<>(docs.values());
         Collections.reverse(values);
         return values.iterator();
-    }
-
-    @Override
-    public void unlock(final boolean exclusive) {
-        final Thread thread = Thread.currentThread();
-        // NOTE: locks should be released in the reverse order that they were acquired
-        final Iterator<DocumentImpl> documentIterator = getReverseDocumentIterator();
-        while (documentIterator.hasNext()) {
-            final DocumentImpl document = documentIterator.next();
-            final Lock dlock = document.getUpdateLock();
-            if (exclusive) {
-                dlock.release(LockMode.WRITE_LOCK);
-            } else if (dlock.isLockedForRead(thread)) {
-                dlock.release(LockMode.READ_LOCK);
-            }
-        }
     }
 
     @Override

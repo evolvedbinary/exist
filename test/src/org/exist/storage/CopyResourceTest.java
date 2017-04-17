@@ -29,7 +29,7 @@ import org.exist.EXistException;
 import org.exist.TestUtils;
 import org.exist.collections.Collection;
 import org.exist.collections.IndexInfo;
-import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.security.PermissionDeniedException;
 import org.exist.storage.lock.Lock.LockMode;
 import org.exist.storage.serializers.Serializer;
@@ -131,16 +131,10 @@ public class CopyResourceTest {
 			final Serializer serializer = broker.getSerializer();
 			serializer.reset();
 
-			DocumentImpl doc = null;
-			try {
-				doc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("test").append(testCollectionName).append("new_test.xml"), LockMode.READ_LOCK);
-				assertNotNull("Document should not be null", doc);
-				final String data = serializer.serialize(doc);
+			try(final LockedDocument lockedDoc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("test").append(testCollectionName).append("new_test.xml"), LockMode.READ_LOCK);) {
+				assertNotNull("Document should not be null", lockedDoc);
+				final String data = serializer.serialize(lockedDoc.getDocument());
 				assertNotNull(data);
-			} finally {
-				if(doc != null) {
-					doc.getUpdateLock().release(LockMode.READ_LOCK);
-				}
 			}
 		}
 	}
@@ -190,20 +184,15 @@ public class CopyResourceTest {
 			final Serializer serializer = broker.getSerializer();
 			serializer.reset();
 
-			DocumentImpl doc = null;
-			try {
-				doc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("test").append(testCollectionName).append(subCollection).append("test2.xml"), LockMode.READ_LOCK);
-				assertNotNull("Document should not be null", doc);
-				final String data = serializer.serialize(doc);
+			try(final LockedDocument lockedDoc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("test").append(testCollectionName).append(subCollection).append("test2.xml"), LockMode.READ_LOCK);) {
+				assertNotNull("Document should not be null", lockedDoc);
+				final String data = serializer.serialize(lockedDoc.getDocument());
 				assertNotNull(data);
-			} finally {
-				if(doc != null) {
-					doc.getUpdateLock().release(LockMode.READ_LOCK);
-				}
 			}
 
-			doc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("test").append(testCollectionName).append("new_test2.xml"), LockMode.READ_LOCK);
-			assertNull("Document should not exist", doc);
+			try(final LockedDocument lockedDoc = broker.getXMLResource(XmldbURI.ROOT_COLLECTION_URI.append("test").append(testCollectionName).append("new_test2.xml"), LockMode.READ_LOCK)) {
+                assertNull("Document should not exist", lockedDoc);
+            }
 		}
 	}
 
