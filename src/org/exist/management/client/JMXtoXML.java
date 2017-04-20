@@ -216,6 +216,7 @@ public class JMXtoXML {
         private String instance;
 
         public Ping(String instance) {
+            super(instance + "-jmxtoxml.ping");
             this.instance = instance;
         }
 

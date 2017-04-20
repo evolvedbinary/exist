@@ -21,6 +21,8 @@
  */
 package org.exist.storage.journal;
 
+import org.exist.storage.BrokerPool;
+
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
@@ -52,11 +54,12 @@ public class FileSyncThread extends Thread {
     /**
      * Create a new FileSyncThread, using the specified latch
      * to synchronize on.
-     * 
+     *
+     * @param pool The broker pool
      * @param latch
      */
-    public FileSyncThread(Object latch) {
-        super();
+    public FileSyncThread(BrokerPool pool, Object latch) {
+        super(pool.getId() + "-journal.FileSyncThread");
         this.latch = latch;
     }
     

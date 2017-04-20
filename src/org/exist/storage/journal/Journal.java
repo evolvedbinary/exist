@@ -166,7 +166,7 @@ public class Journal {
         // we use a 1 megabyte buffer:
         currentBuffer = ByteBuffer.allocateDirect(1024 * 1024);
 
-        syncThread = new FileSyncThread(latch);
+        syncThread = new FileSyncThread(pool, latch);
         syncThread.start();
 
         this.syncOnCommit = pool.getConfiguration().getProperty(PROPERTY_RECOVERY_SYNC_ON_COMMIT, DEFAULT_SYNC_ON_COMMIT);
@@ -347,7 +347,7 @@ public class Journal {
         try {
             if (switchLogFiles && channel != null && channel.position() > MIN_REPLACE) {
                 final Path oldFile = getFile(currentFile);
-                final RemoveThread rt = new RemoveThread(channel, oldFile);
+                final RemoveThread rt = new RemoveThread(pool, channel, oldFile);
                 try {
                     switchFiles();
                 } catch (final LogException e) {
@@ -549,8 +549,8 @@ public class Journal {
         final FileChannel channel;
         final Path path;
 
-        RemoveThread(final FileChannel channel, final Path path) {
-            super("RemoveJournalThread");
+        RemoveThread(final BrokerPool pool, final FileChannel channel, final Path path) {
+            super(pool.getId() + "-journal.RemoveJournalThread");
             this.channel = channel;
             this.path = path;
         }

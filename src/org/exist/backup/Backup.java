@@ -198,7 +198,7 @@ public class Backup
             final BackupDialog dialog = new BackupDialog( parent, false );
             dialog.setSize( new Dimension( 350, 150 ) );
             dialog.setVisible( true );
-            final BackupThread thread = new BackupThread( current, dialog );
+            final BackupThread thread = new BackupThread(current, dialog );
             thread.start();
 
             if( parent == null ) {
@@ -498,7 +498,7 @@ public class Backup
 
         public BackupThread( Collection collection, BackupDialog dialog )
         {
-            super();
+            super(rootCollection.getInstanceName() + "-BackupThread");
             collection_ = collection;
             dialog_     = dialog;
         }

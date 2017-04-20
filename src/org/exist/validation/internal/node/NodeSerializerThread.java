@@ -24,6 +24,7 @@ package org.exist.validation.internal.node;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.transform.OutputKeys;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,11 +42,14 @@ public class NodeSerializerThread extends Thread{
     private final Serializer serializer;
     private final NodeValue node;
     private final BlockingOutputStream bos;
-    
+
+    private static final AtomicInteger threadInitNumber = new AtomicInteger();
+
     /**
      * Creates a new instance of NodeSerializerThread
      */
     public NodeSerializerThread(Serializer serializer, NodeValue node, BlockingOutputStream bos) {
+        super("NodeSerializerThread-" + threadInitNumber.getAndIncrement());
         this.serializer=serializer;
         this.node=node;
         this.bos=bos;
