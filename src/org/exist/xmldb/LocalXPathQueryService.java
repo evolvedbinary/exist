@@ -362,6 +362,7 @@ public class LocalXPathQueryService extends AbstractLocalService implements XPat
     @Override
     public void beginProtected() throws XMLDBException {
         try {
+            int retries = BEGIN_PROTECTED_MAX_LOCKING_RETRIES == - 1 ? -1 : BEGIN_PROTECTED_MAX_LOCKING_RETRIES - 2;
             boolean deadlockCaught;
             do {
                 reservedBroker = brokerPool.get(Optional.of(user));
@@ -372,9 +373,9 @@ public class LocalXPathQueryService extends AbstractLocalService implements XPat
                     lockedDocuments = new LockedDocumentMap();
                     docs = new DefaultDocumentSet();
                     coll.allDocs(reservedBroker, docs, true, lockedDocuments, LockMode.WRITE_LOCK);
+                    return;
                 } catch (final LockException e) {
-                    LOG.debug("Deadlock detected. Starting over again. Docs: " + docs.getDocumentCount() + "; locked: " +
-                            lockedDocuments.size());
+                    LOG.warn("Deadlock detected. Starting over again. Docs: {}; locked: {}. Cause: {}", docs.getDocumentCount(), lockedDocuments.size(), e.getMessage());
                     lockedDocuments.unlock();
                     reservedBroker.close();
                     deadlockCaught = true;
@@ -382,13 +383,16 @@ public class LocalXPathQueryService extends AbstractLocalService implements XPat
                     throw new XMLDBException(ErrorCodes.PERMISSION_DENIED,
                             "Permission denied on document");
                 }
-            } while (deadlockCaught);
+                retries--;
+            } while (deadlockCaught && retries >= -1);
         } catch (final EXistException e) {
             if(reservedBroker != null) {
                 reservedBroker.close();
             }
             throw new XMLDBException(ErrorCodes.VENDOR_ERROR, e.getMessage());
         }
+
+        throw new XMLDBException(ErrorCodes.VENDOR_ERROR, "Unable to beginProtected after " + BEGIN_PROTECTED_MAX_LOCKING_RETRIES + " retries");
     }
 	
     /**
