@@ -51,11 +51,9 @@ import org.exist.storage.index.CollectionStore;
 import org.exist.storage.io.VariableByteInput;
 import org.exist.storage.io.VariableByteOutputStream;
 import org.exist.storage.journal.*;
+import org.exist.storage.lock.*;
 import org.exist.storage.lock.Lock.LockMode;
-import org.exist.storage.lock.LockManager;
-import org.exist.storage.lock.ManagedCollectionLock;
-import org.exist.storage.lock.ManagedDocumentLock;
-import org.exist.storage.lock.ManagedLock;
+import org.exist.storage.lock.Lock.LockType;
 import org.exist.storage.serializers.NativeSerializer;
 import org.exist.storage.serializers.Serializer;
 import org.exist.storage.sync.Sync;
@@ -627,7 +625,7 @@ public class NativeBroker extends DBBroker {
      * @throws IOException
      * @throws TriggerException
      */
-    private Tuple2<Boolean, Collection> getOrCreateTempCollection(final Txn transaction)
+    private @EnsureUnlocked Tuple2<Boolean, Collection> getOrCreateTempCollection(final Txn transaction)
         throws LockException, PermissionDeniedException, IOException, TriggerException {
         try {
             pushSubject(pool.getSecurityManager().getSystemSubject());
@@ -807,9 +805,11 @@ public class NativeBroker extends DBBroker {
      * NOTE - When this is called there must be a WRITE_LOCK on collectionUri
      * and a WRITE_LOCK on parentCollection (if it is not null)
      */
-    private Collection createCollection(final Txn transaction, @Nullable final Collection parentCollection,
-            final XmldbURI collectionUri, final CollectionCache collectionCache)
-            throws TriggerException, ReadOnlyException, PermissionDeniedException, LockException, IOException {
+    private @EnsureUnlocked Collection createCollection(final Txn transaction,
+            @Nullable @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection parentCollection,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK, type=LockType.COLLECTION) final XmldbURI collectionUri,
+            final CollectionCache collectionCache) throws TriggerException, ReadOnlyException,
+            PermissionDeniedException, LockException, IOException {
 
         final CollectionTrigger trigger;
         if(parentCollection == null) {
@@ -838,8 +838,10 @@ public class NativeBroker extends DBBroker {
      * NOTE - When this is called there must be a WRITE_LOCK on collectionUri
      * and at least a READ_LOCK on parentCollection (if it is not null)
      */
-    private Collection createCollectionObject(final Txn transaction, @Nullable final Collection parentCollection,
-            final XmldbURI collectionUri) throws ReadOnlyException, PermissionDeniedException, LockException {
+    private Collection createCollectionObject(final Txn transaction,
+            @Nullable @EnsureLocked(mode=LockMode.READ_LOCK) final Collection parentCollection,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK, type=LockType.COLLECTION) final XmldbURI collectionUri)
+            throws ReadOnlyException, PermissionDeniedException, LockException {
         final Collection collection = new MutableCollection(this, collectionUri);
         collection.setId(getNextCollectionId(transaction));
         collection.setCreationTime(System.currentTimeMillis());
@@ -865,8 +867,9 @@ public class NativeBroker extends DBBroker {
      *
      * @return The Collection object loaded from disk, or null if the record does not exist on disk
      */
-    private @Nullable Collection loadCollection(final XmldbURI collectionUri, final long address)
-            throws PermissionDeniedException, LockException, IOException {
+    private @Nullable @EnsureLocked(mode=LockMode.READ_LOCK, type=LockType.COLLECTION) Collection loadCollection(
+            @EnsureLocked(mode=LockMode.READ_LOCK, type=LockType.COLLECTION) final XmldbURI collectionUri,
+            final long address) throws PermissionDeniedException, LockException, IOException {
         try(final ManagedLock<ReentrantLock> collectionsDbLock = lockManager.acquireBtreeReadLock(collectionsDb.getLockName())) {
             VariableByteInput is;
             if (address == BFile.UNKNOWN_ADDRESS) {
@@ -908,7 +911,7 @@ public class NativeBroker extends DBBroker {
      *
      * @return the Collection, or null if no Collection matches the path
      */
-    private @Nullable Collection openCollection(final XmldbURI path, final long address, final LockMode lockMode)
+    private @Nullable @EnsureLocked Collection openCollection(final XmldbURI path, final long address, final LockMode lockMode)
             throws PermissionDeniedException {
         final XmldbURI collectionUri = prepend(path.normalizeCollectionPath());
 
@@ -1165,7 +1168,9 @@ public class NativeBroker extends DBBroker {
      * @throws PermissionDeniedException If the current user does not have appropriate permissions
      * @throws LockException If an exception occurs whilst acquiring locks
      */
-    protected void checkPermissionsForCopy(final Collection sourceCollection, final Collection targetCollection, final XmldbURI newName) throws PermissionDeniedException, LockException {
+    protected void checkPermissionsForCopy(@EnsureLocked(mode=LockMode.READ_LOCK) final Collection sourceCollection,
+            @EnsureLocked(mode=LockMode.READ_LOCK) final Collection targetCollection, final XmldbURI newName)
+            throws PermissionDeniedException, LockException {
 
         if(!sourceCollection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.EXECUTE | Permission.READ)) {
             throw new PermissionDeniedException("Permission denied to copy collection " + sourceCollection.getURI() + " by " + getCurrentSubject().getName());
@@ -1231,7 +1236,11 @@ public class NativeBroker extends DBBroker {
      * @throws TriggerException If a CollectionTrigger throws an exception
      * @throws EXistException If no more Document IDs are available
      */
-    private Collection doCopyCollection(final Txn transaction, final DocumentTrigger documentTrigger, final Collection sourceCollection, final XmldbURI destinationCollectionUri, final boolean copyCollectionMode) throws PermissionDeniedException, IOException, EXistException, TriggerException, LockException {
+    private Collection doCopyCollection(final Txn transaction, final DocumentTrigger documentTrigger,
+            @EnsureLocked(mode=LockMode.READ_LOCK) final Collection sourceCollection,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK, type=LockType.COLLECTION) final XmldbURI destinationCollectionUri,
+            final boolean copyCollectionMode) throws PermissionDeniedException, IOException, EXistException,
+            TriggerException, LockException {
         if(LOG.isDebugEnabled()) {
             LOG.debug("Copying collection to '{}'", destinationCollectionUri);
         }
@@ -1277,7 +1286,10 @@ public class NativeBroker extends DBBroker {
      * @throws TriggerException If a CollectionTrigger throws an exception
      * @throws EXistException If no more Document IDs are available
      */
-    private void doCopyCollectionDocuments(final Txn transaction, final DocumentTrigger documentTrigger, final Collection sourceCollection, final Collection destinationCollection) throws LockException, PermissionDeniedException, IOException, TriggerException, EXistException {
+    private void doCopyCollectionDocuments(final Txn transaction, final DocumentTrigger documentTrigger,
+            @EnsureLocked(mode=LockMode.READ_LOCK) final Collection sourceCollection,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection destinationCollection)
+            throws LockException, PermissionDeniedException, IOException, TriggerException, EXistException {
         for(final Iterator<DocumentImpl> i = sourceCollection.iterator(this); i.hasNext(); ) {
             final DocumentImpl child = i.next();
 
@@ -1356,7 +1368,8 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    private boolean isSubCollection(final Collection col, final Collection sub) {
+    private boolean isSubCollection(@EnsureLocked(mode=LockMode.READ_LOCK) final Collection col,
+            @EnsureLocked(mode=LockMode.READ_LOCK) final Collection sub) {
         return isSubCollection(col.getURI(), sub.getURI());
     }
 
@@ -1365,7 +1378,9 @@ public class NativeBroker extends DBBroker {
     }
 
     @Override
-    public void moveCollection(final Txn transaction, final Collection sourceCollection, final Collection targetCollection, final XmldbURI newName) throws PermissionDeniedException, LockException, IOException, TriggerException {
+    public void moveCollection(final Txn transaction, final Collection sourceCollection,
+            final Collection targetCollection, final XmldbURI newName)
+            throws PermissionDeniedException, LockException, IOException, TriggerException {
         assert(sourceCollection != null);
         assert(targetCollection != null);
         assert(newName != null);
@@ -1613,7 +1628,9 @@ public class NativeBroker extends DBBroker {
      * @param targetCollection The target Collection which the source collection is to be moved to
      * @param newName The name of the source collection in the target Collection
      */
-    private void moveBinaryFork(final Txn transaction, final Path sourceDir, final Collection targetCollection, final XmldbURI newName) throws IOException {
+    private void moveBinaryFork(final Txn transaction, final Path sourceDir,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection targetCollection, final XmldbURI newName)
+            throws IOException {
         final XmldbURI destinationCollectionUri = targetCollection.getURI().append(newName);
 
         final Path targetDir = getCollectionFile(getFsDir(), destinationCollectionUri, false);
@@ -1665,7 +1682,11 @@ public class NativeBroker extends DBBroker {
      *     on the Collection the first time this function is called. Triggers will always
      *     be fired for recursive calls of this function.
      */
-    private void moveCollectionRecursive(final Txn transaction, final CollectionTrigger trigger, @Nullable final Collection sourceCollectionParent, final Collection sourceCollection, final Collection targetCollection, final XmldbURI newName, final boolean fireTrigger) throws PermissionDeniedException, IOException, LockException, TriggerException {
+    private void moveCollectionRecursive(final Txn transaction, final CollectionTrigger trigger,
+            @Nullable @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection sourceCollectionParent,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection sourceCollection,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection targetCollection, final XmldbURI newName,
+            final boolean fireTrigger) throws PermissionDeniedException, IOException, LockException, TriggerException {
         final XmldbURI sourceCollectionUri = sourceCollection.getURI();
         final XmldbURI destinationCollectionUri = targetCollection.getURI().append(newName);
 
@@ -1726,7 +1747,7 @@ public class NativeBroker extends DBBroker {
         return _removeCollection(transaction, collection, null);
     }
 
-    private boolean _removeCollection(final Txn transaction, final Collection collection, @Nullable final ManagedCollectionLock parentCollectionLock) throws PermissionDeniedException, TriggerException, IOException {
+    private boolean _removeCollection(final Txn transaction, @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection collection, @Nullable final ManagedCollectionLock parentCollectionLock) throws PermissionDeniedException, TriggerException, IOException {
         final XmldbURI collectionUri = collection.getURI();
 
         getBrokerPool().getProcessMonitor().startJob(ProcessMonitor.ACTION_REMOVE_COLLECTION, collectionUri);
@@ -1824,7 +1845,8 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    private void removeCollectionBinaries(final Txn transaction, final Collection collection) throws IOException {
+    private void removeCollectionBinaries(final Txn transaction,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection collection) throws IOException {
         final Path fsSourceDir = getCollectionFile(getFsDir(), collection.getURI(), false);
         if(fsJournalDir.isPresent()) {
             final Path fsTargetDir = getCollectionFile(fsJournalDir.get(), transaction, collection.getURI(), true);
@@ -1852,7 +1874,9 @@ public class NativeBroker extends DBBroker {
     }
 
 
-    private void removeCollectionsDocumentNodes(final Txn transaction, final Collection collection) throws TriggerException, PermissionDeniedException, LockException {
+    private void removeCollectionsDocumentNodes(final Txn transaction,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection collection)
+            throws TriggerException, PermissionDeniedException, LockException {
         final DocumentTrigger docTrigger = new DocumentTriggers(this, collection);
 
         for (final Iterator<DocumentImpl> itDocument = collection.iterator(this); itDocument.hasNext(); ) {
@@ -1914,7 +1938,9 @@ public class NativeBroker extends DBBroker {
      *
      * @return true if the current user is allowed to remove the Collection
      */
-    private boolean checkRemoveCollectionPermissions(@Nullable final Collection parentCollection, final Collection collection) throws PermissionDeniedException {
+    private boolean checkRemoveCollectionPermissions(
+            @Nullable @EnsureLocked(mode=LockMode.READ_LOCK) final Collection parentCollection,
+            @EnsureLocked(mode=LockMode.READ_LOCK) final Collection collection) throws PermissionDeniedException {
         // parent collection permissions
         if(parentCollection != null) {
             if (!parentCollection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.WRITE)) {
@@ -2054,7 +2080,8 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    private void reindexCollection(final Collection collection, final IndexMode mode) throws PermissionDeniedException, LockException {
+    private void reindexCollection(@EnsureLocked(mode=LockMode.READ_LOCK) final Collection collection,
+            final IndexMode mode) throws PermissionDeniedException, LockException {
         final TransactionManager transact = pool.getTransactionManager();
 
         final long start = System.currentTimeMillis();
@@ -2074,7 +2101,9 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    private void reindexCollection(final Txn transaction, final Collection collection, final IndexMode mode) throws PermissionDeniedException, IOException, LockException {
+    private void reindexCollection(final Txn transaction,
+            @EnsureLocked(mode=LockMode.READ_LOCK) final Collection collection, final IndexMode mode)
+            throws PermissionDeniedException, IOException, LockException {
         if(!collection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.WRITE)) {
             throw new PermissionDeniedException("Account " + getCurrentSubject().getName() + " have insufficient privileges on collection " + collection.getURI());
         }
@@ -2112,11 +2141,15 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    private void dropCollectionIndex(final Txn transaction, final Collection collection) throws PermissionDeniedException, IOException, LockException {
+    private void dropCollectionIndex(final Txn transaction,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection collection)
+            throws PermissionDeniedException, IOException, LockException {
         dropCollectionIndex(transaction, collection, false);
     }
 
-    private void dropCollectionIndex(final Txn transaction, final Collection collection, final boolean reindex) throws PermissionDeniedException, IOException, LockException {
+    private void dropCollectionIndex(final Txn transaction,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final Collection collection, final boolean reindex)
+            throws PermissionDeniedException, IOException, LockException {
         if(isReadOnly()) {
             throw new IOException(DATABASE_IS_READ_ONLY);
         }
@@ -2327,6 +2360,7 @@ public class NativeBroker extends DBBroker {
         }
     }
 
+    @Override
     public void storeMetadata(final Txn transaction, final DocumentImpl doc) throws TriggerException {
         final Collection col = doc.getCollection();
         final DocumentTrigger trigger = new DocumentTriggers(this, col);
@@ -2338,11 +2372,14 @@ public class NativeBroker extends DBBroker {
         trigger.afterUpdateDocumentMetadata(this, transaction, doc);
     }
 
-    protected Path getCollectionFile(final Path dir, final XmldbURI uri, final boolean create) throws IOException {
+    protected Path getCollectionFile(final Path dir,
+            @EnsureLocked(mode=LockMode.READ_LOCK, type=LockType.COLLECTION) final XmldbURI uri, final boolean create)
+            throws IOException {
         return getCollectionFile(dir, null, uri, create);
     }
 
-    public Path getCollectionBinaryFileFsPath(final XmldbURI uri) {
+    public Path getCollectionBinaryFileFsPath(
+            @EnsureLocked(mode=LockMode.READ_LOCK, type=LockType.COLLECTION) final XmldbURI uri) {
         String suri = uri.getURI().toString();
         if(suri.startsWith("/")) {
             suri = suri.substring(1);
@@ -2350,7 +2387,8 @@ public class NativeBroker extends DBBroker {
         return getFsDir().resolve(suri);
     }
 
-    private Path getCollectionFile(Path dir, final Txn transaction, final XmldbURI uri, final boolean create)
+    private Path getCollectionFile(Path dir, final Txn transaction,
+            @EnsureLocked(mode=LockMode.READ_LOCK, type=LockType.COLLECTION) final XmldbURI uri, final boolean create)
             throws IOException {
         if(transaction != null) {
             dir = dir.resolve("txn." + transaction.getId());
@@ -2401,7 +2439,9 @@ public class NativeBroker extends DBBroker {
      * @param blob The binary document to store
      * @param fWriteData A function that given the destination path, writes the document data to that path
      */
-    private void storeBinaryResource(final Txn transaction, final BinaryDocument blob, final ConsumerE<Path, IOException> fWriteData) throws IOException {
+    private void storeBinaryResource(final Txn transaction,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final BinaryDocument blob,
+            final ConsumerE<Path, IOException> fWriteData) throws IOException {
         blob.setPage(Page.NO_PAGE);
         final Path binFile = getCollectionFile(getFsDir(), blob.getURI(), true);
         final boolean exists = Files.exists(binFile);
@@ -2743,7 +2783,9 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    private void copyXMLResource(final Txn transaction, final DocumentImpl oldDoc, final DocumentImpl newDoc) throws IOException {
+    private void copyXMLResource(final Txn transaction,
+            @EnsureLocked(mode=LockMode.READ_LOCK) final DocumentImpl oldDoc,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final DocumentImpl newDoc) throws IOException {
         if (LOG.isDebugEnabled())
             LOG.debug("Copying document " + oldDoc.getFileURI() + " to " + newDoc.getURI());
         final long start = System.currentTimeMillis();
@@ -2949,7 +2991,7 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    private void dropIndex(final Txn transaction, final DocumentImpl document) {
+    private void dropIndex(final Txn transaction, @EnsureLocked(mode=LockMode.WRITE_LOCK) final DocumentImpl document) {
         final StreamListener listener = indexController.getStreamListener(document, ReindexMode.REMOVE_ALL_NODES);
         listener.startIndexDocument(transaction);
         final NodeList nodes = document.getChildNodes();
@@ -3005,7 +3047,8 @@ public class NativeBroker extends DBBroker {
      * @param transaction
      * @param document
      */
-    private void removeResourceMetadata(final Txn transaction, final DocumentImpl document) {
+    private void removeResourceMetadata(final Txn transaction,
+            @EnsureLocked(mode=LockMode.WRITE_LOCK) final DocumentImpl document) {
         // remove document metadata
         try(final ManagedLock<ReentrantLock> collectionsDbLock = lockManager.acquireBtreeWriteLock(collectionsDb.getLockName())) {
             if(LOG.isDebugEnabled()) {
@@ -3018,6 +3061,7 @@ public class NativeBroker extends DBBroker {
         }
     }
 
+    @Override
     public void removeResource(Txn tx, DocumentImpl doc) throws IOException, PermissionDeniedException {
         if (doc instanceof BinaryDocument) {
             removeBinaryResource(tx, (BinaryDocument) doc);
@@ -3334,13 +3378,13 @@ public class NativeBroker extends DBBroker {
     }
 
     private <T extends IStoredNode> void copyNodes(final Txn transaction, final INodeIterator iterator, final IStoredNode<T> node,
-                           final NodePath currentPath, final DocumentImpl newDoc, final boolean defragment,
+                           final NodePath currentPath, @EnsureLocked(mode=LockMode.WRITE_LOCK) final DocumentImpl newDoc, final boolean defragment,
                            final StreamListener listener) {
         copyNodes(transaction, iterator, node, currentPath, newDoc, defragment, listener, null);
     }
 
     private <T extends IStoredNode> void copyNodes(final Txn transaction, INodeIterator iterator, final IStoredNode<T> node,
-                           final NodePath currentPath, final DocumentImpl newDoc, final boolean defragment,
+                           final NodePath currentPath, @EnsureLocked(mode=LockMode.WRITE_LOCK) final DocumentImpl newDoc, final boolean defragment,
                            final StreamListener listener, NodeId oldNodeId) {
         if(node.getNodeType() == Node.ELEMENT_NODE) {
             currentPath.addComponent(node.getQName());
@@ -3417,8 +3461,8 @@ public class NativeBroker extends DBBroker {
      * for later removal.
      */
     @Override
-    public <T extends IStoredNode> void removeNode(final Txn transaction, final IStoredNode<T> node, final NodePath currentPath,
-                           final String content) {
+    public <T extends IStoredNode> void removeNode(final Txn transaction, final IStoredNode<T> node,
+            final NodePath currentPath, final String content) {
         final DocumentImpl doc = node.getOwnerDocument();
         new DOMTransaction(this, domDb, () -> lockManager.acquireBtreeWriteLock(domDb.getLockName()), doc) {
             @Override
@@ -3497,7 +3541,7 @@ public class NativeBroker extends DBBroker {
 
     @Override
     public void removeAllNodes(final Txn transaction, final IStoredNode node, final NodePath currentPath,
-                               final StreamListener listener) {
+            final StreamListener listener) {
 
         try(final INodeIterator iterator = getNodeIterator(node)) {
             iterator.next();
@@ -3514,7 +3558,7 @@ public class NativeBroker extends DBBroker {
     }
 
     private <T extends IStoredNode> void collectNodesForRemoval(final Txn transaction, final Stack<RemovedNode> stack,
-                                        final INodeIterator iterator, final StreamListener listener, final IStoredNode<T> node, final NodePath currentPath) {
+            final INodeIterator iterator, final StreamListener listener, final IStoredNode<T> node, final NodePath currentPath) {
         RemovedNode removed;
         switch(node.getNodeType()) {
             case Node.ELEMENT_NODE:
@@ -3877,7 +3921,6 @@ public class NativeBroker extends DBBroker {
         } catch(final Exception e) {
             LOG.warn(e.getMessage(), e);
         }
-        super.shutdown();
     }
 
     /**

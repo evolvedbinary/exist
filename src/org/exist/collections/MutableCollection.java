@@ -49,6 +49,7 @@ import org.exist.storage.io.VariableByteInput;
 import org.exist.storage.io.VariableByteOutputStream;
 import org.exist.storage.lock.*;
 import org.exist.storage.lock.Lock.LockMode;
+import org.exist.storage.lock.Lock.LockType;
 import org.exist.storage.sync.Sync;
 import org.exist.storage.txn.Txn;
 import org.exist.util.Configuration;
@@ -121,7 +122,7 @@ public class MutableCollection implements Collection {
      * @param broker The database broker
      * @param path The path of the Collection
      */
-    public MutableCollection(final DBBroker broker, final XmldbURI path) {
+    public MutableCollection(final DBBroker broker, @EnsureLocked(mode=LockMode.READ_LOCK, type=LockType.COLLECTION) final XmldbURI path) {
         //The permissions assigned to this collection
         this.permissions = PermissionFactory.getDefaultCollectionPermission(broker.getBrokerPool().getSecurityManager());
 
@@ -141,8 +142,9 @@ public class MutableCollection implements Collection {
      *
      * @return The Collection Object
      */
-    public static MutableCollection load(final DBBroker broker, final XmldbURI path, final VariableByteInput inputStream)
-            throws PermissionDeniedException, IOException, LockException {
+    public static MutableCollection load(final DBBroker broker,
+            @EnsureLocked(mode=LockMode.READ_LOCK, type=LockType.COLLECTION) final XmldbURI path,
+            final VariableByteInput inputStream) throws PermissionDeniedException, IOException, LockException {
         final MutableCollection collection = new MutableCollection(broker, path);
         collection.deserialize(broker, inputStream);
         return collection;
