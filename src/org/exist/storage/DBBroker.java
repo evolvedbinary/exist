@@ -645,8 +645,7 @@ public abstract class DBBroker extends Observable implements AutoCloseable {
 	 * Copy a resource to the target Collection and rename it.
 	 *
      * NOTE: It is assumed that the caller holds a {@link LockMode#READ_LOCK} on the
-     *     `sourceDocument` and its parent Collection,
-     *     and a {@link LockMode#WRITE_LOCK} on the `targetCollection`
+     *     {@code sourceDocument} and a {@link LockMode#WRITE_LOCK} on the {@code targetCollection}.
      *
      * @param transaction The current transaction
 	 * @param sourceDocument The document to copy
