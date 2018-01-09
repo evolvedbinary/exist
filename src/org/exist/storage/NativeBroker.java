@@ -2686,22 +2686,6 @@ public class NativeBroker extends DBBroker {
         }
     }
 
-    //TODO : consider a better cooperation with Collection -pb
-    @Override
-    public void getResourceMetadata(final DocumentImpl document) {
-        try(final ManagedLock<ReentrantLock> collectionsDbLock = lockManager.acquireBtreeReadLock(collectionsDb.getLockName())) {
-            final Value key = new CollectionStore.DocumentKey(document.getCollection().getId(), document.getResourceType(), document.getDocId());
-            final VariableByteInput is = collectionsDb.getAsStream(key);
-            if(is != null) {
-                document.readDocumentMeta(is);
-            }
-        } catch(final LockException e) {
-            LOG.warn("Failed to acquire lock on " + FileUtils.fileName(collectionsDb.getFile()));
-        } catch(final IOException e) {
-            LOG.warn("IOException while reading document data", e);
-        }
-    }
-
     @Override
     public void copyResource(final Txn transaction, final DocumentImpl sourceDocument, final Collection targetCollection, final XmldbURI newName) throws PermissionDeniedException, LockException, IOException, TriggerException, EXistException {
         assert(sourceDocument != null);

@@ -562,8 +562,6 @@ public abstract class DBBroker extends Observable implements AutoCloseable {
 
     public abstract long getBinaryResourceSize(@EnsureLocked(mode=LockMode.READ_LOCK) final BinaryDocument blob)
            throws IOException;
-
-    public abstract void getResourceMetadata(@EnsureLocked(mode=LockMode.WRITE_LOCK) final DocumentImpl doc);
     
     /**
      * Completely delete this binary document (descriptor and binary data).
