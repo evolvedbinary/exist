@@ -44,6 +44,8 @@ import org.exist.storage.NodePath;
 import org.exist.storage.StorageAddress;
 import org.exist.storage.io.VariableByteInput;
 import org.exist.storage.io.VariableByteOutputStream;
+import org.exist.storage.lock.EnsureContainerLocked;
+import org.exist.storage.lock.EnsureLocked;
 import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.storage.txn.Txn;
 import org.exist.util.XMLString;
@@ -71,6 +73,8 @@ import java.io.IOException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.exist.dom.QName.Validity.ILLEGAL_FORMAT;
+import static org.exist.storage.lock.Lock.LockMode.READ_LOCK;
+import static org.exist.storage.lock.Lock.LockMode.WRITE_LOCK;
 
 /**
  * Represents a persistent document object in the database;
@@ -168,6 +172,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @return a <code>Collection</code> value
      */
+    @EnsureContainerLocked(mode=READ_LOCK)
     public Collection getCollection() {
         return collection;
     }
@@ -177,6 +182,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @param collection The Collection that the document belongs too
      */
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setCollection(final Collection collection) {
         this.collection = collection;
     }
@@ -186,6 +192,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @return an <code>int</code> value
      */
+    @EnsureContainerLocked(mode=READ_LOCK)
     public int getDocId() {
         return docId;
     }
@@ -195,6 +202,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @param docId an <code>int</code> value
      */
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setDocId(final int docId) {
         this.docId = docId;
     }
@@ -212,6 +220,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @return a <code>XmldbURI</code> value
      */
+    //@EnsureContainerLocked(mode=READ_LOCK)  // TODO(AR) temporarily we need to allow some unlocked access
     public XmldbURI getFileURI() {
         return fileURI;
     }
@@ -221,10 +230,12 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @param fileURI a <code>XmldbURI</code> value
      */
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setFileURI(final XmldbURI fileURI) {
         this.fileURI = fileURI;
     }
 
+    //@EnsureContainerLocked(mode=READ_LOCK)  // TODO(AR) temporarily we need to allow some unlocked access
     @Override
     public XmldbURI getURI() {
         if(collection == null) {
@@ -234,11 +245,13 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
         }
     }
 
+    @EnsureContainerLocked(mode=READ_LOCK)
     public boolean isCollectionConfig() {
         return fileURI.endsWith(CollectionConfiguration.COLLECTION_CONFIG_SUFFIX_URI);
     }
 
     @Override
+    @EnsureContainerLocked(mode=READ_LOCK)
     public Permission getPermissions() {
         return permissions;
     }
@@ -251,6 +264,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * and should be removed, move code to copyOf or Constructor
      */
     @Deprecated
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setPermissions(final Permission perm) {
         permissions = perm;
     }
@@ -263,11 +277,13 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * and should be removed, move code to copyOf or Constructor
      */
     @Deprecated
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setMetadata(final DocumentMetadata meta) {
         this.metadata = meta;
     }
 
     @Override
+    @EnsureContainerLocked(mode=READ_LOCK)
     public DocumentMetadata getMetadata() {
         return metadata;
     }
@@ -289,7 +305,8 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *                 as allowed by permissions and  Access Control
      *                 Lists (ACLs)
      */
-    public void copyOf(final DocumentImpl other, final boolean preserve) {
+    @EnsureContainerLocked(mode=WRITE_LOCK)
+    public void copyOf(@EnsureLocked(mode=READ_LOCK) final DocumentImpl other, final boolean preserve) {
         childAddress = null;
         children = 0;
 
@@ -324,7 +341,8 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @param other a <code>DocumentImpl</code> value
      */
-    public void copyChildren(final DocumentImpl other) {
+    @EnsureContainerLocked(mode=WRITE_LOCK)
+    public void copyChildren(@EnsureLocked(mode=READ_LOCK) final DocumentImpl other) {
         childAddress = other.childAddress;
         children = other.children;
     }
@@ -334,6 +352,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @param user an <code>User</code> value
      */
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setUserLock(final Account user) {
         getMetadata().setUserLock(user == null ? 0 : user.getId());
     }
@@ -343,6 +362,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @return an <code>User</code> value
      */
+    @EnsureContainerLocked(mode=READ_LOCK)
     public Account getUserLock() {
         final int lockOwnerId = getMetadata().getUserLock();
         if(lockOwnerId == 0) {
@@ -358,6 +378,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * As an estimation, the number of pages occupied by the document
      * is multiplied with the current page size.
      */
+    @EnsureContainerLocked(mode=READ_LOCK)
     public long getContentLength() {
         final long length = getMetadata().getPageCount() * pool.getPageSize();
         return (length < 0) ? 0 : length;
@@ -430,6 +451,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * @param child a <code>NodeHandle</code> value
      * @throws DOMException if an error occurs
      */
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void appendChild(final NodeHandle child) throws DOMException {
         ++children;
         resizeChildList();
@@ -442,6 +464,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * @param ostream a <code>VariableByteOutputStream</code> value
      * @throws IOException if an error occurs
      */
+    @EnsureContainerLocked(mode=READ_LOCK)
     public void write(final VariableByteOutputStream ostream) throws IOException {
         try {
             ostream.writeInt(docId);
@@ -468,6 +491,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * @throws IOException  if an error occurs
      * @throws EOFException if an error occurs
      */
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void read(final VariableByteInput istream) throws IOException, EOFException {
         try {
             docId = istream.readInt();
@@ -494,7 +518,8 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * @return an <code>int</code> value
      */
     @Override
-    public int compareTo(final DocumentImpl other) {
+    @EnsureContainerLocked(mode=READ_LOCK)
+    public int compareTo(@EnsureLocked(mode=READ_LOCK) final DocumentImpl other) {
         final long otherId = other.docId;
         if(otherId == docId) {
             return Constants.EQUAL;
@@ -505,9 +530,6 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.exist.dom.persistent.NodeImpl#updateChild(org.w3c.dom.Node, org.w3c.dom.Node)
-     */
     @Override
     public IStoredNode updateChild(final Txn transaction, final Node oldChild, final Node newChild) throws DOMException {
         if(!(oldChild instanceof StoredNode)) {
@@ -550,6 +572,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
     }
 
     @Override
+    @EnsureContainerLocked(mode=READ_LOCK)
     public Node getFirstChild() {
         if(children == 0) {
             return null;
@@ -563,6 +586,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
         return null;
     }
 
+    @EnsureContainerLocked(mode=READ_LOCK)
     protected NodeProxy getFirstChildProxy() {
         return new NodeProxy(this, NodeId.ROOT_NODE, Node.ELEMENT_NODE, childAddress[0]);
     }
@@ -572,6 +596,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @return a <code>long</code> value
      */
+    @EnsureContainerLocked(mode=READ_LOCK)
     public long getFirstChildAddress() {
         if(children == 0) {
             return StoredNode.UNKNOWN_NODE_IMPL_ADDRESS;
@@ -586,6 +611,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
     }
 
     @Override
+    @EnsureContainerLocked(mode=READ_LOCK)
     public NodeList getChildNodes() {
         final org.exist.dom.NodeListImpl list = new org.exist.dom.NodeListImpl();
         try(final DBBroker broker = pool.getBroker()) {
@@ -622,6 +648,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * @param node a <code>NodeHandle</code> value
      * @return a <code>Node</code> value
      */
+    @EnsureContainerLocked(mode=READ_LOCK)
     protected Node getFollowingSibling(final NodeHandle node) {
         final NodeList cl = getChildNodes();
         for(int i = 0; i < cl.getLength(); i++) {
@@ -671,6 +698,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * @return a <code>DocumentType</code> value
      */
     @Override
+    @EnsureContainerLocked(mode=READ_LOCK)
     public DocumentType getDoctype() {
         return getMetadata().getDocType();
     }
@@ -680,6 +708,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      *
      * @param docType a <code>DocumentType</code> value
      */
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setDocumentType(final DocumentType docType) {
         getMetadata().setDocType(docType);
     }
@@ -966,10 +995,12 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
      * @return an <code>int</code> value
      */
     @Override
+    @EnsureContainerLocked(mode=READ_LOCK)
     public int getChildCount() {
         return children;
     }
 
+    @EnsureContainerLocked(mode=WRITE_LOCK)
     public void setChildCount(final int count) {
         this.children = count;
         if(children == 0) {
@@ -978,6 +1009,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Resource, Do
     }
 
     @Override
+    @EnsureContainerLocked(mode=READ_LOCK)
     public boolean isSameNode(final Node other) {
         // This function is used by Saxon in some circumstances, and this partial implementation is required for proper Saxon operation.
         if(other instanceof DocumentImpl) {
