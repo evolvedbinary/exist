@@ -62,7 +62,6 @@ import org.exist.security.ACLPermission.ACE_ACCESS_TYPE;
 import org.exist.security.ACLPermission.ACE_TARGET;
 import org.exist.security.internal.aider.ACEAider;
 import org.exist.storage.DBBroker;
-import org.exist.storage.lock.Lock.LockMode;
 import org.exist.storage.txn.TransactionManager;
 import org.exist.storage.txn.Txn;
 import org.xml.sax.XMLReader;
@@ -579,7 +578,7 @@ public class SystemImportHandler extends DefaultHandler {
             final LockManager lockManager = broker.getBrokerPool().getLockManager();
             final TransactionManager txnManager = broker.getDatabase().getTransactionManager();
             try(final ManagedDocumentLock targetLock = lockManager.acquireDocumentWriteLock(getTarget().getURI());
-                    final Txn txn = txnManager.beginTransaction()) {
+                final Txn txn = txnManager.beginTransaction()) {
                 final Permission permission = getTarget().getPermissions();
                 permission.setOwner(getOwner());
                 permission.setGroup(getGroup());

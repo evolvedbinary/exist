@@ -26,8 +26,6 @@ import org.exist.collections.Collection;
 import org.exist.collections.ManagedLocks;
 import org.exist.numbering.NodeId;
 import org.exist.storage.DBBroker;
-import org.exist.storage.lock.Lock;
-import org.exist.storage.lock.Lock.LockMode;
 import org.exist.storage.lock.LockManager;
 import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.util.LockException;

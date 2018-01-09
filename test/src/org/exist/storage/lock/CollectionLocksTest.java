@@ -448,10 +448,10 @@ public class CollectionLocksTest {
     private void noDeadlock_writeRead(final XmldbURI col1Uri, final XmldbURI col2Uri) throws InterruptedException {
         final LockManager lockManager = new LockManager(CONCURRENCY_LEVEL);
         final Tuple2<Callable<Void>, Callable<Void>> t1t2 = createInterleaved(
-                () -> lockManager.acquireCollectionWriteLock(col1Uri, false),   //t1,1
-                () -> lockManager.acquireCollectionReadLock(col2Uri),   //t2,1
-                () -> lockManager.acquireCollectionWriteLock(col2Uri, false),   //t1,2
-                () -> lockManager.acquireCollectionReadLock(col1Uri)    //t2,2
+                () -> lockManager.acquireCollectionWriteLock(col1Uri, false),     //t1,1
+                () -> lockManager.acquireCollectionReadLock(col2Uri),                       //t2,1
+                () -> lockManager.acquireCollectionWriteLock(col2Uri, false),     //t1,2
+                () -> lockManager.acquireCollectionReadLock(col1Uri)                        //t2,2
         );
         noDeadlock(t1t2);
     }
@@ -573,10 +573,10 @@ public class CollectionLocksTest {
         final LockManager lockManager = new LockManager(CONCURRENCY_LEVEL);
 
         stress_noDeadlock(
-                () -> lockManager.acquireCollectionWriteLock(col1Uri, false),   //t1,1
-                () -> lockManager.acquireCollectionReadLock(col2Uri),   //t2,1
-                () -> lockManager.acquireCollectionWriteLock(col2Uri, false),   //t1,2
-                () -> lockManager.acquireCollectionReadLock(col1Uri),   //t2,2
+                () -> lockManager.acquireCollectionWriteLock(col1Uri, false),     //t1,1
+                () -> lockManager.acquireCollectionReadLock(col2Uri),                       //t2,1
+                () -> lockManager.acquireCollectionWriteLock(col2Uri, false),     //t1,2
+                () -> lockManager.acquireCollectionReadLock(col1Uri),                       //t2,2
                 numberOfThreads
         );
     }
@@ -592,9 +592,9 @@ public class CollectionLocksTest {
 
         stress_noDeadlock(
                 () -> lockManager.acquireCollectionWriteLock(col1Uri, false),   //t1,1
-                () -> lockManager.acquireCollectionReadLock(col2Uri),   //t2,1
+                () -> lockManager.acquireCollectionReadLock(col2Uri),                     //t2,1
                 () -> lockManager.acquireCollectionWriteLock(col2Uri, false),   //t1,2
-                () -> lockManager.acquireCollectionReadLock(col1Uri),   //t2,2
+                () -> lockManager.acquireCollectionReadLock(col1Uri),                     //t2,2
                 numberOfThreads
         );
     }
