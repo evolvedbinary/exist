@@ -543,7 +543,7 @@ public class SystemImportHandler extends DefaultHandler {
             final TransactionManager txnManager = broker.getDatabase().getTransactionManager();
             final LockManager lockManager = broker.getBrokerPool().getLockManager();
 
-            try(final ManagedCollectionLock targetLock = lockManager.acquireCollectionWriteLock(getTarget().getURI(), false);
+            try(final ManagedCollectionLock targetLock = lockManager.acquireCollectionWriteLock(getTarget().getURI());
                 final Txn txn = txnManager.beginTransaction()) {
                 final Permission permission = getTarget().getPermissions();
                 permission.setOwner(getOwner());

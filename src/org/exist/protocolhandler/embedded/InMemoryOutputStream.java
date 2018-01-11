@@ -83,7 +83,7 @@ public class InMemoryOutputStream extends ByteArrayOutputStream {
         }
 
         final LockManager lockManager = db.getLockManager();
-        txn.acquireCollectionLock(() -> lockManager.acquireCollectionWriteLock(collectionUri, false));
+        txn.acquireCollectionLock(() -> lockManager.acquireCollectionWriteLock(collectionUri));
 
         if (collection.hasChildCollection(broker, documentUri)) {
           throw new IOException("Resource " + documentUri.toString() + " is a collection.");
