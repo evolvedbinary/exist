@@ -2568,17 +2568,11 @@ public class NativeBroker extends DBBroker {
     @Override
     public void readBinaryResource(final BinaryDocument blob, final OutputStream os)
         throws IOException {
-        InputStream is = null;
-        try {
-            is = getBinaryResource(blob);
+        try(final InputStream is = getBinaryResource(blob)) {
             final byte[] buffer = new byte[BINARY_RESOURCE_BUF_SIZE];
             int len;
             while((len = is.read(buffer)) >= 0) {
                 os.write(buffer, 0, len);
-            }
-        } finally {
-            if(is != null) {
-                is.close();
             }
         }
     }
