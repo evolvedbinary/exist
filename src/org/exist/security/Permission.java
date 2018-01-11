@@ -38,7 +38,8 @@ public interface Permission {
     
     public final static int DEFAULT_SYSTEM_ETC_COLLECTION_PERM = 0755;
     public final static int DEFAULT_SYSTEM_SECURITY_COLLECTION_PERM = 0770;
-    
+
+    public final static int DEFAULT_TEMPORARY_COLLECTION_PERM = 0771;
     public final static int DEFAULT_TEMPORARY_DOCUMENT_PERM = 0771;
 
     public final static int SET_UID = 04;

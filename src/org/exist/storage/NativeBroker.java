@@ -631,7 +631,7 @@ public class NativeBroker extends DBBroker {
             pushSubject(pool.getSecurityManager().getSystemSubject());
             final Tuple2<Boolean, Collection> temp = getOrCreateCollectionExplicit(transaction, XmldbURI.TEMP_COLLECTION_URI);
             if (temp._1) {
-                temp._2.setPermissions(0771);
+                temp._2.setPermissions(Permission.DEFAULT_TEMPORARY_COLLECTION_PERM);
                 saveCollection(transaction, temp._2);
             }
             return temp;
