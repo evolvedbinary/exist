@@ -27,6 +27,8 @@ import org.exist.collections.triggers.TriggerException;
 import org.exist.dom.persistent.DocumentImpl;
 import org.exist.security.Subject;
 import org.exist.storage.BrokerPool;
+import org.exist.storage.lock.ManagedCollectionLock;
+import org.exist.util.LockException;
 import org.xmldb.api.base.Collection;
 import org.xmldb.api.base.ErrorCodes;
 import org.xmldb.api.base.XMLDBException;
@@ -73,12 +75,14 @@ public class LocalCollectionManagementService extends AbstractLocalService imple
         withDb((broker, transaction) -> {
             try {
                 final org.exist.collections.Collection coll = broker.getOrCreateCollection(transaction, collName);
-                if (created != null) {
-                    coll.setCreationTime(created.getTime());
+                try(final ManagedCollectionLock collectionLock = broker.getBrokerPool().getLockManager().acquireCollectionWriteLock(collName)) {
+                    if (created != null) {
+                        coll.setCreationTime(created.getTime());
+                    }
+                    broker.saveCollection(transaction, coll);
                 }
-                broker.saveCollection(transaction, coll);
                 return null;
-            } catch (final TriggerException e) {
+            } catch (final LockException | TriggerException e) {
                 throw new XMLDBException(ErrorCodes.VENDOR_ERROR, e.getMessage(), e);
             }
         });
