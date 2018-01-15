@@ -25,9 +25,12 @@ import java.util.Date;
 import org.exist.EXistException;
 import org.exist.collections.triggers.TriggerException;
 import org.exist.dom.persistent.DocumentImpl;
+import org.exist.dom.persistent.LockedDocument;
 import org.exist.security.Subject;
 import org.exist.storage.BrokerPool;
+import org.exist.storage.lock.Lock;
 import org.exist.storage.lock.ManagedCollectionLock;
+import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.util.LockException;
 import org.xmldb.api.base.Collection;
 import org.xmldb.api.base.ErrorCodes;
@@ -162,15 +165,29 @@ public class LocalCollectionManagementService extends AbstractLocalService imple
 
         withDb((broker, transaction) ->
                 modify(broker, transaction, srcPath.removeLastSegment()).apply((sourceCol, b1, t1) -> {
-                    final DocumentImpl source = sourceCol.getDocument(b1, srcPath.lastSegment());
-                    if(source == null) {
-                        throw new XMLDBException(ErrorCodes.NO_SUCH_RESOURCE, "Resource " + srcPath + " not found");
-                    }
+                    try(final LockedDocument lockedSource = sourceCol.getDocumentWithLock(b1, srcPath.lastSegment(), Lock.LockMode.WRITE_LOCK)) {
+                        final DocumentImpl source = lockedSource == null ? null : lockedSource.getDocument();
+                        if (source == null) {
 
-                    return modify(b1, t1, destPath).apply((destinationCol, b2, t2) -> {
-                        b2.moveResource(t2, source, destinationCol, newName);
-                        return null;
-                    });
+                            // NOTE: early release of Collection lock inline with Asymmetrical Locking scheme
+                            sourceCol.close();
+
+                            throw new XMLDBException(ErrorCodes.NO_SUCH_RESOURCE, "Resource " + srcPath + " not found");
+                        }
+
+                        return modify(b1, t1, destPath).apply((destinationCol, b2, t2) -> {
+                            try(final ManagedDocumentLock lockedDestination = b2.getBrokerPool().getLockManager().acquireDocumentWriteLock(destinationCol.getURI().append(newName))) {
+
+                                b2.moveResource(t2, source, destinationCol, newName);
+
+                                // NOTE: early release of Collection locks inline with Asymmetrical Locking scheme
+                                destinationCol.close();
+                                sourceCol.close();
+                            }
+
+                            return null;
+                        });
+                    }
                 })
         );
     }
@@ -231,19 +248,32 @@ public class LocalCollectionManagementService extends AbstractLocalService imple
 
         withDb((broker, transaction) ->
             read(broker, transaction, srcPath.removeLastSegment()).apply((sourceCol, b1, t1) -> {
-                final DocumentImpl source = sourceCol.getDocument(b1, srcPath.lastSegment());
-                if(source == null) {
-                    throw new XMLDBException(ErrorCodes.NO_SUCH_RESOURCE, "Resource " + srcPath + " not found");
-                }
+                try(final LockedDocument lockedSource = sourceCol.getDocumentWithLock(b1, srcPath.lastSegment(), Lock.LockMode.READ_LOCK)) {
+                    final DocumentImpl source = lockedSource == null ? null : lockedSource.getDocument();
+                    if (source == null) {
 
-                return modify(b1, t1, destPath).apply((destinationCol, b2, t2) -> {
-                    try {
-                        b2.copyResource(t2, source, destinationCol, newName);
-                        return null;
-                    } catch (final EXistException e) {
-                        throw new XMLDBException(ErrorCodes.VENDOR_ERROR, "failed to copy resource " + srcPath, e);
+                        // NOTE: early release of Collection lock inline with Asymmetrical Locking scheme
+                        sourceCol.close();
+
+                        throw new XMLDBException(ErrorCodes.NO_SUCH_RESOURCE, "Resource " + srcPath + " not found");
                     }
-                });
+
+                    return modify(b1, t1, destPath).apply((destinationCol, b2, t2) -> {
+                        try(final ManagedDocumentLock lockedDestination = b2.getBrokerPool().getLockManager().acquireDocumentWriteLock(destinationCol.getURI().append(newName))) {
+                            try {
+                                b2.copyResource(t2, source, destinationCol, newName);
+
+                                // NOTE: early release of Collection locks inline with Asymmetrical Locking scheme
+                                destinationCol.close();
+                                sourceCol.close();
+
+                                return null;
+                            } catch (final EXistException e) {
+                                throw new XMLDBException(ErrorCodes.VENDOR_ERROR, "failed to copy resource " + srcPath, e);
+                            }
+                        }
+                    });
+                }
             })
         );
     }

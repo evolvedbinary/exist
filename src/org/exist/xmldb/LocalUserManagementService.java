@@ -36,6 +36,7 @@ import org.exist.security.internal.aider.ACEAider;
 import org.exist.security.internal.aider.UserAider;
 import org.exist.storage.BrokerPool;
 import com.evolvedbinary.j8fu.function.FunctionE;
+import org.exist.storage.lock.ManagedDocumentLock;
 import org.exist.xmldb.function.LocalXmldbCollectionFunction;
 import org.exist.xmldb.function.LocalXmldbDocumentFunction;
 import org.exist.xmldb.function.LocalXmldbFunction;
@@ -362,7 +363,9 @@ public class LocalUserManagementService extends AbstractLocalService implements 
             int i = 0;
             while(itDocument.hasNext()) {
                 final DocumentImpl document = itDocument.next();
-                perms[i++] = document.getPermissions();
+                try(final ManagedDocumentLock documentLock = broker.getBrokerPool().getLockManager().acquireDocumentReadLock(document.getURI())) {
+                    perms[i++] = document.getPermissions();
+                }
             }
 
             return perms;
