@@ -114,8 +114,9 @@ public class DocumentLocksTest {
                     while (!lockManager.getDocumentLock(docUri.toString()).hasQueuedThreads()) {
                         Thread.sleep(10);
                     }
+
+                    lastWriteHolder.set(this);
                 }
-                lastWriteHolder.set(this);
                 return null;
             }
         };
@@ -126,8 +127,9 @@ public class DocumentLocksTest {
                 thread2StartLatch.await();
                 try (final ManagedDocumentLock documentLock = lockManager.acquireDocumentWriteLock(docUri)) {
                     firstWriteHolder.compareAndSet(null, this);
+
+                    lastWriteHolder.set(this);
                 }
-                lastWriteHolder.set(this);
                 return null;
             }
         };
