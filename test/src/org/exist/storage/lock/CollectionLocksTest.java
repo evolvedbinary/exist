@@ -204,8 +204,8 @@ public class CollectionLocksTest {
 //                            Thread.sleep(SINGLE_WRITER_THREAD_SLEEP);
 //                        }
 //                    }
+                    lastWriteHolder.set(this);
                 }
-                lastWriteHolder.set(this);
                 return null;
             }
         };
@@ -216,8 +216,9 @@ public class CollectionLocksTest {
                 thread2StartLatch.await();
                 try (final ManagedCollectionLock collectionLock = lockManager.acquireCollectionWriteLock(collectionUri, lockParent)) {
                     firstWriteHolder.compareAndSet(null, this);
+
+                    lastWriteHolder.set(this);
                 }
-                lastWriteHolder.set(this);
                 return null;
             }
         };
