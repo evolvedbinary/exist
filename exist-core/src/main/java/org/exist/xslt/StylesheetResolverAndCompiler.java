@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -147,7 +156,6 @@ public class StylesheetResolverAndCompiler implements Stylesheet {
 
     final TemplatesHandler handler = factory(broker.getBrokerPool(), errorListener).newTemplatesHandler();
     handler.setSystemId(stylesheet.getBaseURI());
-    handler.startDocument();
 
     final Serializer serializer = broker.borrowSerializer();
     try {
@@ -156,8 +164,6 @@ public class StylesheetResolverAndCompiler implements Stylesheet {
     } finally {
       broker.returnSerializer(serializer);
     }
-
-    handler.endDocument();
 
     final Templates t = handler.getTemplates();
 
