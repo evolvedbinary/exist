@@ -55,7 +55,7 @@ import org.exist.scheduler.impl.QuartzSchedulerImpl;
 import org.exist.scheduler.impl.SystemTaskJobImpl;
 import org.exist.security.*;
 import org.exist.security.SecurityManager;
-import org.exist.security.internal.SecurityManagerImpl;
+import org.exist.security.shiro.ExistShiroSecurityManagerAdapter;
 import org.exist.storage.blob.BlobStore;
 import org.exist.storage.blob.BlobStoreImplService;
 import org.exist.storage.blob.BlobStoreService;
@@ -87,7 +87,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -480,7 +479,8 @@ public class BrokerPool extends BrokerPools implements BrokerPoolConstants, Data
         // NOTE: this must occur after the scheduler, and before any other service which requires access to the data directory
         this.dataLock = servicesManager.register(new FileLockService("dbx_dir.lck", BrokerPool.PROPERTY_DATA_DIR, NativeBroker.DEFAULT_DATA_DIR));
 
-        this.securityManager = servicesManager.register(new SecurityManagerImpl(this));
+        //this.securityManager = servicesManager.register(new SecurityManagerImpl(this));
+        this.securityManager = servicesManager.register(new ExistShiroSecurityManagerAdapter());
 
         this.cacheManager = servicesManager.register(new DefaultCacheManager(this));
         this.xQueryPool = servicesManager.register(new XQueryPool());
@@ -560,6 +560,8 @@ public class BrokerPool extends BrokerPools implements BrokerPoolConstants, Data
                 // If the initialization fails after transactionManager has been created this method better cleans up
                 // or the FileSyncThread for the journal can/will hang.
                 try {
+//securityManager.
+        //org.apache.shiro.SecurityUtils.getSecurityManager().authenticate()
 
                     // Enter System Mode
                     try(final DBBroker systemBroker = get(Optional.of(securityManager.getSystemSubject()))) {

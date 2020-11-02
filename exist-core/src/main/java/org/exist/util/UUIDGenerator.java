@@ -74,6 +74,17 @@ public class UUIDGenerator {
     }
 
     /**
+     * Generate a version 4 UUID.
+     *
+     * See <a href="http://en.wikipedia.org/wiki/Universally_Unique_Identifier#Version_4_.28random.29">http://en.wikipedia.org/wiki/Universally_Unique_Identifier#Version_4_.28random.29</a>.
+     *
+     * @return a Version 4 UUID
+     */
+    public static UUID getUUIDversion4Object() {
+        return UUIDv4_GENERATOR.generate();
+    }
+
+    /**
      * Generate a version 3 UUID code.
      *
      * See <a href="http://en.wikipedia.org/wiki/Universally_Unique_Identifier#Version_3_.28MD5_hash.29">http://en.wikipedia.org/wiki/Universally_Unique_Identifier#Version_3_.28MD5_hash.29</a>

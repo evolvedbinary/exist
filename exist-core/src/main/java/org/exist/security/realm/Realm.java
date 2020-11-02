@@ -43,6 +43,7 @@ public interface Realm extends AuthenticatingRealm, AuthorizingRealm, AccountsMa
 
     Collection<Group> getGroups();
 
+    @Deprecated
     Database getDatabase();
 
     Group getExternalGroup(final String name);

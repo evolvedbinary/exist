@@ -26,7 +26,7 @@ import org.exist.numbering.NodeId;
 
 import javax.xml.stream.XMLStreamReader;
 
-public interface ExtendedXMLStreamReader extends XMLStreamReader {
+public interface ExtendedXMLStreamReader extends XMLStreamReader, AutoCloseable {
 
     public final static String PROPERTY_NODE_ID = "node-id";
     

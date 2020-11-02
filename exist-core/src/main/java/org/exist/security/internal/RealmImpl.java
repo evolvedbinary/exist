@@ -72,12 +72,12 @@ public class RealmImpl extends AbstractRealm {
     public final static int GUEST_GROUP_ID = 1048574;
     public final static int UNKNOWN_GROUP_ID = 1048573;
 
-    final AccountImpl ACCOUNT_SYSTEM;
-    final AccountImpl ACCOUNT_UNKNOWN;
-    
-    final GroupImpl GROUP_DBA;
-    final GroupImpl GROUP_GUEST;
-    final GroupImpl GROUP_UNKNOWN;
+    public final AccountImpl ACCOUNT_SYSTEM;
+    public final AccountImpl ACCOUNT_UNKNOWN;
+
+    public final GroupImpl GROUP_DBA;
+    public final GroupImpl GROUP_GUEST;
+    public final GroupImpl GROUP_UNKNOWN;
     
     private static final String DEFAULT_ADMIN_PASSWORD = "";
     private static final String DEFAULT_GUEST_PASSWORD = "guest";
@@ -85,7 +85,7 @@ public class RealmImpl extends AbstractRealm {
     //@ConfigurationFieldAsElement("allow-guest-authentication")
     public boolean allowGuestAuthentication = true;
 
-    protected RealmImpl(final DBBroker broker, final SecurityManagerImpl sm, final Configuration config) throws ConfigurationException { //, Configuration conf
+    public RealmImpl(final DBBroker broker, final SecurityManagerImpl sm, final Configuration config) throws ConfigurationException { //, Configuration conf
 
     	super(sm, config);
 

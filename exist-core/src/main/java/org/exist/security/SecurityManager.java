@@ -58,8 +58,8 @@ public interface SecurityManager extends Configurable {
 
    void attach(DBBroker broker, Txn transaction) throws EXistException;
    
-   Database getDatabase();
-   Database database();
+   @Deprecated Database getDatabase();
+   @Deprecated Database database();
 
    void registerAccount(Account account);
 

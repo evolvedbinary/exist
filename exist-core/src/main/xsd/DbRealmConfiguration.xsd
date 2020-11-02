@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:c="http://exist-db.org/Configuration" 
+    targetNamespace="http://exist-db.org/Configuration"
+    elementFormDefault="qualified">
+    
+    <xs:element name="account">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="c:password"/>
+                <xs:element name="group" type="c:groupReference" minOccurs="1" maxOccurs="unbounded"/>
+                <xs:element ref="c:expired"/>
+                <xs:element ref="c:enabled"/>
+                <xs:element ref="c:umask"/>
+                <xs:element ref="c:metadata" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element ref="c:name"/>
+            </xs:sequence>
+            <xs:attribute ref="c:id" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:attribute name="id" type="xs:positiveInteger"/>
+    
+    <xs:element name="password" type="xs:string"/>
+    
+    <xs:complexType name="groupReference">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+    
+    <xs:element name="expired" type="xs:boolean" default="false"/>
+    
+    <xs:element name="enabled" type="xs:boolean" default="true"/>
+    
+    <xs:element name="umask" type="c:octal"/>
+    
+    <xs:element name="metadata">
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="xs:string">
+                    <xs:attribute name="key" use="required" type="xs:anyURI"/>
+                </xs:extension>
+            </xs:simpleContent>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:simpleType name="octal">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{1,4}"></xs:pattern>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:element name="name" type="xs:string"/>
+    
+    <xs:element name="group">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="manager" type="c:managerReference" minOccurs="1" maxOccurs="unbounded"/>
+                <xs:element ref="c:metadata" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element ref="c:name"/>
+            </xs:sequence>
+            <xs:attribute ref="c:id" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:complexType name="managerReference">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+    
+</xs:schema>
