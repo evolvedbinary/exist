@@ -221,7 +221,7 @@ public class CollectionConfigurationManager implements BrokerPoolService {
             }
 
             // use default configuration
-            return defaultConfig;
+            return defaultConfig;  // TODO(AR) this can result in a lot of the same configs being added to lists and maps
         }
     }
 

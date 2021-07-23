@@ -48,11 +48,13 @@ public class RangeIndexConfig {
 
     private static final Logger LOG = LogManager.getLogger(RangeIndexConfig.class);
 
-    private Map<QName, RangeIndexConfigElement> paths = new TreeMap<>();
+    // treemap is used to preserve order
+    private final Map<QName, RangeIndexConfigElement> paths = new TreeMap<>();
 
     private Analyzer analyzer;
 
-    private PathIterator iterator = new PathIterator();
+    // TODO(AR) should start as null
+    private final PathIterator iterator = new PathIterator();
 
     public RangeIndexConfig() {
         // default analyzer

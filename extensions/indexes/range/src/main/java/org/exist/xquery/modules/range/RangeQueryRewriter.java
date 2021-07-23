@@ -63,7 +63,7 @@ public class RangeQueryRewriter extends QueryRewriter {
                 NodePath contextPath = toNodePath(getPrecedingSteps(locationStep));
                 // process the remaining predicates
                 for (Predicate pred : preds) {
-                    if (pred.getLength() != 1) {
+                    if (pred.getSubExpressionCount() != 1) {
                         // can only optimize predicates with one expression
                         break;
                     }
@@ -127,7 +127,7 @@ public class RangeQueryRewriter extends QueryRewriter {
     }
 
     protected static Lookup rewrite(Expression expression, NodePath path) throws XPathException {
-        ArrayList<Expression> eqArgs = new ArrayList<>(2);
+        final List<Expression> eqArgs = new ArrayList<>(2);
         if (expression instanceof GeneralComparison) {
             GeneralComparison comparison = (GeneralComparison) expression;
             eqArgs.add(comparison.getLeft());

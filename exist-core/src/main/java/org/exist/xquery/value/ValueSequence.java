@@ -879,7 +879,7 @@ public class ValueSequence extends AbstractSequence implements MemoryNodeSet {
     private class CollectionIterator implements Iterator<Collection> {
         private Collection nextCollection = null;
         private int pos = 0;
-
+//TODO(AR) can this return the same collection multiple times? should it?
         CollectionIterator() {
             next();
         }

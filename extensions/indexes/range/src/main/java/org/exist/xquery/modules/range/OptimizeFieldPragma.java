@@ -95,7 +95,9 @@ public class OptimizeFieldPragma extends Pragma {
         // without context path, we cannot rewrite the entire query
         if (contextPath != null) {
             final List<Predicate> notOptimizable = new ArrayList<>(preds.length);
-            List<RangeIndexConfig> configs = getConfigurations(contextSequence);
+
+            // TODO(AR) this list contains many duplicates, as the contextSequence can contain nodes from the same collection
+            List<RangeIndexConfig> configs = getConfigurations(contextSequence);  //TODO(AR) this is returning one config per-collection in the db, yet we may know the first call (locationStep.parent) is fn:collection - so this could be much more efficient..
             // walk through the predicates attached to the current location step
             // check if expression can be optimized
 
@@ -292,6 +294,8 @@ public class OptimizeFieldPragma extends Pragma {
         return rices;
     }
 
+    // TODO(AR) is this returning too many configs? -- 296 are returned for benjamins
+    // TODO(AR) how are these arranged, a list does not seem efficient
     private List<RangeIndexConfig> getConfigurations(Sequence contextSequence) {
         List<RangeIndexConfig> configs = new ArrayList<>();
         for (final Iterator<Collection> i = contextSequence.getCollectionIterator(); i.hasNext(); ) {

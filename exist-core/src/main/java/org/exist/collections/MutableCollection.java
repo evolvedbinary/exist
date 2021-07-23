@@ -1970,11 +1970,12 @@ public class MutableCollection implements Collection {
     public IndexSpec getIndexConfiguration(final DBBroker broker) {
         final CollectionConfiguration conf = getConfiguration(broker);
         //If the collection has its own config...
-        if (conf == null) {
-            return broker.getIndexConfiguration();
+        if (conf != null) {
+            return conf.getIndexConfiguration();
         }
         //... otherwise return the general config (the broker's one)
-        return conf.getIndexConfiguration();
+        // TODO(AR) what is the difference between this and CollectionConfigurationManagement#defaultConfig
+        return broker.getIndexConfiguration();  // TODO(AR) this can result in a lot of the same object being added to lists and maps
     }
 
     @Override
