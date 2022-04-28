@@ -249,18 +249,12 @@ public class MapFunction extends BasicFunction {
             mergeDuplicates = MergeDuplicates.USE_FIRST;
         }
 
-        if (mergeDuplicates == MergeDuplicates.REJECT) {
-            throw new XPathException(this, ErrorCodes.FOJS0005, "map { \"duplicates\": \"reject\" } is not yet implemented by eXist-db");
-        } else if (mergeDuplicates == MergeDuplicates.COMBINE) {
-            throw new XPathException(this, ErrorCodes.FOJS0005, "map { \"combine\": \"reject\" } is not yet implemented by eXist-db");
-        }
-
         final Sequence maps = args[0];
         final int totalMaps = maps.getItemCount();
         final AbstractMapType head;
         final List<AbstractMapType> tail = new ArrayList<>(totalMaps - 1);
 
-        if (mergeDuplicates == MergeDuplicates.USE_LAST) {
+        if (mergeDuplicates == MergeDuplicates.USE_LAST || mergeDuplicates == MergeDuplicates.COMBINE) {
             // head is the first map
             head = (AbstractMapType) maps.itemAt(0);
             for (int i = 1; i < totalMaps; i++) {
@@ -277,7 +271,41 @@ public class MapFunction extends BasicFunction {
             }
         }
 
-        return head.merge(tail);
+        if (mergeDuplicates == MergeDuplicates.COMBINE) {
+            final List<XPathException> mergeExceptions = new ArrayList<>();
+            final AbstractMapType merged
+                    = head.merge(tail, (first, second) -> {
+                try {
+                    final ValueSequence sequence = new ValueSequence(first);
+                    sequence.addAll(second);
+                    return sequence;
+                } catch (final XPathException e) {
+                    //We cannot throw out of the MapType - pass exceptions here.
+                    mergeExceptions.add(e);
+                }
+                return Sequence.EMPTY_SEQUENCE;
+            });
+            if (!mergeExceptions.isEmpty()) {
+                throw mergeExceptions.get(0);
+            }
+            return merged;
+        }
+
+        final AbstractMapType result = head.merge(tail);
+
+        if (mergeDuplicates == MergeDuplicates.REJECT) {
+
+            int inputItemsSize = head.size();
+            for (final AbstractMapType other : tail) {
+                inputItemsSize += other.size();
+            }
+            if (inputItemsSize > result.size()) {
+                // no duplicates, so we don't need to consider the duplicates
+                throw new XPathException(this, ErrorCodes.FOJS0003, "map { \"duplicates\": \"reject\" } maps had duplicate entry");
+            }
+        }
+
+        return result;
     }
 
     private Sequence forEach(final Sequence[] args) throws XPathException {

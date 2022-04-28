@@ -32,6 +32,7 @@ import org.exist.xquery.value.Sequence;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
+import java.util.function.BinaryOperator;
 
 import static org.exist.xquery.functions.map.MapType.newLinearMap;
 
@@ -71,6 +72,12 @@ public class SingleKeyMapType extends AbstractMapType {
     public AbstractMapType merge(final Iterable<AbstractMapType> others) {
         final MapType map = new MapType(context, collator, key, value);
         return map.merge(others);
+    }
+
+    @Override
+    public AbstractMapType merge(final Iterable<AbstractMapType> others, final BinaryOperator<Sequence> mergeFn) {
+        final MapType map = new MapType(context, collator, key, value);
+        return map.merge(others, mergeFn);
     }
 
     @Override
