@@ -256,6 +256,8 @@ public class MapFunction extends BasicFunction {
 
         if (mergeDuplicates == MergeDuplicates.USE_LAST || mergeDuplicates == MergeDuplicates.COMBINE) {
             // head is the first map
+            // USE_LAST will pick the item from the last map containing a duplicate item
+            // COMBINE will combine duplicate items in head-first order
             head = (AbstractMapType) maps.itemAt(0);
             for (int i = 1; i < totalMaps; i++) {
                 final AbstractMapType other = (AbstractMapType) maps.itemAt(i);
@@ -264,6 +266,7 @@ public class MapFunction extends BasicFunction {
 
         } else {
             // head is the last map
+            // USE_FIRST will pick the item from the first map containing a duplicate item
             head = (AbstractMapType) maps.itemAt(totalMaps - 1);
             for (int i = totalMaps - 2; i >= 0; i--) {
                 final AbstractMapType other = (AbstractMapType) maps.itemAt(i);
@@ -272,6 +275,8 @@ public class MapFunction extends BasicFunction {
         }
 
         if (mergeDuplicates == MergeDuplicates.COMBINE) {
+            // Provide a callback function for merging items which share a key
+            // Call merge variant
             final List<XPathException> mergeExceptions = new ArrayList<>();
             final AbstractMapType merged
                     = head.merge(tail, (first, second) -> {

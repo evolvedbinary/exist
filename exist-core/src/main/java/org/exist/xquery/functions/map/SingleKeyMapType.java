@@ -44,9 +44,9 @@ import static org.exist.xquery.functions.map.MapType.newLinearMap;
  */
 public class SingleKeyMapType extends AbstractMapType {
 
-    private AtomicValue key;
-    private Sequence value;
-    private @Nullable Collator collator;
+    private final AtomicValue key;
+    private final Sequence value;
+    private final @Nullable Collator collator;
 
     public SingleKeyMapType(final XQueryContext context, final @Nullable Collator collator, final AtomicValue key, final Sequence value) {
         super(context);
