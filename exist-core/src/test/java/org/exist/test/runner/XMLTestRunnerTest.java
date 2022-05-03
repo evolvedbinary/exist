@@ -60,7 +60,7 @@ class XMLTestRunnerTest {
         lines.add("    </test>");
         lines.add("</TestSet>");
         write(xmlTestFile, lines);
-        runner = new XMLTestRunner(xmlTestFile, false);
+        runner = (XMLTestRunner) XMLTestRunner.getRunner(xmlTestFile, false);
     }
 
     @Test

@@ -78,18 +78,53 @@ public class XMLTestRunner extends AbstractTestRunner {
 
     /**
      * @param path The path to the XML file containing the tests.
+     * @param doc the document node contaning the tests
+     * @param info the parsed test information
      * @param parallel whether the tests should be run in parallel.
-     *
-     * @throws InitializationError if the test runner could not be constructed.
      */
-    public XMLTestRunner(final Path path, final boolean parallel) throws InitializationError {
+
+    XMLTestRunner(final Path path, final Document doc, final XMLTestInfo info, final boolean parallel) {
         super(path, parallel);
+        this.doc = doc;
+        this.info = info;
+    }
+
+    /**
+     * Construct a test runner appropriate to the kind of XML file supplied. This can be
+     * 1. XML formatter XQuery tests of eXist-DB
+     * 2. XQTS test XML files from the XQTS test suite
+     *
+     * @param path The path to the XML file containing the tests.
+     * @param parallel whether the tests should be run in parallel
+     * @return the appropriate kind of test runner determined after some exploratory probing of the XML file
+     * @throws InitializationError if the file doesn't contain a format of XML tests we know about
+     */
+    public static AbstractTestRunner getRunner(final Path path, final boolean parallel) throws InitializationError {
+
+        /*
+         * TODO (AP) pull this (factory) method out into AbstractTestRunner, merge with the getRunner() in XSuite.java
+         * so we end up with a number of clean sibling subclasses of AbstractTestRunner.
+         */
+        final Document doc;
+        final XMLTestInfo info;
+        final XQTSTestRunner.XQTSTestSuite xqtsTestSuite;
         try {
-            this.doc = parse(path);
+            doc = parse(path);
         } catch (final ParserConfigurationException | IOException | SAXException e) {
             throw new InitializationError(e);
         }
-        this.info = extractTestInfo(path, doc);
+        try {
+            info = extractTestInfo(path, doc);
+            return new XMLTestRunner(path, doc, info, parallel);
+        } catch (final InitializationError ie) {
+            try {
+                xqtsTestSuite = XQTSTestRunner.getTestsFromDocument(doc, path.toString());
+                return new XQTSTestRunner(path, doc, xqtsTestSuite, parallel);
+            } catch (final XQTSTestRunner.XQTSTestException te) {
+                // Neither possible runner was happy
+                throw new InitializationError(Arrays.asList(new Exception[]{ie, te}));
+            }
+        }
     }
 
     private static XMLTestInfo extractTestInfo(final Path path, final Document doc) throws InitializationError {
@@ -120,7 +155,7 @@ public class XMLTestRunner extends AbstractTestRunner {
                             testName = getTaskText(child);
                         }
                         if (testName == null) {
-                            throw new InitializationError("Could not find @id or <task> within <test> of XML <TestSet> document:" + path.toAbsolutePath().toString());
+                            throw new InitializationError("Could not find @id or <task> within <test> of XML <TestSet> document:" + path.toAbsolutePath());
                         }
                         testNames.add(testName);
                         break;
@@ -133,7 +168,7 @@ public class XMLTestRunner extends AbstractTestRunner {
         }
 
         if (testSetName == null) {
-            throw new InitializationError("Could not find <testName> in XML <TestSet> document: " + path.toAbsolutePath().toString());
+            throw new InitializationError("Could not find <testName> in XML <TestSet> document: " + path.toAbsolutePath());
         }
 
         return new XMLTestInfo(testSetName, description, testNames);
@@ -141,11 +176,9 @@ public class XMLTestRunner extends AbstractTestRunner {
 
     private static @Nullable String getIdValue(final Node test) {
         String id = ((Element)test).getAttribute("id");
-        if (id != null) {
-            id = id.trim();
-            if (!id.isEmpty()) {
-                return id;
-            }
+        id = id.trim();
+        if (!id.isEmpty()) {
+            return id;
         }
         return null;
     }
@@ -169,8 +202,7 @@ public class XMLTestRunner extends AbstractTestRunner {
     }
 
     private String getSuiteName() {
-        final String suiteName = "xmlts." + info.getName();  // add "xmlts." prefix
-        return suiteName;
+        return "xmlts." + info.getName();
     }
 
     @Override
@@ -213,7 +245,7 @@ public class XMLTestRunner extends AbstractTestRunner {
         }
     }
 
-    private Document parse(final Path path) throws ParserConfigurationException, IOException, SAXException {
+    private static Document parse(final Path path) throws ParserConfigurationException, IOException, SAXException {
         final InputSource src = new InputSource(path.toUri().toASCIIString());
         final SAXParser parser = SAX_PARSER_FACTORY.newSAXParser();
         final XMLReader xr = parser.getXMLReader();
