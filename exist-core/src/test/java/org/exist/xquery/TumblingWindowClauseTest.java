@@ -29,9 +29,9 @@ public class TumblingWindowClauseTest {
     @Test
     public void query() throws EXistException, PermissionDeniedException, IOException, SAXException, LockException, RecognitionException, XPathException, TokenStreamException
     {
-        String query =
-                "xquery version \"3.0\";\n" +
-                        "for tumbling window \n" +
+        String query =  "xquery version \"3.0\";\n" +
+                        "for tumbling window $w in (2, 4, 6, 8, 10)\n" +
+                        "start at $s when fn:true()\n" +
                         "return <p>1</p>";
 
         // parse the query into the internal syntax tree
