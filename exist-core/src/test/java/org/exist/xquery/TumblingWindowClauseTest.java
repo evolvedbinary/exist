@@ -30,9 +30,10 @@ public class TumblingWindowClauseTest {
     public void query() throws EXistException, PermissionDeniedException, IOException, SAXException, LockException, RecognitionException, XPathException, TokenStreamException
     {
         String query =  "xquery version \"3.0\";\n" +
-                        "for tumbling window $w in (2, 4, 6, 8, 10)\n" +
-                        "start at $s when fn:true()\n" +
-                        "return <p>1</p>";
+                        "for tumbling window $w in (2, 4, 6, 8, 10, 12, 14)\n" +
+                        "    start at $s when fn:true()\n" +
+                        "    only end at $e when $e - $s eq 2\n" +
+                        "return <window>{ $w }</window>";
 
         // parse the query into the internal syntax tree
         XQueryLexer lexer = new XQueryLexer(new StringReader(query));
