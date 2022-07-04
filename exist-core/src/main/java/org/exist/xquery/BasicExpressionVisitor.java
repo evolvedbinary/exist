@@ -174,6 +174,11 @@ public class BasicExpressionVisitor implements ExpressionVisitor {
     }
 
     @Override
+    public void visitWindowExpression(final WindowExpr letExpr) {
+        //Nothing to do
+    }
+
+    @Override
     public void visitOrderByClause(OrderByClause orderBy) {
         // Nothing to do
     }
