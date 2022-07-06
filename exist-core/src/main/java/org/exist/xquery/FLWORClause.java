@@ -34,7 +34,7 @@ import java.util.Set;
 public interface FLWORClause extends Expression {
 
     enum ClauseType {
-        FOR, LET, GROUPBY, ORDERBY, WHERE, SOME, EVERY, WINDOW
+        FOR, LET, GROUPBY, ORDERBY, WHERE, SOME, EVERY, WINDOW, COUNT
     }
 
     /**
