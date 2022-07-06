@@ -35,7 +35,8 @@ import org.w3c.dom.Element;
 public class WindowExpr extends BindingExpression {
 
     public enum WindowType {
-        TUMBLING_WINDOW
+        TUMBLING_WINDOW,
+        SLIDING_WINDOW
     }
 
     //private Expression inputSequence = null;
