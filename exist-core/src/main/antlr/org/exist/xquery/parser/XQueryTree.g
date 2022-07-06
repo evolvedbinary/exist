@@ -1709,6 +1709,19 @@ throws PermissionDeniedException, EXistException, XPathException
 					clauses.add(clause);
 				}
 			)
+			|
+            #(
+            	co:"count"
+            	countVarName:VARIABLE_BINDING
+                {
+                	ForLetClause clause = new ForLetClause();
+                    clause.ast = co;
+                    clause.varName = countVarName.getText();
+                    clause.type = FLWORClause.ClauseType.COUNT;
+                    clause.inputSequence = null;
+                    clauses.add(clause);
+                }
+            )
 		)+
 		step=expr [(PathExpr) action]
 		{
