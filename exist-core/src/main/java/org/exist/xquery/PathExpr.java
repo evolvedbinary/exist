@@ -229,7 +229,7 @@ public class PathExpr extends AbstractExpression implements CompiledXQuery,
             //TODO : let the parser do it ? -pb
             boolean gotAtomicResult = false;
             Expression prev = null;
-            for (Expression step : steps) {
+            for (final Expression step : steps) {
                 prev = expr;
                 expr = step;
                 context.getWatchDog().proceed(expr);
@@ -299,7 +299,12 @@ public class PathExpr extends AbstractExpression implements CompiledXQuery,
                         // expression with more than one step
                         result.removeDuplicates();
                     }
+
+                    if (result != Sequence.EMPTY_SEQUENCE_VALID && result.isEmpty()) {
+                        break;
+                    }
                 }
+
                 if (!staticContext) {
                     currentContext = result;
                 }
