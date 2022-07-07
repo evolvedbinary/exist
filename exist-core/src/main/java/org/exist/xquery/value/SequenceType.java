@@ -22,6 +22,7 @@
 package org.exist.xquery.value;
 
 import org.exist.dom.QName;
+import org.exist.xquery.Annotation;
 import org.exist.xquery.Cardinality;
 import org.exist.xquery.XPathException;
 import org.w3c.dom.Document;
@@ -39,6 +40,8 @@ public class SequenceType {
     private int primaryType = Type.ITEM;
     private Cardinality cardinality = Cardinality.EXACTLY_ONE;
     private QName nodeName = null;
+
+    private Annotation[] annotations;
 
     public SequenceType() {
     }
@@ -227,6 +230,13 @@ public class SequenceType {
         } else if (seq.hasMany() && cardinality.atMostOne()) {
             throw new XPathException("Sequence with more than one item is not allowed here");
         }
+    }
+
+    public void setAnnotations(final Annotation[] annotations) {
+        this.annotations = annotations;
+    }
+    public Annotation[] getAnnotations() {
+        return annotations;
     }
 
     @Override
