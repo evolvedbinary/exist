@@ -263,7 +263,8 @@ prolog throws XPathException
             ( "declare" "context" "item" )
             => contextItemDeclUp { inSetters = false; }
 			|
-			( "declare" MOD )
+			// bare keyword updating is valid because of rule CompatibilityAnnotation in the XQUF standard
+			( "declare" (MOD | "updating") )
 			=> annotateDecl { inSetters = false; }
         )
 		SEMICOLON!
@@ -456,6 +457,12 @@ annotation
 :
 	MOD! name=eqName! (LPAREN! literal (COMMA! literal)* RPAREN!)?
         { #annotation= #(#[ANNOT_DECL, name], #annotation); }
+
+    | "updating"!
+    {
+        name = "updating";
+        #annotation= #(#[ANNOT_DECL, name], #annotation);
+    }
     ;
 
 eqName returns [String name]
@@ -2224,6 +2231,8 @@ reservedKeywords returns [String name]
 	"map" { name = "map"; }
 	|
 	"array" { name = "array"; }
+	|
+	"updating" { name = "updating"; }
 	;
 
 /**
