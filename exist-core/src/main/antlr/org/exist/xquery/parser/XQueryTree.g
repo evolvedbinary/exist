@@ -156,8 +156,36 @@ options {
 		}
 	}
 
+    private static Annotation[] processAnnotations(List annots) {
+            Annotation[] anns = new Annotation[annots.size()];
+
+            //iterate the declare Annotations
+            for(int i = 0; i < anns.length; i++) {
+               List la = (List)annots.get(i);
+
+               //extract the Value for the Annotation
+               LiteralValue[] aValue;
+               if(la.size() > 1) {
+
+                PathExpr aPath = (PathExpr)la.get(1);
+
+                aValue = new LiteralValue[aPath.getSubExpressionCount()];
+                for(int j = 0; j < aValue.length; j++) {
+                    aValue[j] = (LiteralValue)aPath.getExpression(j);
+                }
+               } else {
+                aValue = new LiteralValue[0];
+               }
+
+               Annotation a = new Annotation((QName)la.get(0), aValue, null);
+               anns[i] = a;
+            }
+
+            return anns;
+    	}
+
 	private static void processAnnotations(List annots, FunctionSignature signature) {
-	    Annotation[] anns = new Annotation[annots.size()];
+        Annotation[] anns = new Annotation[annots.size()];
 
         //iterate the declare Annotations
         for(int i = 0; i < anns.length; i++) {
@@ -1066,6 +1094,12 @@ throws XPathException
 			}
 		)
 		|
+		{ List annots = new ArrayList(); }
+        (annotations [annots])?
+		{
+		    Annotation[] anns = processAnnotations(annots);
+		    type.setAnnotations(anns);
+		}
 		#(
 			FUNCTION_TEST { type.setPrimaryType(Type.FUNCTION_REFERENCE); }
 			(
