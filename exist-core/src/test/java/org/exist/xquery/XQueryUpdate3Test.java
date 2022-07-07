@@ -102,4 +102,31 @@ public class XQueryUpdate3Test
             }
         }
     }
+
+    @Test
+    public void simpleAnnotationIsInvalidForVariableDeclaration() throws EXistException, RecognitionException, XPathException, TokenStreamException, PermissionDeniedException
+    {
+        String query = "declare %simple variable $ab := 1;";
+
+        BrokerPool pool = BrokerPool.getInstance();
+        try(final DBBroker broker = pool.getBroker()) {
+            // parse the query into the internal syntax tree
+            XQueryContext context = new XQueryContext(broker.getBrokerPool());
+            XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
+            XQueryParser xparser = new XQueryParser(lexer);
+            xparser.prolog();
+            if (xparser.foundErrors()) {
+                fail(xparser.getErrorMessage());
+                return;
+            }
+
+            XQueryAST ast = (XQueryAST) xparser.getAST();
+            XQueryTreeParser treeParser = new XQueryTreeParser(context);
+            PathExpr expr = new PathExpr(context);
+            treeParser.prolog(ast, expr);
+        }
+        catch(XPathException ex) {
+            assertEquals(ErrorCodes.XUST0032, ex.getErrorCode());
+        }
+    }
 }
