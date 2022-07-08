@@ -109,6 +109,7 @@ import static org.exist.Namespaces.XML_NS;
  *
  * @author <a href="mailto:wolfgang@exist-db.org">Wolfgang Meier</a>
  */
+
 public class XQueryContext implements BinaryValueManager, Context {
 
     private static final Logger LOG = LogManager.getLogger(XQueryContext.class);
@@ -419,6 +420,8 @@ public class XQueryContext implements BinaryValueManager, Context {
 
     private final Map<QName, DecimalFormat> staticDecimalFormats = new HashMap<>();
     private static final QName UNNAMED_DECIMAL_FORMAT = new QName("__UNNAMED__", Function.BUILTIN_FUNCTION_NS);
+
+    private RevalidationMode revalidationMode = RevalidationMode.LAX;
 
     public XQueryContext() {
         profiler = new Profiler(null);
@@ -3259,6 +3262,22 @@ public class XQueryContext implements BinaryValueManager, Context {
 
         binaryValueInstances.push(binaryValue);
     }
+
+    public enum RevalidationMode {
+        STRICT,
+        LAX,
+        SKIP
+    }
+
+    /**
+     * Revalidation mode controls the process by which type information
+     * is recovered for an updated document
+     */
+    public void setRevalidationMode(final RevalidationMode rev) {
+        this.revalidationMode = rev;
+    }
+
+    public RevalidationMode getRevalidationMode() { return this.revalidationMode; }
 
     /**
      * Cleanup Task which is responsible for relasing the streams
