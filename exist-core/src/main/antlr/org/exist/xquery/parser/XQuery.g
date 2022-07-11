@@ -723,6 +723,7 @@ exprSingle throws XPathException
 	| ( "typeswitch" LPAREN ) => typeswitchExpr
 	| ( "update" ( "replace" | "value" | "insert" | "delete" | "rename" )) => updateExpr
 	| ( "copy" DOLLAR) => copyModifyExpr
+	| ( "invoke" "updating" ) => dynamicUpdFunCall
 	| orExpr
 	;
 
@@ -1307,6 +1308,11 @@ postfixExpr throws XPathException
 		(QUESTION) => lookup
 	)*
 	;
+
+dynamicUpdFunCall throws XPathException
+:
+	"invoke"! "updating"^ primaryExpr ( argumentList )*
+    ;
 
 arrowExpr throws XPathException
 :
@@ -2279,6 +2285,8 @@ reservedKeywords returns [String name]
     "skip" { name = "skip"; }
     |
     "transform" { name = "transform"; }
+    |
+    "invoke" { name = "invoke"; }
 	;
 
 /**
