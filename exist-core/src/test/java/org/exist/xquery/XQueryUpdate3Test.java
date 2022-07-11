@@ -190,4 +190,66 @@ public class XQueryUpdate3Test
             }
         }
     }
+
+    @Test
+    public void transformWith() throws EXistException, RecognitionException, XPathException, TokenStreamException, PermissionDeniedException
+    {
+        String query = "$e transform with { $e + 1 }\n";
+
+        BrokerPool pool = BrokerPool.getInstance();
+        try(final DBBroker broker = pool.getBroker()) {
+            // parse the query into the internal syntax tree
+            XQueryContext context = new XQueryContext(broker.getBrokerPool());
+            XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
+            XQueryParser xparser = new XQueryParser(lexer);
+            xparser.expr();
+            if (xparser.foundErrors()) {
+                fail(xparser.getErrorMessage());
+                return;
+            }
+
+            XQueryAST ast = (XQueryAST) xparser.getAST();
+
+            XQueryTreeParser treeParser = new XQueryTreeParser(context);
+            PathExpr expr = new PathExpr(context);
+            Expression ret = treeParser.expr(ast, expr);
+            if (treeParser.foundErrors()) {
+                fail(treeParser.getErrorMessage());
+                return;
+            }
+
+            assertTrue(ret instanceof CopyModifyExpression);
+        }
+    }
+
+    @Test
+    public void copyModifyExprTest() throws EXistException, RecognitionException, XPathException, TokenStreamException, PermissionDeniedException
+    {
+        String query = "copy $je := $e\n" +
+                "   modify $je\n" +
+                "   return $je";
+
+        BrokerPool pool = BrokerPool.getInstance();
+        try(final DBBroker broker = pool.getBroker()) {
+            // parse the query into the internal syntax tree
+            XQueryContext context = new XQueryContext(broker.getBrokerPool());
+            XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
+            XQueryParser xparser = new XQueryParser(lexer);
+            xparser.expr();
+            if (xparser.foundErrors()) {
+                fail(xparser.getErrorMessage());
+                return;
+            }
+
+            XQueryAST ast = (XQueryAST) xparser.getAST();
+
+            XQueryTreeParser treeParser = new XQueryTreeParser(context);
+            PathExpr expr = new PathExpr(context);
+            treeParser.expr(ast, expr);
+            if (treeParser.foundErrors()) {
+                fail(treeParser.getErrorMessage());
+                return;
+            }
+        }
+    }
 }
