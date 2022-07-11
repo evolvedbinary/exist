@@ -34,8 +34,9 @@ public class DynamicFunctionCall extends AbstractExpression {
     private final Expression functionExpr;
     private final List<Expression> arguments;
     private final boolean isPartial;
-    
     private AnalyzeContextInfo cachedContextInfo;
+
+    private Category category = Category.SIMPLE;
 
     public DynamicFunctionCall(final XQueryContext context, final Expression fun, final List<Expression> args, final boolean partial) {
         super(context);
@@ -154,5 +155,15 @@ public class DynamicFunctionCall extends AbstractExpression {
         }
 
         return builder.toString();
+    }
+
+
+    @Override
+    public Category getCategory() {
+        return this.category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }

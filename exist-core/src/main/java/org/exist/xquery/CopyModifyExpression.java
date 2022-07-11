@@ -42,13 +42,9 @@ public class CopyModifyExpression extends PathExpr {
     protected Expression modifyExpr;
     protected Expression returnExpr;
 
-    public enum Category {
-        UPDATING,
-        SIMPLE
-    }
-
     // see https://www.w3.org/TR/xquery-update-30/#id-copy-modify for details
     public Category getCategory() {
+        // placeholder implementation
         return Category.SIMPLE;
     }
 
