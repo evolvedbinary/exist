@@ -180,6 +180,7 @@ imaginaryTokenDefinitions
 	PRAGMA
 	GTEQ
 	SEQUENCE
+	INSERT_TARGET
 	;
 
 // === XPointer ===
@@ -722,6 +723,7 @@ exprSingle throws XPathException
 	| ( "switch" LPAREN ) => switchExpr
 	| ( "typeswitch" LPAREN ) => typeswitchExpr
 	| ( "update" ( "replace" | "value" | "insert" | "delete" | "rename" )) => updateExpr
+	| ( "insert" ) => xqufInsertExpr
 	| ( "copy" DOLLAR) => copyModifyExpr
 	| ( "invoke" "updating" ) => dynamicUpdFunCall
 	| orExpr
@@ -756,6 +758,27 @@ insertExpr throws XPathException
 	"insert" exprSingle
 	( "into" | "preceding" | "following" ) exprSingle
 	;
+
+xqufInsertExpr throws XPathException
+:
+	"insert"^ ( "node"! | "nodes"! ) exprSingle
+	insertExprTargetChoice exprSingle
+	;
+
+insertExprTargetChoice throws XPathException
+{ String target = null; }
+:
+    (
+        ( ( "as"! ( "first"! { target = "first"; } | "last"! { target = "last"; } )  )? "into"! {
+            if (target == null)
+                target = "into";
+        } )
+        | "after"! { target = "after"; }
+        | "before"! { target = "before"; }
+    )
+    { #insertExprTargetChoice= #(#[INSERT_TARGET, target]); }
+
+;
 
 deleteExpr throws XPathException
 :
@@ -2287,6 +2310,16 @@ reservedKeywords returns [String name]
     "transform" { name = "transform"; }
     |
     "invoke" { name = "invoke"; }
+    |
+    "nodes" { name = "nodes"; }
+    |
+    "first" { name = "first"; }
+    |
+    "last" { name = "last"; }
+    |
+    "after" { name = "after"; }
+    |
+    "before" { name = "before"; }
 	;
 
 /**
