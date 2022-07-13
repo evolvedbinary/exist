@@ -724,6 +724,7 @@ exprSingle throws XPathException
 	| ( "typeswitch" LPAREN ) => typeswitchExpr
 	| ( "update" ( "replace" | "value" | "insert" | "delete" | "rename" )) => updateExpr
 	| ( "insert" ) => xqufInsertExpr
+	| ( "delete" ) => xqufDeleteExpr
 	| ( "copy" DOLLAR) => copyModifyExpr
 	| ( "invoke" "updating" ) => dynamicUpdFunCall
 	| orExpr
@@ -759,6 +760,16 @@ insertExpr throws XPathException
 	( "into" | "preceding" | "following" ) exprSingle
 	;
 
+deleteExpr throws XPathException
+:
+	"delete" exprSingle
+	;
+
+renameExpr throws XPathException
+:
+	"rename" exprSingle "as"! exprSingle
+	;
+
 xqufInsertExpr throws XPathException
 :
 	"insert"^ ( "node"! | "nodes"! ) exprSingle
@@ -780,14 +791,9 @@ insertExprTargetChoice throws XPathException
 
 ;
 
-deleteExpr throws XPathException
+xqufDeleteExpr throws XPathException
 :
-	"delete" exprSingle
-	;
-
-renameExpr throws XPathException
-:
-	"rename" exprSingle "as"! exprSingle
+	"delete"^ ( "node"! | "nodes"! ) exprSingle
 	;
 
 copyModifyExpr throws XPathException
