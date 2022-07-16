@@ -180,6 +180,11 @@ imaginaryTokenDefinitions
 	PRAGMA
 	GTEQ
 	SEQUENCE
+	TUMBLING_WINDOW
+	CURRENT_ITEM
+	PREVIOUS_ITEM
+	NEXT_ITEM
+	WINDOW_VARS
 	;
 
 // === XPointer ===
@@ -692,7 +697,7 @@ expr throws XPathException
 
 exprSingle throws XPathException
 :
-	( ( "for" | "let" ) DOLLAR ) => flworExpr
+	( ( "for" | "let" ) ("tumbling" | "sliding" | DOLLAR ) ) => flworExpr
 	| ( "try" LCURLY ) => tryCatchExpr
 	| ( ( "some" | "every" ) DOLLAR ) => quantifiedExpr
 	| ( "if" LPAREN ) => ifExpr
@@ -799,7 +804,9 @@ flworExpr throws XPathException
 
 initialClause throws XPathException
 :
-    ( forClause | letClause )
+    ( ( "for" DOLLAR ) => forClause
+    | ( "for" ( "tumbling" | "sliding" ) ) => windowClause
+    | letClause )
     ;
 
 intermediateClause throws XPathException
@@ -820,6 +827,11 @@ forClause throws XPathException
 letClause throws XPathException
 :
 	"let"^ letVarBinding ( COMMA! letVarBinding )*
+	;
+
+windowClause throws XPathException
+:
+	"for"! ("tumbling"|"sliding") "window"^ inVarBinding windowStartCondition ( windowEndCondition )?
 	;
 
 inVarBinding throws XPathException
@@ -845,6 +857,36 @@ allowingEmpty
 :
 	"allowing"! "empty"
 	;
+
+windowStartCondition throws XPathException
+:
+    "start"^ windowVars "when" exprSingle
+;
+
+windowEndCondition throws XPathException
+:
+    ( "only" )? "end"^ windowVars "when" exprSingle
+;
+
+windowVars throws XPathException
+{ String currentItemName = null, previousItemName = null, nextItemName = null;  }
+:
+    ( DOLLAR! currentItemName=eqName! )?
+    ( sp:positionalVar )?
+    ( "previous"! DOLLAR! previousItemName=eqName! )?
+    ( "next"! DOLLAR! nextItemName=eqName! )?
+    {
+        windowVars_AST = (org.exist.xquery.parser.XQueryAST)astFactory.create(WINDOW_VARS);
+        if (currentItemName != null)
+            windowVars_AST.addChild(astFactory.create(CURRENT_ITEM,currentItemName));
+        if (sp_AST != null)
+            windowVars_AST.addChild(sp_AST);
+        if (previousItemName != null)
+            windowVars_AST.addChild(astFactory.create(PREVIOUS_ITEM,previousItemName));
+        if (nextItemName != null)
+            windowVars_AST.addChild(astFactory.create(NEXT_ITEM,nextItemName));
+    }
+;
 
 letVarBinding throws XPathException
 { String varName; }
@@ -2224,6 +2266,22 @@ reservedKeywords returns [String name]
 	"map" { name = "map"; }
 	|
 	"array" { name = "array"; }
+	|
+	"tumbling" { name = "tumbling"; }
+	|
+    "window" { name = "window"; }
+    |
+    "start" { name = "start"; }
+    |
+    "end" { name = "end"; }
+    |
+    "only" { name = "only"; }
+    |
+    "previous" { name = "previous"; }
+    |
+    "next" { name = "next"; }
+    |
+    "sliding" { name = "sliding"; }
 	;
 
 /**
