@@ -228,6 +228,10 @@ public class ErrorCodes {
             "module has incorrect type");
     public static final ErrorCode FOQM0006 = new W3CErrorCode("FOQM0006", "No suitable XQuery processor available.");
 
+    /* XQuery 3.0 Update Facility https://www.w3.org/TR/xquery-update-30/#id-new-error-codes */
+    public static final ErrorCode XUST0032 = new W3CErrorCode("XUST0032", "It is a static error if an %updating or %simple annotation is used on a VarDecl.");
+    public static final ErrorCode XUST0003 = new W3CErrorCode("XUST0003", "It is a static error if a Prolog contains more than one revalidation declaration.");
+
     /* eXist specific XQuery and XPath errors
      *
      * Codes have the format [EX][XQ|XP][DY|SE|ST][nnnn]
