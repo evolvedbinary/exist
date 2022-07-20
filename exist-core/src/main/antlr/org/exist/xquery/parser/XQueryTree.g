@@ -1741,6 +1741,9 @@ throws PermissionDeniedException, EXistException, XPathException
 						case WHERE:
 								expr = new WhereClause(context, new DebuggableExpression(clause.inputSequence));
 								break;
+						case COUNT:
+						        expr = new CountClause(context, clause.varName);
+						        break;
             default:
                 expr= new ForExpr(context, clause.allowEmpty);
                 break;
