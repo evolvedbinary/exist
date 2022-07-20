@@ -2013,7 +2013,7 @@ throws PermissionDeniedException, EXistException, XPathException
                 FLWORClause expr;
                 switch (clause.type) {
                     case LET:
-                        expr= new LetExpr(context);
+                        expr = new LetExpr(context);
                         expr.setASTNode(expr_AST_in);
                         break;
                     case GROUPBY:
@@ -2028,8 +2028,11 @@ throws PermissionDeniedException, EXistException, XPathException
                     case WINDOW:
                         expr = new WindowExpr(context, clause.windowType, clause.windowConditions.get(0), clause.windowConditions.size() > 1 ? clause.windowConditions.get(1) : null);
                         break;
+                    case COUNT:
+                        expr = new CountClause(context, clause.varName);
+                        break;
                     default:
-                        expr= new ForExpr(context, clause.allowEmpty);
+                        expr = new ForExpr(context, clause.allowEmpty);
                         break;
                 }
                 expr.setASTNode(clause.ast);
