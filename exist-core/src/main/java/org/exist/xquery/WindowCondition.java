@@ -45,4 +45,29 @@ public class WindowCondition
                 + " next " + this.nextItem
                 + " when " + this.whenExpression.toString();
     }
+
+    public QName getCurrentItem()
+    {
+        return currentItem;
+    }
+
+    public QName getNextItem()
+    {
+        return nextItem;
+    }
+
+    public QName getPreviousItem()
+    {
+        return previousItem;
+    }
+
+    public String getPosVar()
+    {
+        return posVar;
+    }
+
+    public boolean getOnly()
+    {
+        return only;
+    }
 }
