@@ -1643,8 +1643,9 @@ throws PermissionDeniedException, EXistException, XPathException
                         QName nextItemName = null;
                         String windowStartPosVar = null;
             	    }
-            	    (
+            	    #(
                     	// WINDOW_VARS
+                    	WINDOW_VARS
                     	(
                     	    currentItem:CURRENT_ITEM
                     	    {
@@ -1715,8 +1716,9 @@ throws PermissionDeniedException, EXistException, XPathException
                                 only = true;
                             }
                         )?
-                        (
+                        #(
                             // WINDOW_VARS
+                            WINDOW_VARS
                            	(
                            	    endCurrentItem:CURRENT_ITEM
                            	    {
@@ -1740,7 +1742,7 @@ throws PermissionDeniedException, EXistException, XPathException
                                 {
                                     if (endPreviousItem != null && endPreviousItem.getText() != null) {
                                        try {
-                                            endPreviousItemName= QName.parse(staticContext, previousItem.getText());
+                                            endPreviousItemName= QName.parse(staticContext, endPreviousItem.getText());
                                        } catch (final IllegalQNameException iqe) {
                                            throw new XPathException(endPreviousItem.getLine(), endPreviousItem.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + endPreviousItem.getText());
                                        }
