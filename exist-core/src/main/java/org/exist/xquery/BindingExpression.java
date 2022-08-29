@@ -53,8 +53,8 @@ public abstract class BindingExpression extends AbstractFLWORClause implements R
 		super(context);
 	}
 
-	public void setVariable(final QName qname) {
-		varName = qname;
+	public void setVariable(final QName varName) {
+		this.varName = varName;
 	}
 
     public QName getVariable() {

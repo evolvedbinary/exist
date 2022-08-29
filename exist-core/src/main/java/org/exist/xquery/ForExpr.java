@@ -183,7 +183,7 @@ public class ForExpr extends BindingExpression {
                     processItem(var, i.nextItem(), in, resultSequence, at, p);
                 }
             }
-       } finally {
+        } finally {
             // restore the local variable stack 
             context.popLocalVariables(mark, resultSequence);
         }

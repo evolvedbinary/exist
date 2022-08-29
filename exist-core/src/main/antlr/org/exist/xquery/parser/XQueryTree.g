@@ -1413,9 +1413,9 @@ throws PermissionDeniedException, EXistException, XPathException
                 step=expr[inputSequence]
                 {
                     try {
-                    	clause.varName = QName.parse(staticContext, someVarName.getText(), null);
+                        clause.varName = QName.parse(staticContext, someVarName.getText(), null);
                     } catch (final IllegalQNameException iqe) {
-                    	throw new XPathException(someVarName.getLine(), someVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + someVarName.getText());
+                        throw new XPathException(someVarName.getLine(), someVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + someVarName.getText());
                     }
                     clause.inputSequence= inputSequence;
                     clauses.add(clause);
@@ -1468,9 +1468,9 @@ throws PermissionDeniedException, EXistException, XPathException
                 step=expr[inputSequence]
                 {
                     try {
-                    	clause.varName = QName.parse(staticContext, everyVarName.getText(), null);
+                        clause.varName = QName.parse(staticContext, everyVarName.getText(), null);
                     } catch (final IllegalQNameException iqe) {
-                    	throw new XPathException(everyVarName.getLine(), everyVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + everyVarName.getText());
+                        throw new XPathException(everyVarName.getLine(), everyVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + everyVarName.getText());
                     }
                     clause.inputSequence= inputSequence;
                     clauses.add(clause);
@@ -1610,19 +1610,19 @@ throws PermissionDeniedException, EXistException, XPathException
                             posVar:POSITIONAL_VAR
                             {
                                 try {
-                                	clause.posVar = distinctVariableNames.check(ErrorCodes.XQST0089, posVar, QName.parse(staticContext, posVar.getText(), null));
+                                    clause.posVar = distinctVariableNames.check(ErrorCodes.XQST0089, posVar, QName.parse(staticContext, posVar.getText(), null));
                                 } catch (final IllegalQNameException iqe) {
-                                	throw new XPathException(posVar.getLine(), posVar.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + posVar.getText());
+                                    throw new XPathException(posVar.getLine(), posVar.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + posVar.getText());
                                 }
                             }
                         )?
                         step=expr [inputSequence]
                         {
-                                try {
-                                	clause.varName = distinctVariableNames.check(ErrorCodes.XQST0089, varName, QName.parse(staticContext, varName.getText(), null));
-                                } catch (final IllegalQNameException iqe) {
-                                	throw new XPathException(varName.getLine(), varName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + varName.getText());
-                                }
+                            try {
+                                clause.varName = distinctVariableNames.check(ErrorCodes.XQST0089, varName, QName.parse(staticContext, varName.getText(), null));
+                            } catch (final IllegalQNameException iqe) {
+                                throw new XPathException(varName.getLine(), varName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + varName.getText());
+                            }
                             clause.inputSequence= inputSequence;
                             clauses.add(clause);
                         }
@@ -1652,9 +1652,9 @@ throws PermissionDeniedException, EXistException, XPathException
                         step=expr [inputSequence]
                         {
                             try {
-                            	clause.varName = QName.parse(staticContext, letVarName.getText(), null);
+                                clause.varName = QName.parse(staticContext, letVarName.getText(), null);
                             } catch (final IllegalQNameException iqe) {
-                            	throw new XPathException(letVarName.getLine(), letVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + letVarName.getText());
+                                throw new XPathException(letVarName.getLine(), letVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + letVarName.getText());
                             }
                             clause.inputSequence= inputSequence;
                             clauses.add(clause);
@@ -1857,7 +1857,7 @@ throws PermissionDeniedException, EXistException, XPathException
                     )
                 )?
             )
-			|
+            |
       // XQuery 3.0 group by clause
       #(
           gb:GROUP_BY
@@ -1999,7 +1999,11 @@ throws PermissionDeniedException, EXistException, XPathException
                 {
                     ForLetClause clause = new ForLetClause();
                     clause.ast = co;
-                    clause.varName = countVarName.getText();
+                    try {
+                        clause.varName = QName.parse(staticContext, countVarName.getText(), null);
+                    } catch (final IllegalQNameException iqe) {
+                        throw new XPathException(countVarName.getLine(), countVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + countVarName.getText());
+                    }
                     clause.type = FLWORClause.ClauseType.COUNT;
                     clause.inputSequence = null;
                     clauses.add(clause);
