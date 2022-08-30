@@ -224,7 +224,7 @@ public class XQuery {
             } else {
                 parser.xpath();
             }
-            
+
             if (parser.foundErrors()) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(parser.getErrorMessage());
@@ -233,7 +233,7 @@ public class XQuery {
                 if (lastException instanceof XPathException xpe) {
                     throw new StaticXQueryException(xpe.getColumn(), xpe.getLine(), parser.getErrorMessage(), xpe);
                 } else {
-            	throw new StaticXQueryException(context.getRootExpression(), parser.getErrorMessage());
+                    throw new StaticXQueryException(context.getRootExpression(), parser.getErrorMessage());
                 }
             }
 

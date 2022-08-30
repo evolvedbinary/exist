@@ -104,8 +104,8 @@ options {
 	}
 
 	public Exception getLastException() {
-        return (Exception) exceptions.get(exceptions.size() - 1);
-    }
+		return (Exception) exceptions.get(exceptions.size() - 1);
+	}
 
 	public String getXQDoc() {
 		return lexer.getXQDoc();
