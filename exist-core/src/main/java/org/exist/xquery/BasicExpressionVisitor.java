@@ -179,6 +179,11 @@ public class BasicExpressionVisitor implements ExpressionVisitor {
     }
 
     @Override
+    public void visitCountClause(CountClause count) {
+        //Nothing to do
+    }
+
+    @Override
     public void visitOrderByClause(OrderByClause orderBy) {
         // Nothing to do
     }
