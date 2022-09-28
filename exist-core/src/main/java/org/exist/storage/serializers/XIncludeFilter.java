@@ -56,6 +56,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
+import javax.annotation.Nullable;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
@@ -201,6 +202,11 @@ public class XIncludeFilter implements Receiver {
     @Override
     public void startDocument() throws SAXException {
         receiver.startDocument();
+    }
+
+    @Override
+    public void declaration(@Nullable final String version, @Nullable final String encoding, @Nullable final String standalone) throws SAXException {
+        receiver.declaration(version, encoding, standalone);
     }
 
     @Override

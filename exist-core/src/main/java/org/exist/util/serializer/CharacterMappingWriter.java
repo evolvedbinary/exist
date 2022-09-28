@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.exist.dom.QName;
 import org.exist.xquery.util.SerializerUtils;
 
+import javax.annotation.Nullable;
 import javax.xml.transform.TransformerException;
 import java.io.Writer;
 import java.nio.CharBuffer;
@@ -89,6 +90,11 @@ public class CharacterMappingWriter implements SerializerWriter {
     @Override
     public void endDocument() throws TransformerException {
         wrappedSerializerWriter.endDocument();
+    }
+
+    @Override
+    public void declaration(@Nullable final String version, @Nullable final String encoding, @Nullable final String standalone) throws TransformerException {
+        wrappedSerializerWriter.declaration(version, encoding, standalone);
     }
 
     @Override
