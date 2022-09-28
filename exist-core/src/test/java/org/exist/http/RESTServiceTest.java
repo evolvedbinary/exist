@@ -173,6 +173,13 @@ public class RESTServiceTest {
     private static final XmldbURI TEST_DOCTYPE_COLLECTION_URI = XmldbURI.ROOT_COLLECTION_URI.append("rest-test-doctype");
     private static final XmldbURI TEST_XML_DOC_WITH_DOCTYPE_URI = XmldbURI.create("test-with-doctype.xml");
 
+    private static final String XML_WITH_XMLDECL =
+            "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" standalone=\"yes\"?>\n" +
+            "<bookmap id=\"bookmap-2\"/>";
+
+    private static final XmldbURI TEST_XMLDECL_COLLECTION_URI = XmldbURI.ROOT_COLLECTION_URI.append("rest-test-xmldecl");
+    private static final XmldbURI TEST_XML_DOC_WITH_XMLDECL_URI = XmldbURI.create("test-with-xmldecl.xml");
+
     private static String credentials;
     private static String badCredentials;
 
@@ -198,6 +205,10 @@ public class RESTServiceTest {
 
     private static String getResourceWithDocTypeUri() {
         return getServerUri() + TEST_DOCTYPE_COLLECTION_URI.append(TEST_XML_DOC_WITH_DOCTYPE_URI);
+    }
+
+    private static String getResourceWithXmlDeclUri() {
+        return getServerUri() + TEST_XMLDECL_COLLECTION_URI.append(TEST_XML_DOC_WITH_XMLDECL_URI);
     }
 
     /* About path components of URIs:
@@ -279,6 +290,11 @@ public class RESTServiceTest {
 
             try (final Collection col = broker.getOrCreateCollection(transaction, TEST_DOCTYPE_COLLECTION_URI)) {
                 broker.storeDocument(transaction, TEST_XML_DOC_WITH_DOCTYPE_URI, new StringInputSource(XML_WITH_DOCTYPE), MimeType.XML_TYPE, col);
+                broker.saveCollection(transaction, col);
+            }
+
+            try (final Collection col = broker.getOrCreateCollection(transaction, TEST_XMLDECL_COLLECTION_URI)) {
+                broker.storeDocument(transaction, TEST_XML_DOC_WITH_XMLDECL_URI, new StringInputSource(XML_WITH_XMLDECL), MimeType.XML_TYPE, col);
                 broker.saveCollection(transaction, col);
             }
 
@@ -1297,6 +1313,82 @@ try {
             assertEquals(
                     "<!DOCTYPE bookmap PUBLIC \"-//OASIS//DTD DITA BookMap//EN\" \"bookmap.dtd\">\r\n" +
                     "<bookmap id=\"bookmap-1\"/>\r\n", response);
+
+        } finally {
+            connect.disconnect();
+        }
+    }
+
+    @Test
+    public void getXmlDeclDefault() throws IOException {
+        final HttpURLConnection connect = getConnection(getResourceWithXmlDeclUri());
+        try {
+            connect.setRequestMethod("GET");
+            connect.connect();
+
+            final int r = connect.getResponseCode();
+            assertEquals("Server returned response code " + r, HttpStatus.OK_200, r);
+            String contentType = connect.getContentType();
+            final int semicolon = contentType.indexOf(';');
+            if (semicolon > 0) {
+                contentType = contentType.substring(0, semicolon).trim();
+            }
+            assertEquals("Server returned content type " + contentType, "application/xml", contentType);
+
+            final String response = readResponse(connect.getInputStream());
+
+            assertEquals("<bookmap id=\"bookmap-2\"/>\r\n", response);
+
+        } finally {
+            connect.disconnect();
+        }
+    }
+
+    @Test
+    public void getXmlDeclNo() throws IOException {
+        final HttpURLConnection connect = getConnection(getResourceWithXmlDeclUri() + "?_omit-xml-declaration=no&_omit-original-xml-declaration=no");
+        try {
+            connect.setRequestMethod("GET");
+            connect.connect();
+
+            final int r = connect.getResponseCode();
+            assertEquals("Server returned response code " + r, HttpStatus.OK_200, r);
+            String contentType = connect.getContentType();
+            final int semicolon = contentType.indexOf(';');
+            if (semicolon > 0) {
+                contentType = contentType.substring(0, semicolon).trim();
+            }
+            assertEquals("Server returned content type " + contentType, "application/xml", contentType);
+
+            final String response = readResponse(connect.getInputStream());
+
+            assertEquals("<?xml version=\"1.1\" encoding=\"ISO-8859-1\" standalone=\"yes\"?>\r\n" +
+                    "<bookmap id=\"bookmap-2\"/>\r\n", response);
+
+        } finally {
+            connect.disconnect();
+        }
+    }
+
+    @Test
+    public void getXmlDeclYes() throws IOException {
+        final HttpURLConnection connect = getConnection(getResourceWithXmlDeclUri() + "?_omit-xml-declaration=yes&_omit-original-xml-declaration=yes");
+        try {
+            connect.setRequestMethod("GET");
+            connect.connect();
+
+            final int r = connect.getResponseCode();
+            assertEquals("Server returned response code " + r, HttpStatus.OK_200, r);
+            String contentType = connect.getContentType();
+            final int semicolon = contentType.indexOf(';');
+            if (semicolon > 0) {
+                contentType = contentType.substring(0, semicolon).trim();
+            }
+            assertEquals("Server returned content type " + contentType, "application/xml", contentType);
+
+            final String response = readResponse(connect.getInputStream());
+
+            assertEquals("<bookmap id=\"bookmap-2\"/>\r\n", response);
 
         } finally {
             connect.disconnect();
