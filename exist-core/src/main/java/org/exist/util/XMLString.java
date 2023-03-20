@@ -275,6 +275,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
         return this;
     }
 
+    @Override
     public char charAt(final int pos) {
         return value_[start_ + pos];
     }
