@@ -146,7 +146,7 @@
                 </exclusion>
                 <exclusion> <!-- conflicts -->
                     <groupId>net.sf.saxon</groupId>
-                    <artifactId>saxon</artifactId>
+                    <artifactId>Saxon-HE</artifactId>
                 </exclusion>
                 <exclusion> <!-- conflicts -->
                     <groupId>xerces</groupId>
