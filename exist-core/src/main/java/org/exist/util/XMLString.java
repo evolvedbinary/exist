@@ -26,6 +26,8 @@ import org.exist.xquery.Constants;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import javax.annotation.Nullable;
+
 /**
  * Faster string implementation which uses a CharArrayPool to
  * pool the backing char arrays.
@@ -42,7 +44,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
 
     public final static int DEFAULT_CAPACITY = 16;
 
-    private char[] value_ = null;
+    @Nullable private char[] value_ = null;
     private int start_ = 0;
     private int length_ = 0;
 
