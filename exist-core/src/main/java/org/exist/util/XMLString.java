@@ -74,31 +74,31 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
         length_ = other.length_;
     }
 
-    public final XMLString append(final String str) {
+    public XMLString append(final String str) {
         append(str.toCharArray());
         return this;
     }
 
-    public final XMLString append(final char[] ch) {
+    public XMLString append(final char[] ch) {
         append(ch, 0, ch.length);
         return this;
     }
 
-    public final XMLString append(final char[] ch, final int offset, final int len) {
+    public XMLString append(final char[] ch, final int offset, final int len) {
         ensureCapacity(length_ + len);
         System.arraycopy(ch, offset, value_, length_, len);
         length_ += len;
         return this;
     }
 
-    public final XMLString append(final XMLString other) {
+    public XMLString append(final XMLString other) {
         ensureCapacity(length_ + other.length_);
         System.arraycopy(other.value_, other.start_, value_, length_, other.length_);
         length_ += other.length_;
         return this;
     }
 
-    public final XMLString append(final char ch) {
+    public XMLString append(final char ch) {
         if (value_.length < length_ + 2) {
             ensureCapacity(length_ + 1);
         }
@@ -106,7 +106,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
         return this;
     }
 
-    public final void setData(final char[] ch, final int offset, final int len) {
+    public void setData(final char[] ch, final int offset, final int len) {
         length_ = 0;
         start_ = 0;
         append(ch, offset, len);
@@ -120,7 +120,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
      * @return may return `this` or a new XMLString. The caller should be prepared to cleanup one or
      *     two XMLString instances!
      */
-    public final XMLString normalize(final int mode) {
+    public XMLString normalize(final int mode) {
         if (length_ == 0) {
             return this;
         }
@@ -164,7 +164,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
         return this;
     }
 
-    public final boolean isWhitespaceOnly() {
+    public boolean isWhitespaceOnly() {
         if (length_ == 0) {
             return true;
         }
@@ -176,7 +176,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         if (value_ == null) {
             return "null";
         }
@@ -184,15 +184,15 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
     }
 
     @Override
-    public final int length() {
+    public int length() {
         return length_;
     }
 
-    public final int startOffset() {
+    public int startOffset() {
         return start_;
     }
 
-    public final String substring(final int start, final int count) {
+    public String substring(final int start, final int count) {
         if (start < 0 || count < 0 || start >= length_ || start + count > length_) {
             throw new StringIndexOutOfBoundsException();
         }
@@ -207,7 +207,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
      *
      * @return this after the deletion has been made
      */
-    public final XMLString delete(final int start, final int count) {
+    public XMLString delete(final int start, final int count) {
         System.arraycopy(value_, start + count + start_, value_, start, length_ - (start + count));
         start_ = 0;
         length_ = length_ - count;
@@ -222,7 +222,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
      *
      * @return this after the insertion has been made
      */
-    public final XMLString insert(final int offset, final String data) {
+    public XMLString insert(final int offset, final String data) {
         ensureCapacity(length_ + data.length());
         System.arraycopy(value_, offset, value_, offset + data.length(), length_ - offset);
         System.arraycopy(data.toCharArray(), 0, value_, offset, data.length());
@@ -240,7 +240,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
      *
      * @return this after the replacement has been made
      */
-    public final XMLString replace(final int offset, final int count, final String data) {
+    public XMLString replace(final int offset, final int count, final String data) {
         if (offset < 0 || count < 0 || offset >= length_ || offset + count > length_) {
             throw new StringIndexOutOfBoundsException();
         }
@@ -275,7 +275,7 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
         return this;
     }
 
-    public final char charAt(final int pos) {
+    public char charAt(final int pos) {
         return value_[start_ + pos];
     }
 
@@ -284,14 +284,14 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
     }
 
     @Override
-    public final CharSequence subSequence(final int start, final int end) {
+    public CharSequence subSequence(final int start, final int end) {
         return new String(value_, start_ + start, end - start);
     }
 
     /**
      * @return `this`
      */
-    public final XMLString transformToLower() {
+    public XMLString transformToLower() {
         final int end = start_ + length_;
         for (int i = start_; i < end; i++) {
             value_[i] = Character.toLowerCase(value_[i]);
@@ -299,20 +299,20 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
         return this;
     }
 
-    public final int UTF8Size() {
+    public int UTF8Size() {
         return UTF8.encoded(value_, start_, length_);
     }
 
-    public final byte[] UTF8Encode(final byte[] b, final int offset) {
+    public byte[] UTF8Encode(final byte[] b, final int offset) {
         return UTF8.encode(value_, start_, length_, b, offset);
     }
 
-    public final void toSAX(final ContentHandler ch) throws SAXException {
+    public void toSAX(final ContentHandler ch) throws SAXException {
         ch.characters(value_, start_, length_);
     }
 
     @Override
-    public final int compareTo(final CharSequence cs) {
+    public int compareTo(final CharSequence cs) {
         for (int i = 0; i < length_ && i < cs.length(); i++) {
             if (value_[start_ + i] < cs.charAt(i)) {
                 return Constants.INFERIOR;
@@ -391,14 +391,14 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
         }
     }
 
-    public final void reset() {
+    public void reset() {
         CharArrayPool.releaseCharArray(value_);
         value_ = null;
         start_ = 0;
         length_ = 0;
     }
 
-    public final void reuse() {
+    public void reuse() {
         start_ = 0;
         length_ = 0;
     }
