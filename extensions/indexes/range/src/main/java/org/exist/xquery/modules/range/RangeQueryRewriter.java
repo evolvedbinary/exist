@@ -70,6 +70,10 @@ public class RangeQueryRewriter extends QueryRewriter {
                     }
 
                     final Expression innerExpr = pred.getExpression(0);
+                    if (innerExpr instanceof InternalFunctionCall && ((InternalFunctionCall) innerExpr).getFunction() instanceof  Lookup) {
+                        // innerExpr was already optimized
+                        continue;
+                    }
                     final List<LocationStep> steps = getStepsToOptimize(innerExpr);
                     if (steps == null || steps.isEmpty()) {
                         // no optimizable steps found
