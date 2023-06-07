@@ -30,6 +30,10 @@ import org.exist.xquery.value.SequenceType;
 import org.exist.xquery.value.Type;
 import org.exist.xquery.value.ValueSequence;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Implements a count clause inside a FLWOR expressions.
  *
@@ -116,7 +120,7 @@ public class CountClause extends AbstractFLWORClause {
         }
         return true;
     }
-    private boolean isDescending(final OrderSpec[] orderSpecs) {
+    private boolean isDescending(final List<OrderSpec> orderSpecs) {
         for (final OrderSpec orderSpec : orderSpecs) {
             if ((orderSpec.getModifiers() & OrderSpec.DESCENDING_ORDER) == OrderSpec.DESCENDING_ORDER) {
                 return true;
@@ -197,8 +201,30 @@ public class CountClause extends AbstractFLWORClause {
         dumper.endIndent().nl();
     }
 
+    public String toString() {
+        final StringBuilder result = new StringBuilder();
+        result.append("count");
+        result.append(" ");
+        result.append(this.varName);
+        return result.toString();
+    }
+
     @Override
     public void accept(final ExpressionVisitor visitor) {
         visitor.visitCountClause(this);
+    }
+
+    @Override
+    public Set<QName> getTupleStreamVariables() {
+        final Set<QName> vars = new HashSet<>();
+
+        vars.add(varName);
+
+        final LocalVariable startVar = getStartVariable();
+        if (startVar != null) {
+            vars.add(startVar.getQName());
+        }
+
+        return vars;
     }
 }
