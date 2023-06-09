@@ -1655,7 +1655,7 @@ public class XQueryContext implements BinaryValueManager, Context {
                 return null;
             }
             // INOTE: expathrepo
-            final Module module = instantiateModule(namespaceURI, (Class<Module>) mClass, getConfiguration() != null ? (Map<String, Map<String, List<? extends Object>>>) getConfiguration().getProperty(PROPERTY_MODULE_PARAMETERS) : Collections.EMPTY_MAP);
+            final Module module = instantiateModule(namespaceURI, (Class<Module>) mClass, getConfiguration() != null ? (Map<String, Map<String, List<? extends Object>>>) getConfiguration().getProperty(PROPERTY_MODULE_PARAMETERS) : Collections.emptyMap());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("module {} loaded successfully.", module.getNamespaceURI());
             }
