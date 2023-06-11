@@ -203,9 +203,8 @@ public class CountClause extends AbstractFLWORClause {
 
     public String toString() {
         final StringBuilder result = new StringBuilder();
-        result.append("count");
-        result.append(" ");
-        result.append(this.varName);
+        result.append("count ");
+        result.append("$").append(this.varName);
         return result.toString();
     }
 
