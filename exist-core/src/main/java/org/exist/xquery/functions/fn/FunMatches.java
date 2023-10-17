@@ -30,6 +30,7 @@ import org.exist.dom.QName;
 import org.exist.storage.DBBroker;
 import org.exist.storage.ElementValue;
 import org.exist.storage.NativeValueIndex;
+import org.exist.util.XmlRegexFactory;
 import org.exist.util.PatternFactory;
 import org.exist.xquery.pragmas.Optimize;
 import org.exist.xquery.*;
@@ -41,7 +42,6 @@ import org.exist.xquery.value.Sequence;
 import org.exist.xquery.value.StringValue;
 import org.exist.xquery.value.Type;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -510,21 +510,11 @@ public final class FunMatches extends Function implements Optimizable, IndexUseR
         }
     }
 
-
     private boolean matchXmlRegex(final String string, final String pattern, final String flags) throws XPathException {
         try {
-            List<String> warnings = new ArrayList<>(1);
-            RegularExpression regex = context.getBroker().getBrokerPool()
-                    .getSaxonConfiguration()
-                    .compileRegularExpression(pattern, flags, "XP30", warnings);
-
-            for (final String warning : warnings) {
-                LOG.warn(warning);
-            }
-
+            RegularExpression regex = XmlRegexFactory.getInstance().getXmlRegex(context, pattern, flags);
             return regex.containsMatch(string);
-
-        } catch (final net.sf.saxon.trans.XPathException e) {
+        } catch (net.sf.saxon.trans.XPathException e) {
             throw new XPathException(this, ErrorCodes.FORX0001, "Invalid regular expression: " + e.getMessage(), new StringValue(this, pattern), e);
         }
     }
