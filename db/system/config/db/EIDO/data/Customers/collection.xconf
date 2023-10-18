@@ -3,7 +3,6 @@
         <range>
             <create qname="lang" type="xs:string"/>
             <create qname="type" type="xs:string"/>
-            <create qname="@docnum" type="xs:string"/>
             <create qname="@name" type="xs:string"/>
             <create qname="user_id" type="xs:string"/>
             <create qname="@full" type="xs:string"/>
@@ -11,6 +10,7 @@
             <create qname="from" type="xs:string"/>
             <create qname="to" type="xs:string"/>
             <create match="/customer/portal/specialty/document/@subscribed" type="xs:string"/>
+            <create match="/customer/portal/specialty/document/@docnum" type="xs:string"/>
         </range>
     </index>
     <validation mode="auto">
