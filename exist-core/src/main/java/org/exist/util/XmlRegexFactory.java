@@ -26,7 +26,7 @@ public class XmlRegexFactory {
 
     private static final XmlRegexFactory instance = new XmlRegexFactory();
 
-    private final Cache<Pair<String, String>, RegularExpression> cache;
+    private final Cache<Pair<String, String>, Entry> cache;
 
     private XmlRegexFactory() {
         this.cache = Caffeine.newBuilder()
@@ -38,22 +38,46 @@ public class XmlRegexFactory {
         return instance;
     }
 
-    public RegularExpression getXmlRegex(final XQueryContext context, final String pattern, final String flags) throws net.sf.saxon.trans.XPathException {
+    public Entry getXmlRegex(final XQueryContext context, final String pattern, final String flags) throws net.sf.saxon.trans.XPathException {
 
         final Pair<String, String> key = Pair.of(pattern, flags);
-        RegularExpression regex = cache.getIfPresent(key);
-        if (regex == null) {
-                List<String> warnings = new ArrayList<>(1);
-                regex = context.getBroker().getBrokerPool()
-                    .getSaxonConfiguration()
-                    .compileRegularExpression(pattern, flags, "XP30", warnings);
+        Entry entry = cache.getIfPresent(key);
+        if (entry == null) {
+            List<String> warnings = new ArrayList<>(1);
+            RegularExpression regex = context.getBroker().getBrokerPool()
+                .getSaxonConfiguration()
+                .compileRegularExpression(pattern, flags, "XP30", warnings);
 
-                for (final String warning : warnings) {
-                    LOG.warn(warning);
-                }
-                cache.put(key, regex);
+            for (final String warning : warnings) {
+                LOG.warn(warning);
+            }
+            entry = new Entry(regex);
+            cache.put(key, entry);
         }
 
-        return regex;
+        return entry;
+    }
+
+    /**
+     * Regular expression factory entry
+     *
+     * Caches the common check for match of ""
+     */
+    public static class Entry {
+        private final boolean matchesEmpty;
+        private final RegularExpression regex;
+
+        private Entry(final RegularExpression regex) {
+            this.matchesEmpty = regex.matches("");
+            this.regex = regex;
+        }
+
+        public RegularExpression getRegex() {
+            return this.regex;
+        }
+
+        public boolean matchesEmpty() {
+            return this.matchesEmpty;
+        }
     }
 }

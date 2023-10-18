@@ -512,7 +512,7 @@ public final class FunMatches extends Function implements Optimizable, IndexUseR
 
     private boolean matchXmlRegex(final String string, final String pattern, final String flags) throws XPathException {
         try {
-            RegularExpression regex = XmlRegexFactory.getInstance().getXmlRegex(context, pattern, flags);
+            RegularExpression regex = XmlRegexFactory.getInstance().getXmlRegex(context, pattern, flags).getRegex();
             return regex.containsMatch(string);
         } catch (net.sf.saxon.trans.XPathException e) {
             throw new XPathException(this, ErrorCodes.FORX0001, "Invalid regular expression: " + e.getMessage(), new StringValue(this, pattern), e);

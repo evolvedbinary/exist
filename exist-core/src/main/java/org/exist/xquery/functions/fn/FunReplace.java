@@ -112,8 +112,8 @@ public class FunReplace extends BasicFunction {
 			final String replace = args[2].itemAt(0).getStringValue();
 
 			try {
-				final RegularExpression regularExpression = XmlRegexFactory.getInstance().getXmlRegex(context, pattern, flags);
-				if (regularExpression.matches("")) {
+				final XmlRegexFactory.Entry regex = XmlRegexFactory.getInstance().getXmlRegex(context, pattern, flags);
+				if (regex.matchesEmpty()) {
 					throw new XPathException(this, ErrorCodes.FORX0003, "regular expression could match empty string");
 				}
 
@@ -123,7 +123,7 @@ public class FunReplace extends BasicFunction {
 						throw new XPathException(this, ErrorCodes.FORX0004, msg);
 					}
 				}
-				final CharSequence res = regularExpression.replace(string, replace);
+				final CharSequence res = regex.getRegex().replace(string, replace);
 				result = new StringValue(this, res.toString());
 
 			} catch (final net.sf.saxon.trans.XPathException e) {
