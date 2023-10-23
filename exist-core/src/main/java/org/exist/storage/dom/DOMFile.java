@@ -21,47 +21,19 @@
  */
 package org.exist.storage.dom;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.nio.file.Path;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.exist.storage.btree.Paged.Page.NO_PAGE;
-
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
+import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.exist.dom.persistent.AttrImpl;
-import org.exist.dom.persistent.DocumentImpl;
-import org.exist.dom.persistent.ElementImpl;
-import org.exist.dom.persistent.IStoredNode;
-import org.exist.dom.persistent.NodeProxy;
-import org.exist.dom.persistent.StoredNode;
+import org.exist.dom.persistent.*;
 import org.exist.numbering.DLNBase;
 import org.exist.numbering.NodeId;
-import org.exist.stax.ExtendedXMLStreamReader;
 import org.exist.stax.EmbeddedXMLStreamReader;
-import org.exist.storage.BrokerPool;
-import org.exist.storage.BufferStats;
-import org.exist.storage.DBBroker;
-import org.exist.storage.NativeBroker;
+import org.exist.stax.ExtendedXMLStreamReader;
+import org.exist.storage.*;
 import org.exist.storage.NativeBroker.NodeRef;
-import org.exist.storage.Signatures;
-import org.exist.storage.StorageAddress;
-import org.exist.storage.btree.BTree;
-import org.exist.storage.btree.BTreeCallback;
-import org.exist.storage.btree.BTreeException;
-import org.exist.storage.btree.DBException;
-import org.exist.storage.btree.IndexQuery;
-import org.exist.storage.btree.Value;
+import org.exist.storage.btree.*;
 import org.exist.storage.cache.Cache;
 import org.exist.storage.cache.Cacheable;
 import org.exist.storage.cache.LRUCache;
@@ -72,10 +44,25 @@ import org.exist.storage.journal.Lsn;
 import org.exist.storage.lock.LockManager;
 import org.exist.storage.txn.Txn;
 import org.exist.util.*;
-import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.exist.util.sanity.SanityCheck;
 import org.exist.xquery.TerminatedException;
 import org.w3c.dom.Node;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.file.Path;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.exist.storage.btree.Paged.Page.NO_PAGE;
 
 /**
  * This is the main storage for XML nodes. Nodes are stored in document order.
@@ -3048,6 +3035,8 @@ public class DOMFile extends BTree implements Lockable {
         // set to true if the page has been removed from the cache
         boolean invalidated = false;
 
+        AtomicInteger lastFound = new AtomicInteger(0);
+
         DOMPage() {
             this.page = createNewPage();
             this.pageHeader = (DOMFilePageHeader) page.getPageHeader();
@@ -3093,10 +3082,33 @@ public class DOMFile extends BTree implements Lockable {
             }
         }
 
+        /**
+         * Optimize scanning for records in a page
+         * Based on the fact that we are looking for the same thing again,
+         * Or we are looking for something after the last thing.
+         *
+         * So, start the scan where we left off before.
+         *
+         * @param targetId the tuple id we are looking for in the page
+         *
+         * @return a record describing the tuple, if we found it, otherwise null
+         */
         RecordPos findRecord(final short targetId) {
-            final int dlen = pageHeader.getDataLength();
+
+            int startScan = lastFound.get();
+            RecordPos rec = findRecordInRange(targetId, startScan, pageHeader.getDataLength());
+            if (rec == null) {
+                rec = findRecordInRange(targetId, 0, startScan);
+            }
+            if (rec != null) {
+                // start from here again next time; step back over the tuple id
+                lastFound.set(rec.offset - LENGTH_TID);
+            }
+            return rec;
+        }
+        RecordPos findRecordInRange(final short targetId, final int from, final int to) {
             RecordPos rec = null;
-            for (int pos = 0; pos < dlen;) {
+            for (int pos = from; pos < to;) {
                 final short tupleID = ByteConversion.byteToShort(data, pos);
                 pos += LENGTH_TID;
                 if (ItemId.matches(tupleID, targetId)) {
