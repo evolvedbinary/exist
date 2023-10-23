@@ -47,7 +47,10 @@ count(
                     (:
                     /portal[exists(specialty/document[ccu:comparable($docname-components, ccu:extract-components-from-docname(@docnum)) and @subscribed eq 'Y'])]
                     :)
+                    (:
                     /portal[exists(specialty/document[@docnum eq $docnum and @subscribed eq 'Y' and ccu:comparable($docname-components, ccu:extract-components-from-docname(@docnum))])]
+                    :)
+                    /portal[exists(specialty/document[@docnum eq $docnum and @subscribed eq 'Y'])]
                     
                     (: NOTE(AR) - alternative formulation of above - multiple predicates instead of 'and'. Tries to see if there is a difference between using one predicate with 'and' compared to using two predicates  :)
                     (:
