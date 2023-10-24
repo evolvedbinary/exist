@@ -51,6 +51,7 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -756,9 +757,14 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
         return UntypedAtomicValue.convertTo(getNodeValue(), requiredType, null);
     }
 
+    AtomicValue atomized;
+
     @Override
     public AtomicValue atomize() throws XPathException {
-        return new UntypedAtomicValue(getNodeValue());
+        if (atomized == null) {
+            atomized = new UntypedAtomicValue(this.getNodeValue());
+        }
+        return atomized;
     }
 
     @Override
