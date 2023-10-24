@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -51,6 +60,7 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -111,6 +121,11 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
     private QName qname = null;
 
     private final Expression expression;
+
+    /**
+     * Used to cache the result of {@link #atomize()}.
+     */
+    @Nullable private AtomicValue atomized = null;
 
     /**
      * Creates a new <code>NodeProxy</code> instance.
@@ -758,7 +773,10 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
 
     @Override
     public AtomicValue atomize() throws XPathException {
-        return new UntypedAtomicValue(getNodeValue());
+        if (atomized == null) {
+            atomized = new UntypedAtomicValue(getNodeValue());
+        }
+        return atomized;
     }
 
     @Override
