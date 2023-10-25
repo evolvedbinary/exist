@@ -80,17 +80,23 @@ import org.exist.util.ByteConversion;
 import org.exist.util.FileUtils;
 import org.exist.xquery.Constants;
 
-import java.lang.AutoCloseable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.RandomAccessFile;
+import java.io.UncheckedIOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *  Paged is a paged file foundation that is used by the BTree class and
@@ -134,7 +140,7 @@ public abstract class Paged implements AutoCloseable {
     private final byte[] tempPageData;
     private final byte[] tempHeaderData;
 
-    private RandomAccessFile raf;
+    private MappedByteBuffer mapped;
     private Path file;
     private boolean readOnly = false;
     private boolean fileIsNew = false;
@@ -166,11 +172,25 @@ public abstract class Paged implements AutoCloseable {
     @Override
     public void close() throws DBException {
         try {
-            raf.close();
-        } catch (final IOException e) {
+            mapped.force();
+            final MappedByteBuffer mappedBuffer = mapped;
+            mapped = null;
+            closeMapped(mappedBuffer);
+        } catch (final ReflectiveOperationException e) {
+            throw new DBException("An error occurred whilst closing a mapped file buffer': " + e.getMessage());
+        } catch (final UncheckedIOException e) {
             throw new DBException("An error occurred whilst closing the database file '"
-                    + file == null ? "null" : FileUtils.fileName(file) + "': " + e.getMessage());
+                    + (file == null ? "null" : FileUtils.fileName(file) + "': " + e.getMessage()));
         }
+    }
+
+    private void closeMapped(MappedByteBuffer mappedBuffer) throws ReflectiveOperationException {
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field unsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        unsafeField.setAccessible(true);
+        Object unsafe = unsafeField.get(null);
+        Method invokeCleaner = unsafeClass.getMethod("invokeCleaner", ByteBuffer.class);
+        invokeCleaner.invoke(unsafe, mappedBuffer);
     }
 
     /**
@@ -242,11 +262,16 @@ public abstract class Paged implements AutoCloseable {
      * @throws IOException if an I/O error occurs
      */
     public void backupToStream(final OutputStream os) throws IOException {
-        raf.seek(0);
-        final byte[] buf = new byte[4096];
-        int len;
-        while ((len = raf.read(buf)) > 0) {
+        final int limit = mapped.capacity();
+        final int block = 4096;
+        final byte[] buf = new byte[block];
+        int copied = 0;
+        mapped.position(0);
+        while (copied < limit) {
+            final int len = Math.min(limit - copied, block);
+            mapped.get(buf, 0, len);
             os.write(buf, 0, len);
+            copied += len;
         }
     }
 
@@ -393,6 +418,8 @@ public abstract class Paged implements AutoCloseable {
      * @param file The File
      *
      * @throws DBException if a database error occurs
+     *
+     * TODO (AP) - we need to perform multiple mappings for very large files
      */
     protected final void setFile(final Path file) throws DBException {
         this.file = file;
@@ -400,22 +427,42 @@ public abstract class Paged implements AutoCloseable {
         try {
             if ((!Files.exists(file)) || Files.isWritable(file)) {
                 try {
-                    raf = new RandomAccessFile(file.toFile(), "rw");
-                    final FileChannel channel = raf.getChannel();   
-                    final FileLock lock = channel.tryLock();
-                    if (lock == null) {
-                        readOnly = true;
+                    final Set<StandardOpenOption> options = new HashSet<StandardOpenOption>();
+                    options.add(StandardOpenOption.CREATE);
+                    options.add(StandardOpenOption.WRITE);
+                    options.add(StandardOpenOption.READ);
+                    try (FileChannel fc = FileChannel.open(file, options)) {
+                        if (fc.size() > Integer.MAX_VALUE) {
+                            throw new DBException("TODO (AP) file too big for temporary hack: " + file);
+                        }
+                        final FileLock lock = fc.tryLock();
+                        if (lock == null) {
+                            mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                            readOnly = true;
+                        } else {
+                            mapped = fc.map(FileChannel.MapMode.READ_WRITE, 0, fc.size());
+                        }
                     }
-                //TODO : who will release the lock ? -pb
+                    //TODO : who will release the lock ? -pb
                 } catch (final NonWritableChannelException e) {
                     //No way : switch to read-only mode
                     readOnly = true;
-                    raf = new RandomAccessFile(file.toFile(), "r");
+                    try (FileChannel fc = FileChannel.open(file, StandardOpenOption.READ)) {
+                        if (fc.size() > Integer.MAX_VALUE) {
+                            throw new DBException("FIXME file too big for temporary hack: " + file);
+                        }
+                        mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                    }
                     LOG.warn(e);
                 }
             } else {
                 readOnly = true;
-                raf = new RandomAccessFile(file.toFile(), "r");
+                try (FileChannel fc = FileChannel.open(file, StandardOpenOption.READ)) {
+                    if (fc.size() > Integer.MAX_VALUE) {
+                        throw new DBException("FIXME file too big for temporary hack: " + file);
+                    }
+                    mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                }
             }
         } catch (final IOException e) {
             LOG.warn("An exception occurred while opening database file {}: {}", file.toAbsolutePath().toString(), e.getMessage(), e);
@@ -711,8 +758,8 @@ public abstract class Paged implements AutoCloseable {
         }
 
         public final synchronized void read() throws IOException {
-            raf.seek(0);
-            raf.read(buf);
+            mapped.position(0);
+            mapped.get(buf);
             read(buf);
             calculateWorkSize();
             dirty = false;
@@ -848,9 +895,9 @@ public abstract class Paged implements AutoCloseable {
         }
 
         public final synchronized void write() throws IOException {
-            raf.seek(0);
+            mapped.position(0);
             write(buf);
-            raf.write(buf);
+            mapped.put(buf);
             dirty = false;
         }
     }
@@ -944,16 +991,16 @@ public abstract class Paged implements AutoCloseable {
 
         public byte[] read() throws IOException {
             try {
-                if (raf.getFilePointer() != offset) {
-                    raf.seek(offset);
+                if (mapped.position() != offset) {
+                    mapped.position((int)offset);
                 }
                 Arrays.fill(tempHeaderData, (byte)0);
-                raf.read(tempHeaderData);
+                mapped.get(tempHeaderData);
                 // Read in the header
                 header.read(tempHeaderData, 0);
                 // Read the working data
                 final byte[] workData = new byte[header.dataLen];
-                raf.read(workData);
+                mapped.get(workData);
                 return workData;
             } catch(final Exception e) {
                 LOG.warn("error while reading page: {}", getPageInfo(), e);
@@ -986,10 +1033,10 @@ public abstract class Paged implements AutoCloseable {
                     System.arraycopy(data, 0, tempPageData, fileHeader.pageHeaderSize, data.length);
                 }
             }
-            if (raf.getFilePointer() != offset) {
-                raf.seek(offset);
+            if (mapped.position() != offset) {
+                mapped.position((int)offset);
             }
-            raf.write(tempPageData);
+            mapped.put(tempPageData);
         }
 
         @Override
@@ -1009,11 +1056,11 @@ public abstract class Paged implements AutoCloseable {
         }
 
         public void dumpPage() throws IOException {
-            if (raf.getFilePointer() != offset) {
-                raf.seek(offset);
+            if (mapped.position() != offset) {
+                mapped.position((int)offset);
             }
             final byte[] data = new byte[fileHeader.pageSize];
-            raf.read(data);
+            mapped.get(data);
             LOG.debug("Contents of page {}: {}", pageNum, hexDump(data));
         }
     }
