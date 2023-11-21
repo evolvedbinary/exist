@@ -320,6 +320,10 @@ public class XMLWriter implements SerializerWriter {
         }
     }
 
+
+    //Fixed size temporary hack
+    final static ThreadLocal<char[]> attrBufLocal = ThreadLocal.withInitial(() -> new char[1024]);
+
     public void attribute(String qname, CharSequence value) throws TransformerException {
         try {
             if(!tagIsOpen) {
@@ -328,11 +332,19 @@ public class XMLWriter implements SerializerWriter {
                     // throw new TransformerException("Found an attribute outside an
                     // element");
             }
-            writer.write(' ');
-            writer.write(qname);
-            writer.write("=\"");
-            writeChars(value, true);
-            writer.write('"');
+            int pos = 0;
+            final char[] attrBuf = attrBufLocal.get();
+            attrBuf[pos++] = ' ';
+            for (int i = 0; i < qname.length(); i++) {
+                attrBuf[pos++] = qname.charAt(i);
+            }
+            attrBuf[pos++] = '=';
+            attrBuf[pos++] = '\"';
+            for (int i = 0; i < value.length(); i++) {
+                attrBuf[pos++] = value.charAt(i);
+            }
+            attrBuf[pos++] = '"';
+            writer.write(attrBuf, 0, pos);
         } catch(final IOException ioe) {
             throw new TransformerException(ioe.getMessage(), ioe);
         }
