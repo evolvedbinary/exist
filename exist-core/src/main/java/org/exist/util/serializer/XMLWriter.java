@@ -28,6 +28,7 @@ import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerException;
 
 import com.evolvedbinary.j8fu.lazy.LazyVal;
+import org.apache.commons.lang3.StringUtils;
 import org.exist.dom.QName;
 import org.exist.storage.serializers.EXistOutputKeys;
 import org.exist.util.CharSlice;
@@ -281,6 +282,9 @@ public class XMLWriter implements SerializerWriter {
         }
     }
 
+    final static char[] xmlnsPrefix = " xmlns:".toCharArray();
+    final static char[] xmlnsNoPrefix = " xmlns=\"".toCharArray();
+
     public void namespace(final String prefix, final String nsURI) throws TransformerException {
         if((nsURI == null) && (prefix == null || prefix.isEmpty())) {
             return;
@@ -292,21 +296,22 @@ public class XMLWriter implements SerializerWriter {
             }
 
             if(prefix != null && !prefix.isEmpty()) {
-                writer.write(' ');
-                writer.write("xmlns");
-                writer.write(':');
+                writer.write(xmlnsPrefix);
                 writer.write(prefix);
                 writer.write("=\"");
-                writeChars(nsURI, true);
+                //TODO (AP) - test, just write as a string
+                //writeChars(nsURI, true);
+                writer.write(nsURI);
                 writer.write('"');
             } else {
                 if(defaultNamespace.equals(nsURI)) {
                     return;	
                 }
-                writer.write(' ');
-                writer.write("xmlns");
+                writer.write(xmlnsNoPrefix);
                 writer.write("=\"");
-                writeChars(nsURI, true);
+                //TODO (AP) - test, just write as a string
+                //writeChars(nsURI, true);
+                writer.write(nsURI);
                 writer.write('"');
                 defaultNamespace= nsURI;				
             }
@@ -348,7 +353,9 @@ public class XMLWriter implements SerializerWriter {
             }
             writer.write(qname.getLocalPart());
             writer.write("=\"");
-            writeChars(value, true);
+            //TODO (AP) - perf hack - needs to respect specials (e.g. precompute)
+            //writeChars(value, true);
+            writer.append(value);
             writer.write('"');
         } catch(final IOException ioe) {
             throw new TransformerException(ioe.getMessage(), ioe);
@@ -364,7 +371,7 @@ public class XMLWriter implements SerializerWriter {
             if(tagIsOpen) {
                 closeStartTag(false);
             }
-            writeChars(chars, false);
+            writer.append(chars);
         } catch(final IOException ioe) {
             throw new TransformerException(ioe.getMessage(), ioe);
         }
