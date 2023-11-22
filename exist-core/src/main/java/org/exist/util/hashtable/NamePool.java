@@ -40,16 +40,17 @@ public class NamePool {
         pool = new ConcurrentHashMap<>();
     }
 
+    private String internNonNull(final String s) {
+        return s == null ? null : s.intern();
+    }
+
     public QName getSharedName(final QName name) {
-        final WrappedQName wrapped = new WrappedQName(name);
-        final QName sharedName = pool.putIfAbsent(wrapped, name);
-        if (sharedName == null) {
-            // The name was not in the pool, return the name just added.
-            return name;
-        } else {
-            // The name was in the pool, return the shared name.
-            return sharedName;
-        }
+        return pool.computeIfAbsent(new WrappedQName(name), _wrapped ->
+            new QName(
+                internNonNull(name.getLocalPart()),
+                internNonNull(name.getNamespaceURI()),
+                internNonNull(name.getPrefix()),
+                name.getNameType()));
     }
 
     /**

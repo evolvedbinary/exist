@@ -53,7 +53,7 @@ public class AttrList {
 		ensureCapacity();
         nodeIds[size] = nodeId;
 		names[size] = name;
-		values[size] = value;
+		values[size] = value.intern();
         type[size] = attrType;
         size++;
 	}
