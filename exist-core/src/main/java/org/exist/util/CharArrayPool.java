@@ -23,8 +23,6 @@ package org.exist.util;
 
 import net.jcip.annotations.ThreadSafe;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * A pool for char arrays.
  *
@@ -38,50 +36,42 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CharArrayPool {
 
     private static final int POOL_SIZE = 128;
-    private static final int MAX = 128;
-    private static final ThreadLocal<char[][]> pools_ = new PoolThreadLocal();
-    private static final AtomicInteger slot_ = new AtomicInteger();
+    private static final int MIN_SIZE = 8;
+
+    private static final ThreadLocal<PoolContent> pools_ = new ThreadLocal<PoolContent>() {
+        @Override
+        protected PoolContent initialValue() {
+            return new PoolContent();
+        }
+    };
 
     private CharArrayPool() {
     }
 
     public static char[] getCharArray(final int size) {
-        if (MAX > size) {
-            final char[][] pool = pools_.get();
-            for (int i = 0; i < pool.length; i++) {
-                if (pool[i] != null && pool[i].length == size) {
-                    final char[] b = pool[i];
-                    pool[i] = null;
-                    return b;
-                }
+        final PoolContent poolContent = pools_.get();
+        if (POOL_SIZE > size) {
+            final int alloc = Math.max(size, MIN_SIZE);
+            final char[][] pool = poolContent.pool;
+            if (pool[alloc] != null) {
+                final char[] b = pools_.get().pool[alloc];
+                pool[alloc] = null;
+                return b;
             }
         }
-        return new char[size];
+        return new char[Math.max(size, MIN_SIZE)];
     }
 
     public static void releaseCharArray(final char[] b) {
-        if (b == null || b.length > MAX) {
+        if (b == null || b.length > POOL_SIZE) {
             return;
         }
-        final char[][] pool = pools_.get();
-        for (int i = 0; i < pool.length; i++) {
-            if (pool[i] == null) {
-                pool[i] = b;
-                return;
-            }
-        }
+        final PoolContent poolContent = pools_.get();
+        poolContent.pool[b.length] = b;
+     }
 
-        int s = slot_.incrementAndGet();
-        if (s < 0) {
-            s = -s;
-        }
-        pool[s % pool.length] = b;
+    private static class PoolContent {
+        final char[][] pool = new char[POOL_SIZE][];
     }
 
-    private static final class PoolThreadLocal extends ThreadLocal<char[][]> {
-        @Override
-        protected char[][] initialValue() {
-            return new char[POOL_SIZE][];
-        }
-    }
 }
