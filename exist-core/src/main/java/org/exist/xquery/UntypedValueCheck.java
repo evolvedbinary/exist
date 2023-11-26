@@ -27,6 +27,8 @@ import org.exist.xquery.util.Error;
 import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.*;
 
+import java.util.WeakHashMap;
+
 /**
  * Runtime-value check for untyped atomic values. Converts a value to the
  * required type if possible.
@@ -39,7 +41,9 @@ public class UntypedValueCheck extends AbstractExpression {
 	private final int requiredType;
 	private final Error error;
     private final boolean atomize;
-    
+
+    private final WeakHashMap<Sequence, Sequence> converted = new WeakHashMap<>(1);
+
     public UntypedValueCheck(XQueryContext context, int requiredType) {
         this(context, requiredType, (Expression) null);
     }
@@ -85,9 +89,14 @@ public class UntypedValueCheck extends AbstractExpression {
             if (contextItem != null)
                 {context.getProfiler().message(this, Profiler.START_SEQUENCES, "CONTEXT ITEM", contextItem.toSequence());}
         }
-        
-		final Sequence seq = expression.eval(contextSequence, contextItem);
-        Sequence result = null;
+
+        final Sequence eval = expression.eval(contextSequence, contextItem);
+        Sequence result = converted.get(eval);
+        if (result != null) {
+            return result;
+        }
+
+        final Sequence seq = expression.eval(contextSequence, contextItem);
         if (seq.hasOne()) {
             final Item item = convert(seq.itemAt(0));
             if (item != null)
@@ -101,6 +110,7 @@ public class UntypedValueCheck extends AbstractExpression {
                 result.add(item);
             }
         }
+        converted.put(eval, result);
 
         if (context.getProfiler().isEnabled()) 
             {context.getProfiler().end(this, "", result);}

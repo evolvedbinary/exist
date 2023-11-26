@@ -26,6 +26,9 @@ import org.exist.dom.persistent.NodeProxy;
 import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.*;
 
+import java.util.Optional;
+import java.util.WeakHashMap;
+
 /**
  * Check a function parameter type at runtime.
  *  
@@ -35,6 +38,8 @@ public class DynamicTypeCheck extends AbstractExpression {
 
 	final private Expression expression;
 	final private int requiredType;
+
+    private final WeakHashMap<Sequence, Optional<Sequence>> checkedCache = new WeakHashMap<>(1);
 	
 	public DynamicTypeCheck(XQueryContext context, int requiredType, Expression expr) {
 		super(context);
@@ -58,20 +63,26 @@ public class DynamicTypeCheck extends AbstractExpression {
 		Item contextItem)
 		throws XPathException {
 		final Sequence seq = expression.eval(contextSequence, contextItem);
+        Optional<Sequence> cached = checkedCache.get(seq);
+        if (cached != null) {
+            return cached.orElse(seq);
+        }
+
         Sequence result = null;
         if (Type.subTypeOf(requiredType, Type.ATOMIC) && !Type.subTypeOf(seq.getItemType(), requiredType)) {
             result = new ValueSequence();
         }
-        if (seq.hasOne())
-            {check(result, seq.itemAt(0));}
-        else if (!seq.isEmpty()) {
-            for(final SequenceIterator i = seq.iterate(); i.hasNext(); ) {
+        if (seq.hasOne()) {
+            check(result, seq.itemAt(0));
+        } else if (!seq.isEmpty()) {
+            for (final SequenceIterator i = seq.iterate(); i.hasNext(); ) {
                 final Item item = i.nextItem();
                 check(result, item);
             }
         }
-		return result == null ? seq : result;
-	}
+        checkedCache.put(seq, result != null ? Optional.of(result) : Optional.empty());
+        return result != null ? result : seq;
+ 	}
 
     private void check(Sequence result, Item item) throws XPathException {
         int type = item.getType();

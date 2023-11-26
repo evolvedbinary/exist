@@ -30,12 +30,16 @@ import org.exist.xquery.value.SequenceIterator;
 import org.exist.xquery.value.Type;
 import org.exist.xquery.value.ValueSequence;
 
+import java.util.WeakHashMap;
+
 /**
  * @author wolf
  */
 public class Atomize extends AbstractExpression {
 
 	private final Expression expression;
+
+    private final WeakHashMap<Sequence, Sequence> atomized = new WeakHashMap<>(1);
 	
 	public Atomize(XQueryContext context, Expression expr) {
 		super(context);
@@ -62,8 +66,13 @@ public class Atomize extends AbstractExpression {
             if (contextItem != null)
                 {context.getProfiler().message(this, Profiler.START_SEQUENCES, "CONTEXT ITEM", contextItem.toSequence());}
         }        
-		
-        final Sequence result = atomize(expression.eval(contextSequence, contextItem));
+
+        final Sequence eval = expression.eval(contextSequence, contextItem);
+        Sequence result = atomized.get(eval);
+        if (result == null) {
+            result = atomize(eval);
+            atomized.put(eval, result);
+        }
 
         if (context.getProfiler().isEnabled())           
             {context.getProfiler().end(this, "", result);}   
