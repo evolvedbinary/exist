@@ -52,19 +52,19 @@ public class URIResolution {
      * @throws URISyntaxException if resolution is not possible
      */
     static AnyURIValue resolveURI(final AnyURIValue relative, final AnyURIValue base) throws URISyntaxException, XPathException {
-        var relativeURI = new URI(relative.getStringValue());
+        final URI relativeURI = new URI(relative.getStringValue());
         if (relativeURI.isAbsolute()) {
             return relative;
         }
-        var baseURI = new URI(base.getStringValue() );
+        final URI baseURI = new URI(base.getStringValue());
         if (!baseURI.isAbsolute()) {
             return relative;
         }
         try {
-            var xBase = XmldbURI.xmldbUriFor(baseURI);
-            var resolved = xBase.getURI().resolve(relativeURI);
+            final XmldbURI xBase = XmldbURI.xmldbUriFor(baseURI);
+            final URI resolved = xBase.getURI().resolve(relativeURI);
             return new AnyURIValue(XmldbURI.XMLDB_URI_PREFIX + resolved);
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             return new AnyURIValue(baseURI.resolve(relativeURI));
         }
     }
@@ -74,7 +74,7 @@ public class URIResolution {
         private final XQueryContext xQueryContext;
         private final Expression containingExpression;
 
-        public CompileTimeURIResolver(XQueryContext xQueryContext, Expression containingExpression) {
+        public CompileTimeURIResolver(final XQueryContext xQueryContext, final Expression containingExpression) {
             this.xQueryContext = xQueryContext;
             this.containingExpression = containingExpression;
         }
@@ -85,12 +85,12 @@ public class URIResolution {
             try {
                 final AnyURIValue baseURI = new AnyURIValue(base);
                 final AnyURIValue hrefURI = new AnyURIValue(href);
-                var resolved = resolveURI(hrefURI, baseURI);
+                final AnyURIValue resolved = resolveURI(hrefURI, baseURI);
                 return resolveDocument(resolved.getStringValue());
-            } catch (URISyntaxException e) {
+            } catch (final URISyntaxException e) {
                 throw new TransformerException(
                     "Failed to resolve " + href + " against " + base, e);
-            } catch (XPathException e) {
+            } catch (final XPathException e) {
                 throw new TransformerException(
                     "Failed to find document as result of resolving " + href + " against " + base, e);
             }
@@ -108,7 +108,7 @@ public class URIResolution {
      * @return the resolved stylesheet as a source
      * @throws org.exist.xquery.XPathException if the item does not exist, or is not a document
      */
-    static Source resolveDocument(final String location, final XQueryContext xQueryContext, Expression containingExpression) throws XPathException {
+    static Source resolveDocument(final String location, final XQueryContext xQueryContext, final Expression containingExpression) throws XPathException {
 
         final Sequence document;
         try {
