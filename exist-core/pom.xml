@@ -777,9 +777,12 @@
                                 <exclude>src/main/java/org/exist/xquery/Materializable.java</exclude>
                                 <exclude>src/test/java/org/exist/xquery/XQueryContextAttributesTest.java</exclude>
                                 <exclude>src/main/java/org/exist/xquery/functions/map/MapType.java</exclude>
+                                <exclude>src/test/java/org/exist/xquery/functions/fn/transform/AbstractTransformBaseUriTest.java</exclude>
                                 <exclude>src/test/java/org/exist/xquery/functions/fn/transform/AbstractTransformIncludeTest.java</exclude>
+                                <exclude>src/test/java/org/exist/xquery/functions/fn/transform/FunTransformBaseUriTest.java</exclude>
                                 <exclude>src/test/java/org/exist/xquery/functions/fn/transform/FunTransformIncludeTest.java</exclude>
                                 <exclude>src/test/java/org/exist/xquery/functions/session/AbstractSessionTest.java</exclude>
+                                <exclude>src/test/java/org/exist/xquery/functions/transform/TransformBaseUriTest.java</exclude>
                                 <exclude>src/test/java/org/exist/xquery/functions/transform/TransformIncludeTest.java</exclude>
                                 <exclude>src/test/java/org/exist/xquery/functions/xmldb/AbstractXMLDBTest.java</exclude>
                                 <exclude>src/test/java/org/exist/xquery/functions/session/AttributeTest.java</exclude>
@@ -947,9 +950,12 @@ The original license statement is also included below.]]></preamble>
                                 <include>src/main/java/org/exist/xquery/Materializable.java</include>
                                 <include>src/test/java/org/exist/xquery/XQueryContextAttributesTest.java</include>
                                 <include>src/main/java/org/exist/xquery/functions/map/MapType.java</include>
+                                <include>src/test/java/org/exist/xquery/functions/fn/transform/AbstractTransformBaseUriTest.java</include>
                                 <include>src/test/java/org/exist/xquery/functions/fn/transform/AbstractTransformIncludeTest.java</include>
+                                <include>src/test/java/org/exist/xquery/functions/fn/transform/FunTransformBaseUriTest.java</include>
                                 <include>src/test/java/org/exist/xquery/functions/fn/transform/FunTransformIncludeTest.java</include>
                                 <include>src/test/java/org/exist/xquery/functions/session/AbstractSessionTest.java</include>
+                                <include>src/test/java/org/exist/xquery/functions/transform/TransformBaseUriTest.java</include>
                                 <include>src/test/java/org/exist/xquery/functions/transform/TransformIncludeTest.java</include>
                                 <include>src/test/java/org/exist/xquery/functions/xmldb/AbstractXMLDBTest.java</include>
                                 <include>src/test/java/org/exist/xquery/functions/session/AttributeTest.java</include>
