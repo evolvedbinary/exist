@@ -256,7 +256,7 @@ public class Transform {
         Throwable cause = e;
         while (cause != null) {
             if (cause instanceof XPathException) {
-                return new XPathException(fnTransform, ((XPathException) cause).getErrorCode(), prefix + cause.getMessage());
+                return new XPathException(fnTransform, ((XPathException) cause).getErrorCode(), prefix + cause.getMessage(), cause.getCause());
             }
             cause = cause.getCause();
         }
@@ -268,15 +268,15 @@ public class Transform {
                 if (from != null) {
                     final QName errorCodeQName = new QName(from.getLocalPart(), from.getURI(), from.getPrefix());
                     final ErrorCodes.ErrorCode errorCode = new ErrorCodes.ErrorCode(errorCodeQName, cause.getMessage());
-                    return new XPathException(fnTransform, errorCode, prefix + cause.getMessage());
+                    return new XPathException(fnTransform, errorCode, prefix + cause.getMessage(), cause);
                 } else {
-                    return new XPathException(fnTransform, defaultErrorCode, prefix + cause.getMessage());
+                    return new XPathException(fnTransform, defaultErrorCode, prefix + cause.getMessage(), cause);
                 }
             }
             cause = cause.getCause();
         }
 
-        return new XPathException(fnTransform, defaultErrorCode, prefix + e.getMessage());
+        return new XPathException(fnTransform, defaultErrorCode, prefix + e.getMessage(), e);
     }
 
     /**
