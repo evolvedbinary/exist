@@ -133,20 +133,123 @@ public class LockTable {
         this.traceStackDepth = traceStackDepth;
     }
 
-    public void attempt(final long groupId, final String id, final LockType lockType, final LockMode mode) {
-        event(Attempt, groupId, id, lockType, mode);
+    public void attempt(final long groupId, final String id, final LockType lockType, final LockMode lockMode) {
+        //event(Attempt, groupId, id, lockType, lockMode);
+
+        if(disableEvents) {
+            return;
+        }
+
+        final long timestamp = System.nanoTime();
+        final Thread currentThread = Thread.currentThread();
+
+        Entry entry = attempting.get(currentThread);
+        if (entry == null) {
+            // happens once per thread!
+            entry = new Entry();
+            attempting.put(currentThread, entry);
+        }
+
+        entry.id = id;
+        entry.lockType = lockType;
+        entry.lockMode = lockMode;
+        entry.owner = currentThread.getName();
+        if(traceStackDepth == 0) {
+            entry.stackTraces = null;
+        } else {
+            entry.stackTraces = new ArrayList<>();
+            entry.stackTraces.add(getStackTrace(currentThread));
+        }
+        // write count last to ensure reader-thread visibility of above fields
+        entry.count = 1;
+
+        notifyListeners(Attempt, timestamp, groupId, entry);
     }
 
     public void attemptFailed(final long groupId, final String id, final LockType lockType, final LockMode mode) {
-        event(AttemptFailed, groupId, id, lockType, mode);
+        //event(AttemptFailed, groupId, id, lockType, mode);
+
+        if(disableEvents) {
+            return;
+        }
+
+        final long timestamp = System.nanoTime();
+        final Thread currentThread = Thread.currentThread();
+
+        final Entry attemptFailedEntry = attempting.get(currentThread);
+        if (attemptFailedEntry == null || attemptFailedEntry.count == 0) {
+            LOG.error("No entry found when trying to remove failed `attempt` for: id={}, thread={}", id, currentThread.getName());
+            return;
+        }
+
+        // mark attempt as unused
+        attemptFailedEntry.count = 0;
+
+        notifyListeners(AttemptFailed, timestamp, groupId, attemptFailedEntry);
     }
 
     public void acquired(final long groupId, final String id, final LockType lockType, final LockMode mode) {
-        event(Acquired, groupId, id, lockType, mode);
+        //event(Acquired, groupId, id, lockType, mode);
+
+        if(disableEvents) {
+            return;
+        }
+
+        final long timestamp = System.nanoTime();
+        final Thread currentThread = Thread.currentThread();
+
+        final Entry attemptEntry = attempting.get(currentThread);
+        if (attemptEntry == null || attemptEntry.count == 0) {
+            LOG.error("No entry found when trying to remove `attempt` to promote to `acquired` for: id={}, thread={}", id, currentThread.getName());
+
+            return;
+        }
+
+        // we now either add or merge the `attemptEntry` with the `acquired` table
+        Entries acquiredEntries = acquired.get(currentThread);
+
+        if (acquiredEntries == null) {
+            final Entry acquiredEntry = new Entry(attemptEntry);
+
+            acquiredEntries = new Entries(acquiredEntry);
+            acquired.put(currentThread, acquiredEntries);
+
+            notifyListeners(Acquired, timestamp, groupId, acquiredEntry);
+
+        } else {
+
+            final Entry acquiredEntry = acquiredEntries.merge(attemptEntry);
+            notifyListeners(Acquired, timestamp, groupId, acquiredEntry);
+        }
+
+        // mark attempt as unused
+        attemptEntry.count = 0;
+
     }
 
-    public void released(final long groupId, final String id, final LockType lockType, final LockMode mode) {
-        event(Released, groupId, id, lockType, mode);
+    public void released(final long groupId, final String id, final LockType lockType, final LockMode lockMode) {
+        //event(Released, groupId, id, lockType, mode);
+
+        if(disableEvents) {
+            return;
+        }
+
+        final long timestamp = System.nanoTime();
+        final Thread currentThread = Thread.currentThread();
+
+        final Entries entries = acquired.get(currentThread);
+        if (entries == null) {
+            LOG.error("No entries found when trying to `release` for: id={}, thread={}", id, currentThread.getName());
+            return;
+        }
+
+        final Entry releasedEntry = entries.unmerge(id, lockType, lockMode);
+        if (releasedEntry == null) {
+            LOG.error("Unable to unmerge entry for `release`: id={}, threadName={}", id, currentThread.getName());
+            return;
+        }
+
+        notifyListeners(Released, timestamp, groupId, releasedEntry);
     }
 
     private void event(final LockEventType lockEventType, final long groupId, final String id, final LockType lockType, final LockMode lockMode) {
