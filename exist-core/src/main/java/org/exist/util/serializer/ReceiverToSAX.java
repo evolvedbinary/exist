@@ -92,9 +92,11 @@ public class ReceiverToSAX implements Receiver {
         contentHandler.endPrefixMapping(prefix);
     }
 
+    final AttributesImpl a = new AttributesImpl();
+
     @Override
     public void startElement(final QName qname, final AttrList attribs) throws SAXException {
-        final AttributesImpl a = new AttributesImpl();
+        a.clear();
         if (attribs != null) {
             for (int i = 0; i < attribs.getLength(); i++) {
                 final QName attrQName = attribs.getQName(i);

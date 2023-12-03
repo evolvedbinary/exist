@@ -153,23 +153,36 @@ public class SAXSerializer extends AbstractSerializer implements ContentHandler,
             if(attribs != null) {
                 for (int i = 0; i < attribs.getLength(); i++) {
                     attrName = attribs.getQName(i);
-                    if (XMLConstants.XMLNS_ATTRIBUTE.equals(attrName)) {
-                        if (nsSupport.getURI(XMLConstants.DEFAULT_NS_PREFIX) == null) {
-                            uri = attribs.getValue(i);
-                            if (enforceXHTML && !Namespaces.XHTML_NS.equals(uri)) {
-                                uri = Namespaces.XHTML_NS;
+
+                    if (attrName.startsWith(XMLConstants.XMLNS_ATTRIBUTE)) {
+                        if (attrName.length() == 5) {
+                            // length of XMLConstants.XMLNS_ATTRIBUTE ==> XMLConstants.XMLNS_ATTRIBUTE.equals(attrName)
+                            if (nsSupport.getURI(XMLConstants.DEFAULT_NS_PREFIX) == null) {
+                                uri = attribs.getValue(i);
+                                if (enforceXHTML && !Namespaces.XHTML_NS.equals(uri)) {
+                                    uri = Namespaces.XHTML_NS;
+                                }
+                                namespaceDecls.put(XMLConstants.DEFAULT_NS_PREFIX, uri);
+                                nsSupport.declarePrefix(XMLConstants.DEFAULT_NS_PREFIX, uri);
                             }
-                            namespaceDecls.put(XMLConstants.DEFAULT_NS_PREFIX, uri);
-                            nsSupport.declarePrefix(XMLConstants.DEFAULT_NS_PREFIX, uri);
-                        }
-                    } else if (attrName.startsWith(XMLConstants.XMLNS_ATTRIBUTE + ":")) {
-                        final String prefix = attrName.substring(6);
-                        if (nsSupport.getURI(prefix) == null) {
-                            uri = attribs.getValue(i);
-                            namespaceDecls.put(prefix, uri);
-                            nsSupport.declarePrefix(prefix, uri);
+                        } else if (attrName.charAt(5) == ':') {
+                            final String prefix = attrName.substring(6);
+                            if (nsSupport.getURI(prefix) == null) {
+                                uri = attribs.getValue(i);
+                                namespaceDecls.put(prefix, uri);
+                                nsSupport.declarePrefix(prefix, uri);
+                            }
+                        } else if ((p = attrName.indexOf(':')) > 0) {
+                            // 3rd branch special case xmlnsxyz:
+                            final String prefix = attrName.substring(0, p);
+                            uri = attribs.getURI(i);
+                            if (nsSupport.getURI(prefix) == null) {
+                                namespaceDecls.put(prefix, uri);
+                                nsSupport.declarePrefix(prefix, uri);
+                            }
                         }
                     } else if ((p = attrName.indexOf(':')) > 0) {
+                        // 3rd branch usual case abc:
                         final String prefix = attrName.substring(0, p);
                         uri = attribs.getURI(i);
                         if (nsSupport.getURI(prefix) == null) {
