@@ -36,6 +36,7 @@ import org.exist.dom.QName;
 import org.exist.dom.persistent.TextImpl;
 import org.exist.numbering.NodeId;
 import org.exist.storage.DBBroker;
+import org.exist.storage.lock.ManagedLock;
 import org.exist.util.Configuration;
 import org.exist.util.serializer.AttrList;
 import org.exist.xquery.value.Type;
@@ -48,6 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.exist.storage.dom.INodeIterator;
@@ -95,7 +97,7 @@ public class NativeSerializer extends Serializer {
             documentStarted = true;
         }
 
-        try(final INodeIterator domIter = broker.getNodeIterator(p)) {
+        try(final INodeIterator domIter = broker.getNodeIterator(p); final ManagedLock<ReentrantLock> readLock = domIter.getReadLock()) {
             serializeToReceiver(null, domIter, p.getOwnerDocument(), checkAttributes, p.getMatches(), new TreeSet<>());
         } catch(final IOException e) {
             LOG.warn("Unable to close node iterator", e);

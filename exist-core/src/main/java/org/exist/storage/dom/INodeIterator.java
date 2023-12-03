@@ -22,9 +22,16 @@
 package org.exist.storage.dom;
 
 import org.exist.dom.persistent.IStoredNode;
+import org.exist.storage.btree.BTreeException;
+import org.exist.storage.lock.ManagedLock;
+import org.xml.sax.SAXException;
+
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReentrantLock;
 
 public interface INodeIterator extends Iterator<IStoredNode>, Closeable {
 
+    public ManagedLock<ReentrantLock> getReadLock();
 }

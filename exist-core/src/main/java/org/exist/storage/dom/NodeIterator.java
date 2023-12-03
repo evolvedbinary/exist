@@ -39,7 +39,9 @@ import org.exist.util.FileUtils;
 import org.exist.util.LockException;
 import org.exist.util.sanity.SanityCheck;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.exist.dom.persistent.NodeHandle;
@@ -95,8 +97,7 @@ public final class NodeIterator implements INodeIterator {
      */
     @Override
     public boolean hasNext() {
-        try(final ManagedLock<ReentrantLock> domFileLock = lockManager.acquireBtreeReadLock(db.getLockName())) {
-            db.setOwnerObject(broker);
+        try {
             if (gotoNextPosition()) {
                 db.addToBuffer(page);
                 final DOMFile.DOMFilePageHeader pageHeader = page.getPageHeader();
@@ -108,10 +109,6 @@ public final class NodeIterator implements INodeIterator {
                     //Mmmmh... strange -pb
                     {return true;}
             }
-        } catch (final LockException e) {
-            LOG.warn("Failed to acquire read lock on {}", FileUtils.fileName(db.getFile()));
-            //TODO : throw exception here ? -pb
-            return false;
         } catch (final BTreeException | IOException e) {
             LOG.warn(e);
             //TODO : throw exception here ? -pb
@@ -124,8 +121,7 @@ public final class NodeIterator implements INodeIterator {
      */
     @Override
     public IStoredNode next() {
-        try(final ManagedLock<ReentrantLock> domFileLock = lockManager.acquireBtreeReadLock(db.getLockName())) {
-            db.setOwnerObject(broker);
+        try {
             IStoredNode nextNode = null;
             if (gotoNextPosition()) {
                 long backLink = 0;
@@ -220,10 +216,6 @@ public final class NodeIterator implements INodeIterator {
                 } while (nextNode == null);
             }
             return nextNode;
-        } catch (final LockException e) {
-            LOG.warn("Failed to acquire read lock on {}", FileUtils.fileName(db.getFile()));
-            //TODO : throw exception here ? -pb
-            return null;
         } catch (final BTreeException | IOException e) {
             LOG.error(e.getMessage(), e);
             //TODO : re-throw exception ? -pb
@@ -297,5 +289,18 @@ public final class NodeIterator implements INodeIterator {
     @Override
     public void close() throws IOException {
         //nothing needs to be done
+    }
+
+    @Override
+    public ManagedLock<ReentrantLock> getReadLock() {
+        try {
+            final ManagedLock<ReentrantLock> domFileLock = lockManager.acquireBtreeReadLock(db.getLockName());
+            db.setOwnerObject(broker);
+            return domFileLock;
+        } catch (final LockException e) {
+            final String filename = FileUtils.fileName(db.getFile());
+            LOG.warn("Failed to acquire read lock on {}", filename);
+            throw new RuntimeException(MessageFormat.format("Failed to acquire read lock on {0}", filename), e);
+        }
     }
 }
