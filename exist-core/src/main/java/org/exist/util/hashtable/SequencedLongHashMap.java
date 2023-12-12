@@ -75,7 +75,7 @@ public class SequencedLongHashMap<V> {
      * @return the value associated with the key, or null if the key is absent
      */
     public @Nullable V get(final long key) {
-        return map.get(key);
+        return map.getAndMoveToLast(key);
     }
 
     /**
