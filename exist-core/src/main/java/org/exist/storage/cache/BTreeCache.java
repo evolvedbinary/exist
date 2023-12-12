@@ -52,23 +52,14 @@ public class BTreeCache<T extends BTreeCacheable> extends LRUCache<T> {
 
     private void removeNext(final T item) {
         boolean removed = false;
-        boolean mustRemoveInner = false;
         Iterator<Long2ObjectMap.Entry<T>> iterator = map.fastEntrySetIterator();
         do {
             final Long2ObjectMap.Entry<T> next = iterator.next();
             final T cached = next.getValue();
-            if(cached.allowUnload() && cached.getKey() != item.getKey() &&
-                    (mustRemoveInner || !cached.isInnerPage())) {
+            if(cached.allowUnload() && cached.getKey() != item.getKey()) {
                 cached.sync(true);
                 map.remove(next.getLongKey());
                 removed = true;
-            } else {
-                if (!iterator.hasNext()) {
-                    // reset the iterator to the beginning
-                    iterator = map.fastEntrySetIterator();      // TODO(AR) this can cause a never ending loop potentially!
-
-                    mustRemoveInner = true;
-                }
             }
         } while(!removed);
         accounting.replacedPage(item);
