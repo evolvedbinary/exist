@@ -95,9 +95,7 @@ import java.nio.channels.NonWritableChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  *  Paged is a paged file foundation that is used by the BTree class and
@@ -141,6 +139,9 @@ public abstract class Paged implements AutoCloseable {
     private final byte[] tempPageData;
     private final byte[] tempHeaderData;
 
+    // We have a channel open for extending writes,
+    // which cannot be achieved via mapped.
+    private FileChannel fileChannel;
     private MappedByteBuffer mapped;
     private Path file;
     private boolean readOnly = false;
@@ -166,20 +167,28 @@ public abstract class Paged implements AutoCloseable {
     }
 
     /**
-     * Close the underlying files.
+     * Close the underlying files (channels, mapped buffers, anything file-related with state).
      *
      * @throws DBException if an error occurs whilst closing
      */
     @Override
     public void close() throws DBException {
         try {
+            fileChannel.close();
             mapped.force();
             final MappedByteBuffer mappedBuffer = mapped;
             mapped = null;
             closeMapped(mappedBuffer);
+        } catch (IOException e) {
+            LOG.warn("An error occurred whilst closing the database file channel '{}' :", (file == null ? "null" : FileUtils.fileName(file)), e);
+            throw new DBException("An error occurred whilst closing the database file '"
+                + (file == null ? "null" : FileUtils.fileName(file) + "': " + e.getMessage()));
         } catch (final ReflectiveOperationException e) {
+            LOG.warn("An error occurred whilst closing a mapped file buffer '{}' : {}",
+                (file == null ? "null" : FileUtils.fileName(file)), e);
             throw new DBException("An error occurred whilst closing a mapped file buffer': " + e.getMessage());
         } catch (final UncheckedIOException e) {
+            LOG.warn("An error occurred whilst closing the database file '{}' :", (file == null ? "null" : FileUtils.fileName(file)), e);
             throw new DBException("An error occurred whilst closing the database file '"
                     + (file == null ? "null" : FileUtils.fileName(file) + "': " + e.getMessage()));
         }
@@ -432,38 +441,36 @@ public abstract class Paged implements AutoCloseable {
                     options.add(StandardOpenOption.CREATE);
                     options.add(StandardOpenOption.WRITE);
                     options.add(StandardOpenOption.READ);
-                    try (FileChannel fc = FileChannel.open(file, options)) {
-                        if (fc.size() > Integer.MAX_VALUE) {
-                            throw new DBException("TODO (AP) file too big for temporary hack: " + file);
-                        }
-                        final FileLock lock = fc.tryLock();
-                        if (lock == null) {
-                            mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-                            readOnly = true;
-                        } else {
-                            mapped = fc.map(FileChannel.MapMode.READ_WRITE, 0, fc.size());
-                        }
+
+                    fileChannel = FileChannel.open(file, options);
+                    if (fileChannel.size() > Integer.MAX_VALUE) {
+                        throw new DBException("TODO (AP) file too big for temporary hack: " + file);
+                    }
+                    final FileLock lock = fileChannel.tryLock();
+                    if (lock == null) {
+                        mapped = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+                        readOnly = true;
+                    } else {
+                        mapped = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, fileChannel.size());
                     }
                     //TODO : who will release the lock ? -pb
                 } catch (final NonWritableChannelException e) {
                     //No way : switch to read-only mode
                     readOnly = true;
-                    try (FileChannel fc = FileChannel.open(file, StandardOpenOption.READ)) {
-                        if (fc.size() > Integer.MAX_VALUE) {
-                            throw new DBException("File exceeds maximum size for mapped buffer: " + file);
-                        }
-                        mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                    fileChannel = FileChannel.open(file, StandardOpenOption.READ);
+                    if (fileChannel.size() > Integer.MAX_VALUE) {
+                        throw new DBException("File exceeds maximum size for mapped buffer: " + file);
                     }
+                    mapped = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
                     LOG.warn(e);
                 }
             } else {
                 readOnly = true;
-                try (FileChannel fc = FileChannel.open(file, StandardOpenOption.READ)) {
-                    if (fc.size() > Integer.MAX_VALUE) {
-                        throw new DBException("File exceeds maximum size for mapped buffer: " + file);
-                    }
-                    mapped = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                fileChannel = FileChannel.open(file, StandardOpenOption.READ);
+                if (fileChannel.size() > Integer.MAX_VALUE) {
+                    throw new DBException("File exceeds maximum size for mapped buffer: " + file);
                 }
+                mapped = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
             }
         } catch (final IOException e) {
             LOG.warn("An exception occurred while opening database file {}: {}", file.toAbsolutePath().toString(), e.getMessage(), e);
@@ -767,9 +774,6 @@ public abstract class Paged implements AutoCloseable {
         }
 
         public int read(final byte[] buf) throws IOException {
-            if (mapped.capacity() < mapped.position() + buf.length) {
-                throw new MappedIOException(mapped.position(), buf);
-            }
             version = ByteConversion.byteToShort(buf, OFFSET_VERSION_ID);
             headerSize = ByteConversion.byteToShort(buf, OFFSET_HEADER_SIZE);
             pageSize = ByteConversion.byteToInt(buf, OFFSET_PAGE_SIZE);
@@ -899,19 +903,17 @@ public abstract class Paged implements AutoCloseable {
         }
 
         public final synchronized void write() throws IOException {
-            mapped.position(0);
-            if (mapped.capacity() < mapped.position() + buf.length) {
-                throw new MappedIOException(0, buf);
-            }
             write(buf);
-            mapped.put(buf);
+            if (buf.length <= mapped.capacity()) {
+                mapped.position(0);
+                mapped.put(buf);
+            } else {
+                final int written = fileChannel.write(ByteBuffer.wrap(buf), 0);
+                if (written < buf.length) {
+                    throw new IOException("Unable to write buffer");
+                }
+            }
             dirty = false;
-        }
-    }
-
-    public final class MappedIOException extends IOException {
-        private MappedIOException(final int position, final byte[] buf) {
-            super("File " + file + " insufficient mapped capacity (" + mapped.capacity() + ") to write " + buf.length + " at " + position);
         }
     }
 
@@ -1004,16 +1006,29 @@ public abstract class Paged implements AutoCloseable {
 
         public byte[] read() throws IOException {
             try {
-                if (mapped.position() != offset) {
-                    mapped.position((int)offset);
-                }
                 Arrays.fill(tempHeaderData, (byte)0);
-                mapped.get(tempHeaderData);
+                long limit = offset + tempHeaderData.length;
+                if (limit <= mapped.capacity()) {
+                    if (mapped.position() != offset) {
+                        mapped.position((int)offset);
+                    }
+                    mapped.get(tempHeaderData);
+                } else {
+                    fileChannel.read(ByteBuffer.wrap(tempHeaderData), offset);
+                }
+
                 // Read in the header
                 header.read(tempHeaderData, 0);
                 // Read the working data
                 final byte[] workData = new byte[header.dataLen];
-                mapped.get(workData);
+                if (limit <= mapped.capacity()) {
+                    if (mapped.position() != offset) {
+                        mapped.position((int)(offset + tempHeaderData.length));
+                    }
+                    mapped.get(workData);
+                } else {
+                    fileChannel.read(ByteBuffer.wrap(workData), offset + tempHeaderData.length);
+                }
                 return workData;
             } catch(final Exception e) {
                 LOG.warn("error while reading page: {}", getPageInfo(), e);
@@ -1046,14 +1061,15 @@ public abstract class Paged implements AutoCloseable {
                     System.arraycopy(data, 0, tempPageData, fileHeader.pageHeaderSize, data.length);
                 }
             }
-            if (mapped.capacity() < offset + data.length) {
-                // TODO (AP) - how to extend the file ? we need to re-map as efficiently as we can.
-                throw new MappedIOException((int) offset, data);
+            if (mapped.capacity() >= offset + tempPageData.length) {
+                if (mapped.position() != offset) {
+                    mapped.position((int)offset);
+                }
+                mapped.put(tempPageData);
+            } else {
+                //append/extend - this region of the file is not mapped
+                fileChannel.write(ByteBuffer.wrap(tempPageData), offset);
             }
-            if (mapped.position() != offset) {
-                mapped.position((int)offset);
-            }
-            mapped.put(tempPageData);
         }
 
         @Override
