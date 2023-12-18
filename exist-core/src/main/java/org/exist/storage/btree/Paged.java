@@ -142,7 +142,7 @@ public abstract class Paged implements AutoCloseable {
     // We have a channel open for extending writes,
     // which cannot be achieved via mapped.
     private FileChannel fileChannel;
-    private MappedByteBuffer mapped;
+    private ArrayList<MappedByteBuffer> mapped = new ArrayList<>();
     private Path file;
     private boolean readOnly = false;
     private boolean fileIsNew = false;
@@ -175,10 +175,10 @@ public abstract class Paged implements AutoCloseable {
     public void close() throws DBException {
         try {
             fileChannel.close();
-            mapped.force();
-            final MappedByteBuffer mappedBuffer = mapped;
-            mapped = null;
-            closeMapped(mappedBuffer);
+            for (MappedByteBuffer buffer : mapped) {
+                closeMapped(buffer);
+            }
+            mapped.clear();
         } catch (IOException e) {
             LOG.warn("An error occurred whilst closing the database file channel '{}' :", (file == null ? "null" : FileUtils.fileName(file)), e);
             throw new DBException("An error occurred whilst closing the database file '"
@@ -272,16 +272,18 @@ public abstract class Paged implements AutoCloseable {
      * @throws IOException if an I/O error occurs
      */
     public void backupToStream(final OutputStream os) throws IOException {
-        final int limit = mapped.capacity();
-        final int block = 4096;
-        final byte[] buf = new byte[block];
-        int copied = 0;
-        mapped.position(0);
-        while (copied < limit) {
-            final int len = Math.min(limit - copied, block);
-            mapped.get(buf, 0, len);
-            os.write(buf, 0, len);
-            copied += len;
+        for (MappedByteBuffer buffer : mapped) {
+            final int limit = buffer.capacity();
+            final int block = 4096;
+            final byte[] buf = new byte[block];
+            int copied = 0;
+            buffer.position(0);
+            while (copied < limit) {
+                final int len = Math.min(limit - copied, block);
+                buffer.get(buf, 0, len);
+                os.write(buf, 0, len);
+                copied += len;
+            }
         }
     }
 
@@ -422,6 +424,59 @@ public abstract class Paged implements AutoCloseable {
         out.println();
     }
 
+    final static long MAX_MAPPED_BUFFER = 1 << 30;
+
+    private void mapToLimit(final FileChannel.MapMode mapMode, final long total) throws IOException {
+        long start = 0;
+        for (MappedByteBuffer buffer : mapped) {
+            start += buffer.capacity();
+        }
+        while (start < total) {
+            final long size = Math.min(MAX_MAPPED_BUFFER, total - start);
+            final MappedByteBuffer next = fileChannel.map(mapMode, start, size);
+            mapped.add(next);
+            start += size;
+        }
+    }
+
+    private void mappedGet(final long position, final byte[] buf) throws IOException {
+        long start = 0;
+        for (MappedByteBuffer buffer : mapped) {
+            final long index = position - start;
+            if (buffer.capacity() > index) {
+                if (buffer.capacity() < index + buf.length) {
+                    throw new IOException("Unexpected mapped buffer overlap");
+                }
+                buffer.position((int) index);
+                buffer.get(buf);
+
+                return;
+            }
+            start += buffer.capacity();
+        }
+
+        // Fall back to reading from the channel
+        fileChannel.read(ByteBuffer.wrap(buf), position);
+    }
+
+    private boolean mappedPut(final long position, final byte[] buf) throws IOException {
+        long start = 0;
+        for (MappedByteBuffer buffer : mapped) {
+            final long index = position - start;
+            if (buffer.capacity() > index) {
+                if (buffer.capacity() < index + buf.length) {
+                    throw new IOException("Unexpected mapped buffer overlap");
+                }
+                buffer.position((int) index);
+                buffer.put(buf);
+
+                return true;
+            }
+            start += buffer.capacity();
+        }
+        return false;
+    }
+
     /**
      * setFile sets the file object for this Paged.
      *
@@ -443,15 +498,12 @@ public abstract class Paged implements AutoCloseable {
                     options.add(StandardOpenOption.READ);
 
                     fileChannel = FileChannel.open(file, options);
-                    if (fileChannel.size() > Integer.MAX_VALUE) {
-                        throw new DBException("TODO (AP) file too big for temporary hack: " + file);
-                    }
                     final FileLock lock = fileChannel.tryLock();
                     if (lock == null) {
-                        mapped = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+                        mapToLimit(FileChannel.MapMode.READ_ONLY, fileChannel.size());
                         readOnly = true;
                     } else {
-                        mapped = fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, fileChannel.size());
+                        mapToLimit(FileChannel.MapMode.READ_WRITE, fileChannel.size());
                     }
                     //TODO : who will release the lock ? -pb
                 } catch (final NonWritableChannelException e) {
@@ -461,7 +513,7 @@ public abstract class Paged implements AutoCloseable {
                     if (fileChannel.size() > Integer.MAX_VALUE) {
                         throw new DBException("File exceeds maximum size for mapped buffer: " + file);
                     }
-                    mapped = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+                    mapToLimit(FileChannel.MapMode.READ_ONLY, fileChannel.size());
                     LOG.warn(e);
                 }
             } else {
@@ -470,7 +522,7 @@ public abstract class Paged implements AutoCloseable {
                 if (fileChannel.size() > Integer.MAX_VALUE) {
                     throw new DBException("File exceeds maximum size for mapped buffer: " + file);
                 }
-                mapped = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
+                mapToLimit(FileChannel.MapMode.READ_ONLY, fileChannel.size());
             }
         } catch (final IOException e) {
             LOG.warn("An exception occurred while opening database file {}: {}", file.toAbsolutePath().toString(), e.getMessage(), e);
@@ -766,8 +818,7 @@ public abstract class Paged implements AutoCloseable {
         }
 
         public final synchronized void read() throws IOException {
-            mapped.position(0);
-            mapped.get(buf);
+            mappedGet(0, buf);
             read(buf);
             calculateWorkSize();
             dirty = false;
@@ -904,10 +955,7 @@ public abstract class Paged implements AutoCloseable {
 
         public final synchronized void write() throws IOException {
             write(buf);
-            if (buf.length <= mapped.capacity()) {
-                mapped.position(0);
-                mapped.put(buf);
-            } else {
+            if (!mappedPut(0, buf)) {
                 final int written = fileChannel.write(ByteBuffer.wrap(buf), 0);
                 if (written < buf.length) {
                     throw new IOException("Unable to write buffer");
@@ -1007,28 +1055,13 @@ public abstract class Paged implements AutoCloseable {
         public byte[] read() throws IOException {
             try {
                 Arrays.fill(tempHeaderData, (byte)0);
-                long limit = offset + tempHeaderData.length;
-                if (limit <= mapped.capacity()) {
-                    if (mapped.position() != offset) {
-                        mapped.position((int)offset);
-                    }
-                    mapped.get(tempHeaderData);
-                } else {
-                    fileChannel.read(ByteBuffer.wrap(tempHeaderData), offset);
-                }
+                mappedGet(offset, tempHeaderData);
 
                 // Read in the header
                 header.read(tempHeaderData, 0);
                 // Read the working data
                 final byte[] workData = new byte[header.dataLen];
-                if (limit <= mapped.capacity()) {
-                    if (mapped.position() != offset) {
-                        mapped.position((int)(offset + tempHeaderData.length));
-                    }
-                    mapped.get(workData);
-                } else {
-                    fileChannel.read(ByteBuffer.wrap(workData), offset + tempHeaderData.length);
-                }
+                mappedGet(offset + tempHeaderData.length, workData);
                 return workData;
             } catch(final Exception e) {
                 LOG.warn("error while reading page: {}", getPageInfo(), e);
@@ -1061,12 +1094,7 @@ public abstract class Paged implements AutoCloseable {
                     System.arraycopy(data, 0, tempPageData, fileHeader.pageHeaderSize, data.length);
                 }
             }
-            if (mapped.capacity() >= offset + tempPageData.length) {
-                if (mapped.position() != offset) {
-                    mapped.position((int)offset);
-                }
-                mapped.put(tempPageData);
-            } else {
+            if (!mappedPut(offset, tempPageData)) {
                 //append/extend - this region of the file is not mapped
                 fileChannel.write(ByteBuffer.wrap(tempPageData), offset);
             }
@@ -1089,11 +1117,8 @@ public abstract class Paged implements AutoCloseable {
         }
 
         public void dumpPage() throws IOException {
-            if (mapped.position() != offset) {
-                mapped.position((int)offset);
-            }
             final byte[] data = new byte[fileHeader.pageSize];
-            mapped.get(data);
+            mappedGet(offset, data);
             LOG.debug("Contents of page {}: {}", pageNum, hexDump(data));
         }
     }
