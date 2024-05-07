@@ -48,6 +48,7 @@
     <modules>
         <module>exist-parent</module>
         <module>exist-ant</module>
+        <module>exist-api</module>
         <module>exist-core</module>
         <module>exist-client</module>
         <module>exist-distribution</module>
