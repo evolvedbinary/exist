@@ -22,7 +22,6 @@
 package org.exist.jetty;
 
 import org.apache.xmlrpc.XmlRpcException;
-import org.exist.client.InteractiveClient;
 import org.exist.start.CompatibleJavaVersionCheck;
 import org.exist.start.StartException;
 import org.exist.util.ConfigurationHelper;
@@ -135,7 +134,7 @@ public class ServerShutdown {
 
     private static Properties loadProperties() {
         try {
-            final Properties properties = ConfigurationHelper.loadProperties("client.properties", InteractiveClient.class);
+            final Properties properties = ConfigurationHelper.loadProperties("client.properties", null);
             if (properties != null) {
                 return properties;
             }

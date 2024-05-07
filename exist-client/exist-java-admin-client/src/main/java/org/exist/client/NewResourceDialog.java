@@ -45,6 +45,8 @@ import org.xmldb.api.base.XMLDBException;
 import org.xmldb.api.modules.BinaryResource;
 import org.xmldb.api.modules.XMLResource;
 
+import static org.exist.client.MessageGuiUtil.showErrorMessage;
+
 /**
  *
  * @author <a href="mailto:adam.retter@googlemail.com">Adam Retter</a>
@@ -268,7 +270,7 @@ public class NewResourceDialog extends JFrame {
                 resourceContentBuilder.append(buf, 0, read);
             }
         } catch(final IOException ioe) {
-            ClientFrame.showErrorMessage(ioe.getMessage(), ioe);
+            showErrorMessage(ioe.getMessage(), ioe);
         }
         
         final String resourceContent;
@@ -294,7 +296,7 @@ public class NewResourceDialog extends JFrame {
             }
             client.reloadCollection();
         } catch(final XMLDBException xmldbe) {
-            ClientFrame.showErrorMessage(xmldbe.getMessage(), xmldbe);
+            showErrorMessage(xmldbe.getMessage(), xmldbe);
         }
     }
 

@@ -22,7 +22,6 @@
 package org.exist.backup;
 
 import org.exist.client.Messages;
-import org.exist.client.MimeTypeFileFilter;
 import org.exist.security.PermissionDeniedException;
 import org.exist.xmldb.XmldbURI;
 import org.xmldb.api.DatabaseManager;

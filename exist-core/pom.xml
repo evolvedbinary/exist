@@ -156,6 +156,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.exist-db.client</groupId>
+            <artifactId>exist-client-messages</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.exist-db</groupId>
             <artifactId>exist-start</artifactId>
             <version>${project.version}</version>

@@ -82,6 +82,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.exist.client.InteractiveClient.DATE_TIME_FORMATTER;
+import static org.exist.client.MessageGuiUtil.showErrorMessage;
 import static org.exist.util.FileUtils.humanSize;
 
 /**
@@ -1134,7 +1135,7 @@ public class ClientFrame extends JFrame implements WindowFocusListener, KeyListe
         client.newClientThread("restore", restoreTask).start();
     }
 
-    public static void repairRepository(Collection collection) throws XMLDBException {
+    private static void repairRepository(final Collection collection) throws XMLDBException {
         final EXistXQueryService service = collection.getService(EXistXQueryService.class);
         service.query("import module namespace repair=\"http://exist-db.org/xquery/repo/repair\"\n" +
                 "at \"resource:org/exist/xquery/modules/expathrepo/repair.xql\";\n" +
@@ -1705,79 +1706,6 @@ public class ClientFrame extends JFrame implements WindowFocusListener, KeyListe
         connectionDialog.setVisible(true);
 
         return properties;
-    }
-
-    public static void showErrorMessage(final String message, final Throwable t) {
-        JScrollPane scroll = null;
-        final JTextArea msgArea = new JTextArea(message);
-        msgArea.setBorder(BorderFactory.createTitledBorder(Messages.getString("ClientFrame.214"))); //$NON-NLS-1$
-        msgArea.setEditable(false);
-        msgArea.setBackground(null);
-        if (t != null) {
-            final StringWriter out = new StringWriter();
-            final PrintWriter writer = new PrintWriter(out);
-            t.printStackTrace(writer);
-            final JTextArea stacktrace = new JTextArea(out.toString(), 20, 50);
-            stacktrace.setBackground(null);
-            stacktrace.setEditable(false);
-            scroll = new JScrollPane(stacktrace);
-            scroll.setPreferredSize(new Dimension(250, 300));
-            scroll.setBorder(BorderFactory
-                    .createTitledBorder(Messages.getString("ClientFrame.215"))); //$NON-NLS-1$
-        }
-        final JOptionPane optionPane = new JOptionPane();
-        optionPane.setMessage(new Object[]{msgArea, scroll});
-        optionPane.setMessageType(JOptionPane.ERROR_MESSAGE);
-        final JDialog dialog = optionPane.createDialog(null, Messages.getString("ClientFrame.216")); //$NON-NLS-1$
-        dialog.setResizable(true);
-        dialog.pack();
-        dialog.setVisible(true);
-    }
-
-    public static int showErrorMessageQuery(final String message, final Throwable t) {
-        final JTextArea msgArea = new JTextArea(message);
-        msgArea.setLineWrap(true);
-        msgArea.setWrapStyleWord(true);
-        msgArea.setEditable(false);
-        msgArea.setBackground(null);
-        JScrollPane scrollMsgArea = new JScrollPane(msgArea);
-        scrollMsgArea.setPreferredSize(new Dimension(600, 300));
-        scrollMsgArea.setBorder(BorderFactory
-                .createTitledBorder(Messages.getString("ClientFrame.217"))); //$NON-NLS-1$
-
-        JScrollPane scrollStacktrace = null;
-        if (t != null) {
-            try (final StringWriter out = new StringWriter();
-                 final PrintWriter writer = new PrintWriter(out)) {
-                t.printStackTrace(writer);
-                final JTextArea stacktrace = new JTextArea(out.toString(), 20, 50);
-                stacktrace.setLineWrap(true);
-                stacktrace.setWrapStyleWord(true);
-                stacktrace.setBackground(null);
-                stacktrace.setEditable(false);
-                scrollStacktrace = new JScrollPane(stacktrace);
-                scrollStacktrace.setPreferredSize(new Dimension(600, 300));
-                scrollStacktrace.setBorder(BorderFactory
-                        .createTitledBorder(Messages.getString("ClientFrame.218"))); //$NON-NLS-1$
-            } catch (final IOException ioe) {
-                ioe.printStackTrace();
-            }
-        }
-
-        final JOptionPane optionPane = new JOptionPane();
-        optionPane.setMessage(new Object[]{scrollMsgArea, scrollStacktrace});
-        optionPane.setMessageType(JOptionPane.ERROR_MESSAGE);
-        optionPane.setOptionType(JOptionPane.OK_CANCEL_OPTION);
-        final JDialog dialog = optionPane.createDialog(null, Messages.getString("ClientFrame.219")); //$NON-NLS-1$
-        dialog.setResizable(true);
-        dialog.pack();
-        dialog.setVisible(true);
-
-        final Object result = optionPane.getValue();
-        if (result == null) {
-            return 2;
-        }
-        return (Integer) optionPane.getValue();
     }
 
     /*

@@ -83,6 +83,8 @@ import org.xmldb.api.base.ResourceSet;
 import org.xmldb.api.base.XMLDBException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.exist.client.MessageGuiUtil.showErrorMessage;
+import static org.exist.client.MessageGuiUtil.showErrorMessageQuery;
 import static org.xmldb.api.base.ResourceType.XML_RESOURCE;
 
 public class QueryDialog extends JFrame {
@@ -157,7 +159,7 @@ public class QueryDialog extends JFrame {
             resource.setContent(queryText);
             collection.storeResource(resource);
         } catch (final XMLDBException xmldbe) {
-            ClientFrame.showErrorMessage(xmldbe.getMessage(), xmldbe);
+            showErrorMessage(xmldbe.getMessage(), xmldbe);
         }
     }
 
@@ -375,7 +377,7 @@ public class QueryDialog extends JFrame {
                 }
             });
         } catch (final XMLDBException e) {
-            ClientFrame.showErrorMessage(
+            showErrorMessage(
                     Messages.getString("QueryDialog.collectionretrievalerrormessage") + ".", e);
         }
 
@@ -434,7 +436,7 @@ public class QueryDialog extends JFrame {
                 query.setText(buf.toString());
 
             } catch (final IOException e) {
-                ClientFrame.showErrorMessage(e.getMessage(), e);
+                showErrorMessage(e.getMessage(), e);
             }
         }
     }
@@ -471,7 +473,7 @@ public class QueryDialog extends JFrame {
             try (final Writer writer = Files.newBufferedWriter(file)) {
                 writer.write(stringToSave);
             } catch (final IOException e) {
-                ClientFrame.showErrorMessage(e.getMessage(), e);
+                showErrorMessage(e.getMessage(), e);
             }
         }
     }
@@ -521,7 +523,7 @@ public class QueryDialog extends JFrame {
         } catch (final Throwable e) {
             statusMessage.setText(Messages.getString(QUERY_DIALOG_ERROR) + ": " + InteractiveClient.getExceptionMessage(e) + ". " + Messages.getString(QUERY_DIALOG_COMPILATION) + ": " + tCompiled + "ms, " + Messages.getString(QUERY_DIALOG_EXECUTION) + ": " + tResult + "ms");
 
-            ClientFrame.showErrorMessageQuery(
+            showErrorMessageQuery(
                     Messages.getString("QueryDialog.compilationerrormessage") + ": "
                             + InteractiveClient.getExceptionMessage(e), e);
 
@@ -618,7 +620,7 @@ public class QueryDialog extends JFrame {
                         }
                         contents.append("\n");
                     } catch (final XMLDBException e) {
-                        select = ClientFrame.showErrorMessageQuery(
+                        select = showErrorMessageQuery(
                                 Messages.getString("QueryDialog.retrievalerrormessage") + ": "
                                         + InteractiveClient.getExceptionMessage(e), e);
                         if (select == 3) {
@@ -636,7 +638,7 @@ public class QueryDialog extends JFrame {
                 progress.setVisible(false);
 
 
-                ClientFrame.showErrorMessageQuery(
+                showErrorMessageQuery(
                         Messages.getString("QueryDialog.queryrunerrormessage") + ": "
                                 + InteractiveClient.getExceptionMessage(e), e);
             } finally {
@@ -683,7 +685,7 @@ public class QueryDialog extends JFrame {
                 final Collection root = client.getCollection(XmldbURI.ROOT_COLLECTION);
                 getCollections(root, currentCollectionName);
             } catch (final XMLDBException e) {
-                ClientFrame.showErrorMessage(
+                showErrorMessage(
                         Messages.getString("QueryDialog.collectionretrievalerrormessage") + ".", e);
             }
 

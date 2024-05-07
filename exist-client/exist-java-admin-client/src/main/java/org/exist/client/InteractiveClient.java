@@ -92,6 +92,7 @@ import se.softhouse.jargo.ArgumentException;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.UTC;
 import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
+import static org.exist.client.MessageGuiUtil.showErrorMessage;
 import static org.exist.storage.serializers.EXistOutputKeys.OMIT_ORIGINAL_XML_DECLARATION;
 import static org.exist.storage.serializers.EXistOutputKeys.OUTPUT_DOCTYPE;
 import static org.xmldb.api.base.ResourceType.XML_RESOURCE;
@@ -1103,7 +1104,7 @@ public class InteractiveClient {
             return true;
         } catch (final Throwable e) {
             if (options.startGUI) {
-                ClientFrame.showErrorMessage(getExceptionMessage(e), e);
+                showErrorMessage(getExceptionMessage(e), e);
             } else {
                 errorln(getExceptionMessage(e));
                 e.printStackTrace();
@@ -2211,7 +2212,7 @@ public class InteractiveClient {
                 AtomicReference<String> errorMessageReference = new AtomicReference<>("");
                 ClientAction.call(this::getResources, e -> {
                     errorMessageReference.set(getExceptionMessage(e));
-                    ClientFrame.showErrorMessage(
+                    showErrorMessage(
                             "XMLDBException occurred while retrieving collection: "
                                     + errorMessageReference, e);
                 });
@@ -2327,7 +2328,7 @@ public class InteractiveClient {
             }
         } catch (final Exception e) {
             if (options.startGUI) {
-                ClientFrame.showErrorMessage(
+                showErrorMessage(
                         "Error while reading query history: " + e.getMessage(),
                         e);
             } else {

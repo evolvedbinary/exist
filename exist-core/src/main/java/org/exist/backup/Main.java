@@ -21,7 +21,6 @@
  */
 package org.exist.backup;
 
-import org.exist.client.ClientFrame;
 import org.exist.start.CompatibleJavaVersionCheck;
 import org.exist.start.StartException;
 import org.exist.util.ConfigurationHelper;
@@ -47,6 +46,7 @@ import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.prefs.Preferences;
 
+import static org.exist.client.MessageGuiUtil.showErrorMessage;
 import static org.exist.util.ArgumentUtil.getBool;
 import static org.exist.util.ArgumentUtil.getOpt;
 import static se.softhouse.jargo.Arguments.*;
@@ -306,7 +306,7 @@ public class Main {
             try {
                 final Collection root = DatabaseManager.getCollection(uri.toString(), username, dbaPassword.orElse(password));
                 if (root != null) {
-                    ClientFrame.repairRepository(root);
+                    repairRepository(root);
                     System.out.println("Application repository rebuilt successfully.");
                 } else {
                     System.err.println("Failed to retrieve root collection: " + uri);
@@ -392,7 +392,7 @@ public class Main {
                     System.out.println("Rebuilding application repository ...");
                     try {
                         final Collection root = DatabaseManager.getCollection(uri.toString(), username, dbaPassword.orElse(password));
-                        ClientFrame.repairRepository(root);
+                        repairRepository(root);
                         listener.info("Application repository rebuilt successfully.");
                     } catch (final XMLDBException e) {
                         reportError(e);
@@ -400,10 +400,10 @@ public class Main {
                     }
                 }
             } catch (final Exception e) {
-                ClientFrame.showErrorMessage(e.getMessage(), null); //$NON-NLS-1$
+                showErrorMessage(e.getMessage(), null); //$NON-NLS-1$
             } finally {
                 if (listener.hasProblems()) {
-                    ClientFrame.showErrorMessage(listener.getAllProblems(), null);
+                    showErrorMessage(listener.getAllProblems(), null);
                 }
             }
 
@@ -424,6 +424,13 @@ public class Main {
         }
     }
 
+    private static void repairRepository(final Collection collection) throws XMLDBException {
+        final EXistXQueryService service = collection.getService(EXistXQueryService.class);
+        service.query("import module namespace repair=\"http://exist-db.org/xquery/repo/repair\"\n" +
+            "at \"resource:org/exist/xquery/modules/expathrepo/repair.xql\";\n" +
+            "repair:clean-all(),\n" +
+            "repair:repair()");
+    }
 
     private static void reportError(final Throwable e) {
         e.printStackTrace();

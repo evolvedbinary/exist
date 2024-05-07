@@ -355,7 +355,7 @@ class DocumentView extends JFrame {
                     ((Observable) collection).deleteObservers();
                 }
             } catch (final XMLDBException e) {
-                ClientFrame.showErrorMessage(Messages.getString("DocumentView.37") //$NON-NLS-1$
+                showErrorMessage(Messages.getString("DocumentView.37") //$NON-NLS-1$
                         + e.getMessage(), e);
             } finally {
                 progress.setVisible(false);
@@ -389,9 +389,9 @@ class DocumentView extends JFrame {
                         ((Observable) collection).deleteObservers();
                     }
                 } catch (final XMLDBException e) {
-                    ClientFrame.showErrorMessage(Messages.getString("DocumentView.40") + e.getMessage(), e); //$NON-NLS-1$
+                    showErrorMessage(Messages.getString("DocumentView.40") + e.getMessage(), e); //$NON-NLS-1$
                 } catch (final URISyntaxException e) {
-                    ClientFrame.showErrorMessage(Messages.getString("DocumentView.41") + e.getMessage(), e); //$NON-NLS-1$
+                    showErrorMessage(Messages.getString("DocumentView.41") + e.getMessage(), e); //$NON-NLS-1$
                 } finally {
                     //hide the progress dialog
                     progress.setVisible(false);
@@ -422,7 +422,7 @@ class DocumentView extends JFrame {
                 writer.write(text.getText());
 
             } catch (final IOException e) {
-                ClientFrame.showErrorMessage(Messages.getString("DocumentView.48") + e.getMessage(), e);
+                showErrorMessage(Messages.getString("DocumentView.48") + e.getMessage(), e);
             }
 
             final File selectedDir = chooser.getCurrentDirectory();

@@ -49,6 +49,8 @@ import org.exist.xmldb.XmldbURI;
 import org.xmldb.api.base.Collection;
 import org.xmldb.api.base.XMLDBException;
 
+import static org.exist.client.MessageGuiUtil.showErrorMessage;
+
 /**
  * Dialog for viewing and editing Triggers in the Admin Client 
  * 
@@ -125,7 +127,7 @@ class TriggersDialog extends JFrame {
                 }
             }
         } catch(final XMLDBException e) {
-            ClientFrame.showErrorMessage(e.getMessage(), e);
+            showErrorMessage(e.getMessage(), e);
             return;
         }
         
@@ -251,7 +253,7 @@ class TriggersDialog extends JFrame {
             cx = new CollectionXConf(collectionName, client);
             triggersModel.fireTableDataChanged();
         } catch(final XMLDBException xmldbe) {
-            ClientFrame.showErrorMessage(xmldbe.getMessage(), xmldbe);
+            showErrorMessage(xmldbe.getMessage(), xmldbe);
         }
 
     }
