@@ -22,7 +22,6 @@
 package org.exist.util;
 
 import net.jcip.annotations.NotThreadSafe;
-import org.exist.xquery.Constants;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -313,17 +312,17 @@ public final class XMLString implements CharSequence, Comparable<CharSequence> {
     public final int compareTo(final CharSequence cs) {
         for (int i = 0; i < length_ && i < cs.length(); i++) {
             if (value_[start_ + i] < cs.charAt(i)) {
-                return Constants.INFERIOR;
+                return -1;
             } else if (value_[start_ + i] > cs.charAt(i)) {
-                return Constants.SUPERIOR;
+                return 1;
             }
         }
         if (length_ < cs.length()) {
-            return Constants.INFERIOR;
+            return -1;
         } else if (length_ > cs.length()) {
-            return Constants.SUPERIOR;
+            return 1;
         } else {
-            return Constants.EQUAL;
+            return 0;
         }
     }
 

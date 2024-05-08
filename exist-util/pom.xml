@@ -55,6 +55,16 @@
 
         <!-- NOTE(AR) we MUST avoid any dependency on exist-core in here -->
 
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
