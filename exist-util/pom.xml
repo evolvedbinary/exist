@@ -26,18 +26,23 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.exist-db.api</groupId>
-        <artifactId>exist-xmldb-api</artifactId>
+        <groupId>org.exist-db</groupId>
+        <artifactId>exist-parent</artifactId>
         <version>7.0.0-SNAPSHOT</version>
-        <relativePath>../../exist-xmldb-api</relativePath>
+        <relativePath>../exist-parent</relativePath>
     </parent>
 
-    <groupId>org.exist-db.api.xmldb</groupId>
-    <artifactId>exist-xmldb-api-remote</artifactId>
+    <artifactId>exist-util</artifactId>
     <packaging>jar</packaging>
 
-    <name>eXist-db XML:DB Remote API</name>
-    <description>eXist-db NoSQL Database XML:DB Remote API</description>
+    <name>eXist-db Utility Classes</name>
+    <description>eXist-db NoSQL Database Utility Classes</description>
+    <!--
+        NOTE(AR): Interfaces, Classes, and Dependencies should only be
+        introduced into this module with great reluctance. This module
+        introduces a coupling between different modules and should
+        ideally eventually be removed through refactoring.
+    -->
 
     <scm>
         <connection>scm:git:https://github.com/exist-db/exist.git</connection>
@@ -50,21 +55,6 @@
 
         <!-- NOTE(AR) we MUST avoid any dependency on exist-core in here -->
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>exist-xmldb-api-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.exist-db.api.xmlrpc</groupId>
-            <artifactId>exist-xmlrpc-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.evolvedbinary.thirdparty.org.apache.xmlrpc</groupId>
-            <artifactId>xmlrpc-client</artifactId>
-            <version>${apache.xmlrpc.version}</version>
-        </dependency>
     </dependencies>
 
 </project>

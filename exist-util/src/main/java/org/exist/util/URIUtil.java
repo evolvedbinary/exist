@@ -19,26 +19,22 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.exist.xquery.util;
+package org.exist.util;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 
-import org.exist.util.CodePointString;
-import org.exist.xmldb.XmldbURI;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Utilities for URI related functions
+ * Utilities for URI related functions.
  *
  * @author <a href="mailto:adam@evolvedbinary.com">Adam Retter</a>
  * @author <a href="mailto:pierrick.brihaye@free.fr">Pierrick Brihaye</a>
  */
-public class URIUtils {
+public class URIUtil {
 
 	private static final char[][] ASCII_TABLE_URI_PATH_COMPONENT_ENCODED = new char[][] {
 			new char[] { '%', '0', '0' },  //NUL
@@ -351,23 +347,6 @@ public class URIUtils {
 	}
 
 	/**
-	 * This method decodes the provided uri for human readability.  The
-	 * method simply wraps URLDecoder.decode(uri,"UTF-8).  It is places here
-	 * to provide a friendly way to decode URIs encoded by urlEncodeUtf8()
-	 * 
-	 * @param uri The uri to decode
-	 * @return The decoded value of the supplied uri
-	 */
-	public static String urlDecodeUtf8(XmldbURI uri) {
-		try {
-			return URLDecoder.decode(uri.toString(), UTF_8.name());
-		} catch(final UnsupportedEncodingException e) {
-			//wrap with a runtime Exception
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
 	 * This method splits the supplied url on the character
 	 * '/' then URL encodes the segments between, returning
 	 * a URL encoded version of the passed url, leaving any
@@ -386,38 +365,6 @@ public class URIUtils {
 			}
 		}
 		return ret.toString();
-	}
-	
-	/**
-	 * This method ensure that a collection path (e.g. /db/[])
-	 * is properly URL encoded.  Uses W3C recommended UTF-8
-	 * encoding.
-	 * 
-	 * @param path The path to check
-	 * @return A UTF-8 URL encoded string
-	 */
-	public static String ensureUrlEncodedUtf8(String path) {
-		try {
-			final XmldbURI uri = XmldbURI.xmldbUriFor(path);
-			return uri.getRawCollectionPath();
-		} catch (final URISyntaxException e) {
-			return URIUtils.urlEncodePartsUtf8(path);
-		}
-	}
-
-	/**
-	 * This method creates an <code>XmldbURI</code> by encoding the provided
-	 * string, then calling XmldbURI.xmldbUriFor(String) with the result of that
-	 * encoding
-	 * 
-	 * @param path The path to encode and create an XmldbURI from
-	 * @return A UTF-8 URI encoded string
-	 * @throws URISyntaxException A URISyntaxException is thrown if the path
-	 * cannot be parsed by XmldbURI, after being encoded by
-	 * <code>urlEncodePartsUtf8</code>
-	 */
-	public static XmldbURI encodeXmldbUriFor(String path) throws URISyntaxException {
-		return XmldbURI.xmldbUriFor(URIUtils.urlEncodePartsUtf8(path));
 	}
 
 	private static final class CharArray {

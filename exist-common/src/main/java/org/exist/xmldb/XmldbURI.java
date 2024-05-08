@@ -24,9 +24,8 @@ package org.exist.xmldb;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.exist.xquery.Constants;
-import org.exist.xquery.util.URIUtils;
-import org.exist.xquery.value.AnyURIValue;
+import org.exist.util.SaxonURIUtil;
+import org.exist.util.URIUtil;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -202,7 +201,7 @@ public class XmldbURI implements Comparable<Object>, Serializable, Cloneable {
         if (xmldbURI == null) {
             return null;
         }
-        final URI uri = new URI(escape ? AnyURIValue.escape(xmldbURI) : xmldbURI);
+        final URI uri = new URI(escape ? SaxonURIUtil.escape(xmldbURI, false) : xmldbURI);
         return getXmldbURI(uri);
     }
 
@@ -210,7 +209,7 @@ public class XmldbURI implements Comparable<Object>, Serializable, Cloneable {
         if (xmldbURI == null) {
             return null;
         }
-        final URI uri = new URI(escape ? AnyURIValue.escape(xmldbURI) : xmldbURI);
+        final URI uri = new URI(escape ? SaxonURIUtil.escape(xmldbURI, false) : xmldbURI);
         return getXmldbURI(uri, mustHaveXMLDB);
     }
 
@@ -218,7 +217,7 @@ public class XmldbURI implements Comparable<Object>, Serializable, Cloneable {
         if (collectionPath == null) {
             return null;
         }
-        final URI uri = new URI(accessURI + URIUtils.iriToURI(collectionPath));
+        final URI uri = new URI(accessURI + URIUtil.iriToURI(collectionPath));
         return getXmldbURI(uri);
     }
 
@@ -465,7 +464,7 @@ public class XmldbURI implements Comparable<Object>, Serializable, Cloneable {
         int last;
 
         // No slash - give them the whole thing!
-        if ((last = name.lastIndexOf('/')) == Constants.STRING_NOT_FOUND) {
+        if ((last = name.lastIndexOf('/')) == -1) {
             return this;
         }
 
@@ -483,7 +482,7 @@ public class XmldbURI implements Comparable<Object>, Serializable, Cloneable {
         int last;
 
         // No slash - give them the whole thing!
-        if ((last = name.lastIndexOf('/')) == Constants.STRING_NOT_FOUND) {
+        if ((last = name.lastIndexOf('/')) == -1) {
             return name;
         }
 
@@ -548,7 +547,7 @@ public class XmldbURI implements Comparable<Object>, Serializable, Cloneable {
         int last;
 
         // No slash - return null!
-        if ((last = uri.lastIndexOf('/')) == Constants.STRING_NOT_FOUND) {
+        if ((last = uri.lastIndexOf('/')) == -1) {
             return XmldbURI.EMPTY_URI;
         }
 
@@ -612,7 +611,7 @@ public class XmldbURI implements Comparable<Object>, Serializable, Cloneable {
                     newURIString.append(parts[i]);
                 } catch (final URISyntaxException e) {
                     LOG.info("Trying to escape : ''{}' in '{}' !", parts[i], pseudoURI);
-                    newURIString.append(URIUtils.encodeForURI(parts[i]));
+                    newURIString.append(URIUtil.encodeForURI(parts[i]));
                 }
             }
         }

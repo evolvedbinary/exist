@@ -163,7 +163,19 @@
 
         <dependency>
             <groupId>org.exist-db</groupId>
+            <artifactId>exist-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.exist-db</groupId>
             <artifactId>exist-start</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.exist-db</groupId>
+            <artifactId>exist-util</artifactId>
             <version>${project.version}</version>
         </dependency>
 

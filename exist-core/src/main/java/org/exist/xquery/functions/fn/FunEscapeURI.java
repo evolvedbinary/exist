@@ -22,7 +22,7 @@
 package org.exist.xquery.functions.fn;
 
 import org.exist.dom.QName;
-import org.exist.util.UTF8;
+import org.exist.util.SaxonURIUtil;
 import org.exist.xquery.BasicFunction;
 import org.exist.xquery.Cardinality;
 import org.exist.xquery.Dependency;
@@ -81,59 +81,12 @@ public class FunEscapeURI extends BasicFunction {
         else {
             final String uri = args[0].getStringValue();
             final boolean escapeReserved = args[1].effectiveBooleanValue();
-            return new StringValue(this, escape(uri, escapeReserved));
+            return new StringValue(this, SaxonURIUtil.escape(uri, escapeReserved));
         }
         
         if (context.getProfiler().isEnabled()) 
             {context.getProfiler().end(this, "", result);} 
         
         return result;            
-    }
-    
-    /**
-     * Does the actual escaping. This method is copied from Michael Kay's
-     * saxon (see http://saxon.sf.net).
-     * 
-     * @param s the string to escape
-     * @param escapeReserved  also escape reserved characters
-     * @return the escaped uri string
-     */
-    public static String escape(CharSequence s, boolean escapeReserved) {
-        //TODO : use dedidated URIUtils... -pb
-        final StringBuilder sb = new StringBuilder(s.length());
-        for (int i=0; i<s.length(); i++) {
-            final char c = s.charAt(i);
-            if ((c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='9')) {
-                sb.append(c);
-            } else if (c<=0x20 || c>=0x7f) {
-                escapeChar(c, ((i+1)<s.length() ? s.charAt(i+1) : ' '), sb);
-            } else if (escapeReserved) {
-                if ("-_.!~*'()%".indexOf(c)>=0) {
-                    sb.append(c);
-                } else {
-                    escapeChar(c, ' ', sb);
-                }
-            } else {
-                if ("-_.!~*'()%;/?:@&=+$,#[]".indexOf(c)>=0) {
-                    sb.append(c);
-                } else {
-                    escapeChar(c, ' ', sb);
-                }
-            }
-        }
-        return sb.toString();
-    }
-
-    private static final String hex = "0123456789ABCDEF";
-
-    private static void escapeChar(char c, char c2, StringBuilder sb) {
-        final byte[] array = new byte[4];
-        final int used = UTF8.getUTF8Encoding(c, c2, array);
-        for (int b=0; b<used; b++) {
-            final int v = (array[b]>=0 ? array[b] : 256 + array[b]);
-            sb.append('%');
-            sb.append(hex.charAt(v/16));
-            sb.append(hex.charAt(v%16));
-        }
     }
 }

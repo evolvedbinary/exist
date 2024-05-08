@@ -22,12 +22,12 @@
 package org.exist.xquery.value;
 
 import com.ibm.icu.text.Collator;
+import org.exist.util.SaxonURIUtil;
 import org.exist.xmldb.XmldbURI;
 import org.exist.xquery.Constants.Comparison;
 import org.exist.xquery.ErrorCodes;
 import org.exist.xquery.Expression;
 import org.exist.xquery.XPathException;
-import org.exist.xquery.functions.fn.FunEscapeURI;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -164,9 +164,9 @@ public class    AnyURIValue extends AtomicValue {
      * @return An escaped string representation of the provided xs:anyURI
      * @see <a href="http://www.w3.org/TR/2000/PR-xlink-20001220/#link-locators">http://www.w3.org/TR/2000/PR-xlink-20001220/#link-locators</A>
      */
-    public static String escape(String uri) {
+    private static String escape(final String uri) {
 
-        return FunEscapeURI.escape(uri, false);
+        return SaxonURIUtil.escape(uri, false);
 
         //TODO: TEST TEST TEST!
 //			// basically copied from URLEncoder.encode
