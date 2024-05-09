@@ -33,11 +33,11 @@
     </parent>
 
     <groupId>org.exist-db.api.xmldb</groupId>
-    <artifactId>exist-xmldb-api-remote</artifactId>
+    <artifactId>exist-xmldb-api-xmlrpc</artifactId>
     <packaging>jar</packaging>
 
-    <name>eXist-db XML:DB Remote API</name>
-    <description>eXist-db NoSQL Database XML:DB Remote API</description>
+    <name>eXist-db XML:DB API over XML-RPC</name>
+    <description>eXist-db NoSQL Database XML:DB API over XML-RPC</description>
 
     <scm>
         <connection>scm:git:https://github.com/exist-db/exist.git</connection>
@@ -57,7 +57,7 @@
         </dependency>
         <dependency>
             <groupId>org.exist-db.api.xmlrpc</groupId>
-            <artifactId>exist-xmlrpc-api</artifactId>
+            <artifactId>exist-xmlrpc-api-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

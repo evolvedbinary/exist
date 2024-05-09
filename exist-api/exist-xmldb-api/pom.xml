@@ -49,7 +49,7 @@
     <modules>
         <module>exist-xmldb-api-common</module>
         <module>exist-xmldb-api-embedded</module>
-        <module>exist-xmldb-api-remote</module>
+        <module>exist-xmldb-api-xmlrpc</module>
     </modules>
 
 </project>

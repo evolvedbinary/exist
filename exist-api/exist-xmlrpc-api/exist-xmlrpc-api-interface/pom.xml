@@ -47,6 +47,12 @@
     </scm>
 
     <dependencies>
+        <!-- TODO(AR) can we work to remove dependency on exist-core? -->
+        <dependency>
+            <groupId>org.exist-db</groupId>
+            <artifactId>exist-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>

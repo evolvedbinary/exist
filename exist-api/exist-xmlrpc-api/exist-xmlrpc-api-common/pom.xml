@@ -33,11 +33,11 @@
     </parent>
 
     <groupId>org.exist-db.api.xmlrpc</groupId>
-    <artifactId>exist-xmlrpc-api-server</artifactId>
+    <artifactId>exist-xmlrpc-api-common</artifactId>
     <packaging>jar</packaging>
 
-    <name>eXist-db XML-RPC API Server</name>
-    <description>eXist-db NoSQL Database XML-RPC API Server</description>
+    <name>eXist-db XML-RPC API Common Classes</name>
+    <description>eXist-db NoSQL Database XML-RPC API Common Classes</description>
 
     <scm>
         <connection>scm:git:https://github.com/exist-db/exist.git</connection>
@@ -47,15 +47,15 @@
     </scm>
 
     <dependencies>
+        <!-- TODO(AR) remove dependency on exist-core -->
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>exist-xmlrpc-api-common</artifactId>
+            <groupId>org.exist-db</groupId>
+            <artifactId>exist-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>exist-xmlrpc-api-interface</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
         </dependency>
     </dependencies>
 

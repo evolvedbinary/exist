@@ -37,7 +37,7 @@
     <packaging>jar</packaging>
 
     <name>eXist-db XML:DB Embedded API</name>
-    <description>eXist-db NoSQL Database XML:DB Embedded API</description>
+    <description>eXist-db NoSQL Database XML:DB API for an eXist-db instance embedded in the same JVM</description>
 
     <scm>
         <connection>scm:git:https://github.com/exist-db/exist.git</connection>
