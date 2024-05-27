@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -184,6 +193,7 @@ imaginaryTokenDefinitions
 	PRAGMA
 	GTEQ
 	SEQUENCE
+	FT_CONTAINS
 	;
 
 // === XPointer ===
@@ -1021,7 +1031,7 @@ castExpr throws XPathException
 
 comparisonExpr throws XPathException
 :
-	r1:stringConcatExpr (
+	r1:ftContainsExpr (
 		( BEFORE ) => BEFORE^ stringConcatExpr
 		|
 		( AFTER ) => AFTER^ stringConcatExpr
@@ -1031,6 +1041,18 @@ comparisonExpr throws XPathException
 		| ( ( EQ^ | NEQ^ | GT^ | LT^ | LTEQ^ ) stringConcatExpr )
 		| ( ( "is"^ | "isnot"^ ) stringConcatExpr )
 	)?
+	;
+
+ftContainsExpr throws XPathException
+    : stringConcatExpr
+        (
+            ("contains" "text") =>
+            (
+              m:"contains"^ {#m.setType(FT_CONTAINS); #m.setText("FT-CONTAINS");}
+              "text"!
+              stringConcatExpr
+            )
+        )?
 	;
 
 stringConcatExpr throws XPathException

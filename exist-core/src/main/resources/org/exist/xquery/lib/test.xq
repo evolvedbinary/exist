@@ -1,4 +1,13 @@
 (:
+ : Copyright (C) 2024 Evolved Binary Ltd
+ :
+ : Changes made by Evolved Binary are proprietary and are not Open Source.
+ :
+ : NOTE: Parts of this file contain code from The eXist-db Authors.
+ :      The original license header is included below.
+ :
+ : -------------------------------------------------------------------------
+ :
  : eXist-db Open Source Native XML Database
  : Copyright (C) 2001 The eXist-db Authors
  :
@@ -235,7 +244,7 @@ declare function t:run-test($test as element(test), $count as xs:integer,
         else $test/expected/node()
     let $OK :=
         if ($test/error) then
-            not(empty($expanded("error"))) and (contains($expanded("error")("description"), $test/error) or local-name-from-QName($expanded("error")("code")) eq string($test/error))
+            not(empty($expanded("error"))) and (fn:contains($expanded("error")("description"), $test/error) or local-name-from-QName($expanded("error")("code")) eq string($test/error))
         else if ($test/xpath) then
             t:test(t:xpath($output("result"), $test/xpath))
         else if ($test/@output eq 'text') then

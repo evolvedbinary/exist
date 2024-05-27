@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -3172,6 +3181,16 @@ throws PermissionDeniedException, EXistException, XPathException
             path.add(step);
         }
     )
+    |
+    #(
+            ftContainsExpr:FT_CONTAINS step=expr [left]
+            step=expr [right]
+            {
+                step= new FTComparison(context, left, right);
+                step.setASTNode(ftContainsExpr);
+                path.add(step);
+            }
+        )
     ;
 
 generalComp [PathExpr path]
