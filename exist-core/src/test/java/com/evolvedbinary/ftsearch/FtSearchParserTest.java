@@ -3,10 +3,13 @@
  *
  * This code is proprietary and is not Open Source.
  */
-package org.exist.xquery;
+package com.evolvedbinary.ftsearch;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
+import org.exist.xquery.PathExpr;
+import org.exist.xquery.XPathException;
+import org.exist.xquery.XQueryContext;
 import org.exist.xquery.parser.XQueryAST;
 import org.exist.xquery.parser.XQueryLexer;
 import org.exist.xquery.parser.XQueryParser;
@@ -19,7 +22,7 @@ import java.io.StringReader;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class ContainsTextTest {
+public class FtSearchParserTest {
 
     @Test
     void parseFunction() throws TokenStreamException, XPathException, RecognitionException {
@@ -31,7 +34,7 @@ public class ContainsTextTest {
                 "    $secondParam as xs:string* )  as xs:boolean {\n" +
                 "\n" +
                 "   some $param in $secondParam\n" +
-                "   satisfies fn:contains($param,$secondParam)\n" +
+                "   satisfies contains($param,$secondParam)\n" +
                 " } ;";
         parse(function);
 
@@ -59,7 +62,7 @@ public class ContainsTextTest {
         }
         final XQueryAST ast = (XQueryAST) xparser.getAST();
 
-        System.out.println("ast = " + ast.toStringList());
+        //System.out.println("ast = " + ast.toStringList());
 
         final XQueryTreeParser treeParser = new XQueryTreeParser(context);
         final PathExpr expr = new PathExpr(context);

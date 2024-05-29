@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+  Copyright (C) 2024 Evolved Binary Ltd
+  Changes made by Evolved Binary are proprietary and are not Open Source.
+
+  NOTE: Parts of this file contain code from The eXist-db Authors.
+        The original license header is included below.
+
+   --------------------------------------------------------------------------
 
     eXist-db Open Source Native XML Database
     Copyright (C) 2001 The eXist-db Authors
@@ -661,6 +668,31 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-xml</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>9.10.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analysis-common</artifactId>
+            <version>9.10.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-memory</artifactId>
+            <version>9.10.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>9.10.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>

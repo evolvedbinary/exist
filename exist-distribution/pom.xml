@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+  Copyright (C) 2024 Evolved Binary Ltd
+  Changes made by Evolved Binary are proprietary and are not Open Source.
+
+  NOTE: Parts of this file contain code from The eXist-db Authors.
+        The original license header is included below.
+
+   --------------------------------------------------------------------------
 
     eXist-db Open Source Native XML Database
     Copyright (C) 2001 The eXist-db Authors
@@ -128,24 +135,24 @@
 
 
         <!-- extensions/indexes/ -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>exist-index-lucene</artifactId>
-            <version>${project.version}</version>
-            <scope>runtime</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>${project.groupId}</groupId>-->
+<!--            <artifactId>exist-index-lucene</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>exist-index-ngram</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>exist-index-range</artifactId>
-            <version>${project.version}</version>
-            <scope>runtime</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>${project.groupId}</groupId>-->
+<!--            <artifactId>exist-index-range</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>exist-index-sort</artifactId>

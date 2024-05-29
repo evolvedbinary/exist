@@ -2263,6 +2263,8 @@ reservedKeywords returns [String name]
 	"empty-sequence" { name = "empty-sequence"; }
 	|
 	"schema-element" { name = "schema-element"; }
+	|
+    "contains" { name = "contains"; }
 	;
 
 /**

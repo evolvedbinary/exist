@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+  Copyright (C) 2024 Evolved Binary Ltd
+  Changes made by Evolved Binary are proprietary and are not Open Source.
+
+  NOTE: Parts of this file contain code from The eXist-db Authors.
+        The original license header is included below.
+
+   --------------------------------------------------------------------------
 
     eXist-db Open Source Native XML Database
     Copyright (C) 2001 The eXist-db Authors
@@ -46,9 +53,9 @@
   </scm>
 
     <modules>
-        <module>lucene</module>
+<!--        <module>lucene</module>-->
         <module>ngram</module>
-        <module>range</module>
+<!--        <module>range</module>-->
         <module>sort</module>
         <module>spatial</module>
         <module>indexes-integration-tests</module>
