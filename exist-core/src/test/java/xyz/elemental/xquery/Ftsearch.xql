@@ -21,7 +21,13 @@ function ftsearch:simpleSearch() {
 declare
     %test:assertEquals("bb aa")
 function ftsearch:listSearchContext() {
-    for $w in ('bbbb', 'ccccc', ('cc bb', 'bb aa'))
+    for $w in ('bbbb', 'ccccc', 'cc bb', 'bb aa')
         where $w contains text 'aa'
         return $w
+};
+
+declare
+    %test:assertTrue
+function ftsearch:listSearchContext2() {
+    ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'ggg'
 };

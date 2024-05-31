@@ -3,14 +3,14 @@
  *
  * This code is proprietary and is not Open Source.
  */
-package com.evolvedbinary.ftsearch;
+package xyz.elemental.xquery;
 
 import org.exist.test.runner.XSuite;
 import org.junit.runner.RunWith;
 
 @RunWith(XSuite.class)
 @XSuite.XSuiteFiles({
-        "src/test/java/com/evolvedbinary/ftsearch/Ftsearch.xql"
+        "src/test/java/xyz/elemental/xquery/Ftsearch.xql"
 })
 public class FtSearchQueryTest {
 }

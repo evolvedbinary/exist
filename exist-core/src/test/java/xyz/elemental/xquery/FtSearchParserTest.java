@@ -3,7 +3,7 @@
  *
  * This code is proprietary and is not Open Source.
  */
-package com.evolvedbinary.ftsearch;
+package xyz.elemental.xquery;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;

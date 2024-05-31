@@ -65,6 +65,7 @@ header {
     import org.exist.storage.ElementValue;
     import org.exist.xquery.functions.map.MapExpr;
     import org.exist.xquery.functions.array.ArrayConstructor;
+    import xyz.elemental.xquery.FTComparison;
 
     import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 }

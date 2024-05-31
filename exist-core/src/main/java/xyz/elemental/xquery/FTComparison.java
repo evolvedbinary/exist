@@ -3,12 +3,13 @@
  *
  * This code is proprietary and is not Open Source.
  */
-package org.exist.xquery;
+package xyz.elemental.xquery;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.exist.xquery.*;
 import org.exist.xquery.value.BooleanValue;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
@@ -26,6 +27,7 @@ public class FTComparison extends BinaryOp {
     //     - Context safe?
     //     - Thread Local better ? Who will then delete them ?
     //     - Pool better?
+
     private static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer();
 
     public FTComparison(XQueryContext context) {
@@ -36,6 +38,11 @@ public class FTComparison extends BinaryOp {
         super(context);
         setLeft(left);
         setRight(right);
+    }
+
+    @Override
+    public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
+        super.analyze(contextInfo); //Always call super!!!
     }
 
     @Override
@@ -53,7 +60,9 @@ public class FTComparison extends BinaryOp {
         while(lefIt.hasNext()) {
             var itemStringValue = lefIt.nextItem().getStringValue();
 
-            var memoryIndex = new MemoryIndex();
+            var memoryIndex = new MemoryIndex(); //Instantiate in analyze.
+            memoryIndex.reset();
+
             memoryIndex.addField(FIELD_NAME, itemStringValue, STANDARD_ANALYZER);
 
             var queryParser = new QueryParser(FIELD_NAME, STANDARD_ANALYZER);
