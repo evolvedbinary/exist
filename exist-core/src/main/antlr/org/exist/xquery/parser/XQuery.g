@@ -176,6 +176,7 @@ imaginaryTokenDefinitions
 	ORDER_BY
     GROUP_BY
 	POSITIONAL_VAR
+	SCORE_VAR
 	CATCH_ERROR_CODE
 	CATCH_ERROR_DESC
 	CATCH_ERROR_VAL
@@ -846,12 +847,20 @@ inVarBinding throws XPathException
 :
 	DOLLAR! varName=v:varName! ( typeDeclaration )? ( allowingEmpty )?
 	( positionalVar )?
+	( scoreVar )?
 	"in"! exprSingle
 	{
 		#inVarBinding= #(#[VARIABLE_BINDING, varName], #inVarBinding);
 		#inVarBinding.copyLexInfo(#v);
 	}
 	;
+
+scoreVar
+{String varName; }
+:
+    "score" DOLLAR! varName=varName
+    {#scoreVar= #[SCORE_VAR, varName];}
+    ;
 
 positionalVar
 { String varName; }
@@ -2265,6 +2274,8 @@ reservedKeywords returns [String name]
 	"schema-element" { name = "schema-element"; }
 	|
     "contains" { name = "contains"; }
+    |
+    "score" { name = "contains"; }
 	;
 
 /**

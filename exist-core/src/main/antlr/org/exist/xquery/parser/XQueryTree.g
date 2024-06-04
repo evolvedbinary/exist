@@ -141,6 +141,7 @@ options {
         QName varName;
         SequenceType sequenceType= null;
         QName posVar = null;
+        QName scoreVar = null;
         Expression inputSequence;
         Expression action;
         FLWORClause.ClauseType type = FLWORClause.ClauseType.FOR;
@@ -1608,6 +1609,16 @@ throws PermissionDeniedException, EXistException, XPathException
                                     clause.posVar = QName.parse(staticContext, posVar.getText(), null);
                                 } catch (final IllegalQNameException iqe) {
                                     throw new XPathException(posVar.getLine(), posVar.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + posVar.getText());
+                                }
+                            }
+                        )?
+                        (
+                            scoreVar:SCORE_VAR
+                            {
+                                try {
+                                    clause.scoreVar = QName.parse(staticContext, scoreVar.getText(), null);
+                                } catch (final IllegalQNameException iqe) {
+                                    throw new XPathException(scoreVar.getLine(), scoreVar.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + scoreVar.getText());
                                 }
                             }
                         )?

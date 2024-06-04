@@ -50,6 +50,17 @@ public class FtSearchParserTest {
         parse(query);
     }
 
+    @Test
+    void parseScore() throws RecognitionException, XPathException, TokenStreamException, IOException {
+        final var query = """
+                xquery version "3.1";
+                for $w score $s in ('aaaa', 'bbbb', 'ccccc')
+                   where $w contains text "aaaa"
+                  return <text>{ $w } { $s  }</text>
+                """;
+        parse(query);
+    }
+
     private PathExpr parse(String query) throws TokenStreamException, XPathException, RecognitionException {
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();

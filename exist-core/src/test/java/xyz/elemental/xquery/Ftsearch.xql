@@ -27,7 +27,15 @@ function ftsearch:listSearchContext() {
 };
 
 declare
+    %test:assertEquals("bb aa")
+function ftsearch:scoreVariable() {
+    for $w score $s in ('bbbb', 'ccccc', 'cc bb', 'bb aa')
+        where $w contains text 'aa'
+        return $w
+};
+
+declare
     %test:assertTrue
 function ftsearch:listSearchContext2() {
-    ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'ggg'
+    ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'bb'
 };
