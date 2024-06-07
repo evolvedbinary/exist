@@ -1,4 +1,11 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ * ---------------------------------------------------------------------
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,10 +28,13 @@
  */
 package org.exist.xquery;
 
+import net.bytebuddy.asm.Advice;
 import org.exist.dom.QName;
 import org.exist.dom.persistent.NodeSet;
 import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.*;
+
+import java.util.Random;
 
 /**
  * Represents an XQuery "for" expression.
@@ -34,6 +44,7 @@ import org.exist.xquery.value.*;
 public class ForExpr extends BindingExpression {
 
     private QName positionalVariable = null;
+    private QName scoreVariable = null;
     private boolean allowEmpty = false;
     private boolean isOuterFor = true;
 
@@ -55,6 +66,14 @@ public class ForExpr extends BindingExpression {
      */
     public void setPositionalVariable(final QName var) {
         positionalVariable = var;
+    }
+
+    /**
+     * Name of the score variable for full text search
+     * @param scoreVariable
+     */
+    public void setScoreVariable(QName scoreVariable) {
+        this.scoreVariable = scoreVariable;
     }
 
 	/* (non-Javadoc)
@@ -79,11 +98,18 @@ public class ForExpr extends BindingExpression {
                 if (varName.equals(positionalVariable)) {
                     throw new XPathException(this, ErrorCodes.XQST0089,
                             "bound variable and positional variable have the same name");
+                    //TODO - We need to check more variables for conflict.
                 }
                 final LocalVariable posVar = new LocalVariable(positionalVariable);
                 posVar.setSequenceType(POSITIONAL_VAR_TYPE);
                 posVar.setStaticType(Type.INTEGER);
                 context.declareVariableBinding(posVar);
+            }
+
+            if(scoreVariable != null) {
+                final LocalVariable scoreVar = new LocalVariable(scoreVariable);
+                scoreVar.setStaticType(Type.FLOAT);
+                context.declareVariableBinding(scoreVar);
             }
 
             final AnalyzeContextInfo newContextInfo = new AnalyzeContextInfo(contextInfo);
@@ -137,6 +163,14 @@ public class ForExpr extends BindingExpression {
                 at.setSequenceType(POSITIONAL_VAR_TYPE);
                 context.declareVariableBinding(at);
             }
+            LocalVariable score = null;
+            if(scoreVariable != null) {
+                score = new LocalVariable(scoreVariable);
+                score.setStaticType(Type.FLOAT);
+                context.declareVariableBinding(score);
+            }
+            //TODO - bind variable to context, but not set value
+
             // Assign the whole input sequence to the bound variable.
             // This is required if we process the "where" or "order by" clause
             // in one step.
@@ -179,10 +213,12 @@ public class ForExpr extends BindingExpression {
             // Loop through each variable binding
             int p = 0;
             if (in.isEmpty() && allowEmpty) {
-                processItem(var, AtomicValue.EMPTY_VALUE, Sequence.EMPTY_SEQUENCE, resultSequence, at, p);
+                processItem(var, AtomicValue.EMPTY_VALUE, Sequence.EMPTY_SEQUENCE, resultSequence, at, p, score);
             } else {
                 for (final SequenceIterator i = in.iterate(); i.hasNext(); p++) {
-                    processItem(var, i.nextItem(), in, resultSequence, at, p);
+                    //TODO - Here I already need the score
+                    // Inspect where, see if there is FTComparions, calculate it, setup score and call it again
+                    processItem(var, i.nextItem(), in, resultSequence, at, p, score);
                 }
             }
         } finally {
@@ -227,12 +263,16 @@ public class ForExpr extends BindingExpression {
     }
 
     private void processItem(LocalVariable var, Item contextItem, Sequence in, Sequence resultSequence, LocalVariable
-            at, int p) throws XPathException {
+            at, int p, LocalVariable score) throws XPathException {
         context.proceed(this);
         context.setContextSequencePosition(p, in);
         if (positionalVariable != null) {
             at.setValue(new IntegerValue(this, p + 1));
         }
+        if(scoreVariable != null) {
+            score.setValue(new FloatValue(this, r.nextFloat()));
+        }
+
         final Sequence contextSequence = contextItem.toSequence();
         // set variable value to current item
         var.setValue(contextSequence);
@@ -240,6 +280,10 @@ public class ForExpr extends BindingExpression {
             {var.checkType();} //because it makes some conversions !
         //Reset the context position
         context.setContextSequencePosition(0, null);
+
+
+        //Expression have list of steps,
+        // clause wraps probably expression
 
         resultSequence.addAll(returnExpr.eval(null, null));
 
@@ -332,4 +376,6 @@ public class ForExpr extends BindingExpression {
     public void accept(ExpressionVisitor visitor) {
         visitor.visitForExpression(this);
     }
+
+    private Random r = new Random();
 }

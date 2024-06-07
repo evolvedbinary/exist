@@ -1847,6 +1847,7 @@ throws PermissionDeniedException, EXistException, XPathException
             bind.setInputSequence(clause.inputSequence);
             if (clause.type == FLWORClause.ClauseType.FOR) {
                  ((ForExpr) bind).setPositionalVariable(clause.posVar);
+                 ((ForExpr) bind).setScoreVariable(clause.scoreVar);
                          }
                 } else if (clause.type == FLWORClause.ClauseType.GROUPBY ) {
                     if (clause.groupSpecs != null) {

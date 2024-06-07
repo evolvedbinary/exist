@@ -68,6 +68,8 @@ public class FTComparison extends BinaryOp {
             var queryParser = new QueryParser(FIELD_NAME, STANDARD_ANALYZER);
 
             try {
+                //context.resolveVariable(qname)
+
                 var score = memoryIndex.search(queryParser.parse(rightString));
                 if(score > 0) {
                     return BooleanValue.TRUE;

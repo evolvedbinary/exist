@@ -10,32 +10,32 @@ xquery version "3.1";
 module namespace ftsearch="http://exist-db.org/xquery/test/ft-search";
 declare namespace test="http://exist-db.org/xquery/xqsuite";
 
-declare
-    %test:assertEquals("aa bb")
-function ftsearch:simpleSearch() {
-    for $w in ('aa bb', 'bbbb', 'ccccc')
-        where $w contains text 'aa'
-        return $w
-};
+(:declare:)
+(:    %test:assertEquals("aa bb"):)
+(:function ftsearch:simpleSearch() {:)
+(:    for $w in ('aa bb', 'bbbb', 'ccccc'):)
+(:        where $w contains text 'aa':)
+(:        return $w:)
+(:};:)
+
+(:declare:)
+(:    %test:assertEquals("bb aa"):)
+(:function ftsearch:listSearchContext() {:)
+(:    for $w in ('bbbb', 'ccccc', 'cc bb', 'bb aa'):)
+(:        where $w contains text 'aa':)
+(:        return $w:)
+(:};:)
 
 declare
-    %test:assertEquals("bb aa")
-function ftsearch:listSearchContext() {
-    for $w in ('bbbb', 'ccccc', 'cc bb', 'bb aa')
-        where $w contains text 'aa'
-        return $w
-};
-
-declare
-    %test:assertEquals("bb aa")
+    %test:assertEquals('bb aa, 0.4')
 function ftsearch:scoreVariable() {
     for $w score $s in ('bbbb', 'ccccc', 'cc bb', 'bb aa')
         where $w contains text 'aa'
-        return $w
+        return concat($w, ", ", $s)
 };
 
-declare
-    %test:assertTrue
-function ftsearch:listSearchContext2() {
-    ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'bb'
-};
+(:declare:)
+(:    %test:assertTrue:)
+(:function ftsearch:listSearchContext2() {:)
+(:    ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'bb':)
+(:};:)
