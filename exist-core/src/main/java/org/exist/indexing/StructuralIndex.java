@@ -29,32 +29,34 @@ import org.exist.xquery.Expression;
 import org.exist.xquery.NodeSelector;
 import org.exist.xquery.NodeTest;
 
+import javax.annotation.Nullable;
+
 /**
  * Core interface for structural indexes. The structural index provides access to elements and attributes
  * through their name and relation.
  */
 public interface StructuralIndex {
 
-    public final static String STRUCTURAL_INDEX_ID = "structural-index";
+    String STRUCTURAL_INDEX_ID = "structural-index";
 
-    public final static String DEFAULT_CLASS = "org.exist.storage.structural.NativeStructuralIndex";
+    String DEFAULT_CLASS = "org.exist.storage.structural.NativeStructuralIndex";
 
-    public boolean matchElementsByTagName(byte type, DocumentSet docs, QName qname, NodeSelector selector);
+    boolean matchElementsByTagName(byte type, DocumentSet docs, QName qname, NodeSelector selector);
 
-    public boolean matchDescendantsByTagName(byte type, QName qname, int axis,
+    boolean matchDescendantsByTagName(byte type, QName qname, int axis,
         DocumentSet docs, ExtNodeSet contextSet, int contextId);
 
-    public NodeSet findElementsByTagName(byte type, DocumentSet docs, QName qname, NodeSelector selector);
+    NodeSet findElementsByTagName(byte type, DocumentSet docs, QName qname, @Nullable NodeSelector selector);
 
-    public NodeSet findElementsByTagName(byte type, DocumentSet docs, QName qname, NodeSelector selector, Expression parent);
+    NodeSet findElementsByTagName(byte type, DocumentSet docs, QName qname, @Nullable NodeSelector selector, @Nullable Expression parent);
 
-    public NodeSet findDescendantsByTagName(byte type, QName qname, int axis,
+    NodeSet findDescendantsByTagName(byte type, QName qname, int axis,
         DocumentSet docs, NodeSet contextSet,  int contextId);
 
-    public NodeSet findDescendantsByTagName(byte type, QName qname, int axis,
-                                            DocumentSet docs, NodeSet contextSet,  int contextId, Expression parent);
+    NodeSet findDescendantsByTagName(byte type, QName qname, int axis,
+                                            DocumentSet docs, NodeSet contextSet,  int contextId, @Nullable Expression parent);
 
-    public NodeSet findAncestorsByTagName(byte type, QName qname, int axis,
+    NodeSet findAncestorsByTagName(byte type, QName qname, int axis,
             DocumentSet docs, NodeSet contextSet, int contextId);
 
     /**
@@ -70,6 +72,6 @@ public interface StructuralIndex {
      * @param contextSet  the NodeSet contextSet
      * @return all nodes matching the given node test, axis and type
      */
-    public NodeSet scanByType(byte type, int axis, NodeTest test, boolean useSelfAsContext, 
+    NodeSet scanByType(byte type, int axis, NodeTest test, boolean useSelfAsContext,
             DocumentSet docs, NodeSet contextSet, int contextId);
 }

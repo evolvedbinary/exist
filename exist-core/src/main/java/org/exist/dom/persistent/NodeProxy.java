@@ -341,7 +341,7 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
      */
     @Override
     public boolean equals(final Object other) {
-        if(!(other instanceof NodeProxy otherNode)) {
+        if(!(other instanceof final NodeProxy otherNode)) {
             return false;
         }
 

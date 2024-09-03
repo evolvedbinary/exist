@@ -39,6 +39,8 @@ import org.w3c.dom.NodeList;
 import java.util.Map;
 import org.exist.security.PermissionDeniedException;
 
+import javax.annotation.Nullable;
+
 /**
  * Provide concurrent access to the index structure. Implements the core operations on the index.
  * The methods in this class are used in a multi-threaded environment. Every thread accessing the
@@ -51,19 +53,19 @@ public interface IndexWorker {
     /**
      * A key to a QName {@link java.util.List} "hint" to be used when the index scans its index entries
      */	
-    public static final String VALUE_COUNT = "value_count";
+    String VALUE_COUNT = "value_count";
 
     /**
      * Returns an ID which uniquely identifies this worker's index.
      * @return a unique name identifying this worker's index.
      */
-    public String getIndexId();
+    String getIndexId();
 
     /**
      * Returns a name which uniquely identifies this worker's index.
      * @return a unique name identifying this worker's index.
      */
-    public String getIndexName();
+    String getIndexName();
 
     /**
      * Read an index configuration from an collection.xconf configuration document.
@@ -165,7 +167,7 @@ public interface IndexWorker {
      * @return a MatchListener or null if the implementation does not want to receive
      * serialization events
      */
-    MatchListener getMatchListener(DBBroker broker, NodeProxy proxy);
+   @Nullable MatchListener getMatchListener(DBBroker broker, NodeProxy proxy);
 
     /**
      * Flush the index. This method will be called when indexing a document. The implementation should
@@ -210,7 +212,7 @@ public interface IndexWorker {
      * <li>the list of the documents in which the index entry is</li>
      * </ol> 
      */
-    public Occurrences[] scanIndex(XQueryContext context, DocumentSet docs, NodeSet contextSet, Map<?,?> hints);
+    Occurrences[] scanIndex(XQueryContext context, DocumentSet docs, NodeSet contextSet, Map<?,?> hints);
 
     /**
      * Returns a {@link QueryRewriter} to be called by the query optimizer.
