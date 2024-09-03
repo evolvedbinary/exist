@@ -26,29 +26,36 @@ import org.exist.dom.persistent.NodeProxy;
 import org.exist.dom.persistent.NodeSet;
 import org.exist.numbering.NodeId;
 
+import javax.annotation.Nullable;
+
 
 /**
  * @author <a href="mailto:wolfgang@exist-db.org">Wolfgang Meier</a>
  */
 public class ChildSelector implements NodeSelector {
 
-    private NodeSet context;
-    private int contextId;
+    private final NodeSet context;
+    private final int contextId;
 
-    public ChildSelector(NodeSet contextSet, int contextId) {
+    public ChildSelector(final NodeSet contextSet, final int contextId) {
         this.context = contextSet;
         this.contextId = contextId;
     }
 
-    public NodeProxy match(DocumentImpl doc, NodeId nodeId) {
+    @Override
+    public @Nullable NodeProxy match(final DocumentImpl doc, final NodeId nodeId) {
         final NodeProxy contextNode = context.parentWithChild(doc, nodeId, true, false);
-        if (contextNode == null)
-           {return null;}
+        if (contextNode == null) {
+            return null;
+        }
+
         final NodeProxy p = new NodeProxy(contextNode.getExpression(), doc, nodeId);
         if (Expression.NO_CONTEXT_ID != contextId) {
             p.deepCopyContext(contextNode, contextId);
-        } else
-            {p.copyContext(contextNode);}
+        } else {
+            p.copyContext(contextNode);
+        }
+
         return p;
     }
 }

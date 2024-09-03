@@ -25,10 +25,21 @@ import org.exist.dom.persistent.DocumentImpl;
 import org.exist.dom.persistent.NodeProxy;
 import org.exist.numbering.NodeId;
 
+import javax.annotation.Nullable;
+
 /**
  * @author <a href="mailto:wolfgang@exist-db.org">Wolfgang Meier</a>
  */
 public interface NodeSelector {
 
-    public NodeProxy match(DocumentImpl doc, NodeId nodeId);
+    /**
+     * Determines if a node should be selected.
+     *
+     * @param doc the document that the node belongs to.
+     * @param nodeId the ID of the node.
+     *
+     * @return if the node should be selected then a node proxy to the node,
+     *     else if the node should not be selected then null.
+     */
+    @Nullable NodeProxy match(DocumentImpl doc, NodeId nodeId);
 }
