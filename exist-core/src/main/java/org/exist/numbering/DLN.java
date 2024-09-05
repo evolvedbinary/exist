@@ -305,6 +305,18 @@ public class DLN extends DLNBase implements NodeId {
         return sibling.isChildOf(parent);
     }
 
+    @Override
+    public boolean isFollowingSiblingOf(final NodeId otherNodeId) {
+        // TODO(AR) ideally use some bit arithmetic in a new function of the DLN implementation method to avoid conversion from bits to ints
+        return getParentId().equals(otherNodeId.getParentId()) && compareTo(otherNodeId) > 0;
+    }
+
+    @Override
+    public boolean isPrecedingSiblingOf(final NodeId otherNodeId) {
+        // TODO(AR) ideally use some bit arithmetic in a new function of the DLN implementation method to avoid conversion from bits to ints
+        return getParentId().equals(otherNodeId.getParentId()) && compareTo(otherNodeId) < 0;
+    }
+
     /**
      * Returns the level within the document tree at which
      * this node occurs.

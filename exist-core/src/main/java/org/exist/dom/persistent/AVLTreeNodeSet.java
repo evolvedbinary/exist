@@ -458,6 +458,16 @@ public class AVLTreeNodeSet extends AbstractNodeSet {
         state = (state == Integer.MAX_VALUE ? 0 : state + 1);
     }
 
+    @Override
+    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+    @Override
+    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
     private static class InorderTraversal implements NodeSetIterator, SequenceIterator {
         @Nullable private final Node root;
         private final Deque<Node> nodes = new ArrayDeque<>();

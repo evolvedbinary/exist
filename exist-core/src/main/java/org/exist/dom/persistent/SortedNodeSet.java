@@ -221,6 +221,16 @@ public class SortedNodeSet extends AbstractNodeSet {
         return new SortedNodeSetIterator(list.iterator());
     }
 
+    @Override
+    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+    @Override
+    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
     private static final class SortedNodeSetIterator implements NodeSetIterator, SequenceIterator {
 
         private final Iterator<IteratorItem> ii;

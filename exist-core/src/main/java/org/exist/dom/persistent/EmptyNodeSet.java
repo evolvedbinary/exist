@@ -109,6 +109,16 @@ public final class EmptyNodeSet extends AbstractNodeSet {
     }
 
     @Override
+    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        return false;
+    }
+
+    @Override
+    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        return false;
+    }
+
+    @Override
     public NodeProxy get(final NodeProxy proxy) {
         return null;
     }

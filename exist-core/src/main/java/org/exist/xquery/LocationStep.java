@@ -869,15 +869,23 @@ public class LocationStep extends Step {
                                 "Using structural index '" + index.toString()
                                         + "'");
                     }
-                    currentSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), null, this);
+
+                    final NodeSelector nodeSelector;
+                    if (axis == Constants.PRECEDING_SIBLING_AXIS) {
+                        nodeSelector = new PrecedingSiblingSelector(contextSet);
+                    } else if (axis == Constants.FOLLOWING_SIBLING_AXIS) {
+                        nodeSelector = new FollowingSiblingSelector(contextSet);
+                    } else {
+                        throw new IllegalArgumentException("Unsupported axis specified");
+                    }
+
+                    currentSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), nodeSelector, this);
+
                     currentDocs = docs;
                     registerUpdateListener();
                 }
-                return switch (axis) {
-                    case Constants.PRECEDING_SIBLING_AXIS -> currentSet.selectPrecedingSiblings(contextSet, contextId);
-                    case Constants.FOLLOWING_SIBLING_AXIS -> currentSet.selectFollowingSiblings(contextSet, contextId);
-                    default -> throw new IllegalArgumentException("Unsupported axis specified");
-                };
+
+                return currentSet;
             }
         }
     }

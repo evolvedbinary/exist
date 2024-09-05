@@ -1009,6 +1009,22 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
     }
 
     @Override
+    public boolean containsPrecedingSiblingOf(final DocumentImpl otherDoc, final NodeId otherId) {
+        if (otherDoc.getDocId() != doc.getDocId()) {
+            return false;
+        }
+        return otherId.isFollowingSiblingOf(nodeId);
+    }
+
+    @Override
+    public boolean containsFollowingSiblingOf(final DocumentImpl otherDoc, final NodeId otherId) {
+        if (otherDoc.getDocId() != doc.getDocId()) {
+            return false;
+        }
+        return otherId.isPrecedingSiblingOf(nodeId);
+    }
+
+    @Override
     public NodeSet getContextNodes(final int contextId) {
         final NewArrayNodeSet result = new NewArrayNodeSet();
         ContextItem contextNode = getContext();

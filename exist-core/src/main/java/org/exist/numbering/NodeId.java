@@ -119,7 +119,7 @@ public interface NodeId extends Comparable<NodeId> {
      *
      * @param other the node id to compare with
      * @param isFollowing if true, return false for descendants of the current node 
-     * @return true true if the current node comes after the other node in document order
+     * @return true if the current node comes after the other node in document order
      */
     boolean after(NodeId other, boolean isFollowing);
 
@@ -168,6 +168,24 @@ public interface NodeId extends Comparable<NodeId> {
     boolean isSiblingOf(NodeId sibling);
 
     /**
+     * Determines if this NodeId is a preceding sibling of the provided NodeId.
+     *
+     * @param nodeId the NodeId to test against.
+     *
+     * @return true if this NodeId is a preceding sibling of the provided NodeId
+     */
+    boolean isPrecedingSiblingOf(NodeId nodeId);
+
+    /**
+     * Determines if this NodeId is a following sibling of the provided NodeId.
+     *
+     * @param nodeId the NodeId to test against.
+     *
+     * @return true if this NodeId is a following sibling of the provided NodeId
+     */
+    boolean isFollowingSiblingOf(NodeId nodeId);
+
+    /**
      * Returns the level within the document tree at which
      * this node occurs.
      *
@@ -175,6 +193,7 @@ public interface NodeId extends Comparable<NodeId> {
      */
     int getTreeLevel();
 
+    @Override
     int compareTo(NodeId other);
 
     /**
