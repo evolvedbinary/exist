@@ -332,6 +332,20 @@ public class ExtArrayNodeSet extends AbstractArrayNodeSet implements DocumentSet
             directParent, includeSelf);
     }
 
+    @Override
+    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.containsPrecedingSiblingOf(doc, nodeId);
+    }
+
+    @Override
+    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.containsFollowingSiblingOf(doc, nodeId);
+    }
+
     /**
      * The method <code>debugParts</code>
      *
@@ -805,6 +819,69 @@ public class ExtArrayNodeSet extends AbstractArrayNodeSet implements DocumentSet
                 parentNodeId = parentNodeId.getParentId();
             }
             return null;
+        }
+
+        /**
+         * Tests this nodeset contains a preceding sibling of the provided node (e.g. a following sibling).
+         *
+         * @param doc the document containing the node to test.
+         * @param nodeId the nodeId of the node to test.
+         *
+         * @return true if the node is a following sibling of a node in this nodeset.
+         */
+        boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+            sort();
+            int low = 0;
+            int high = length - 1;
+            int mid;
+            int cmp;
+            NodeProxy p;
+            while (low <= high) {
+                mid = (low + high) / 2;
+                p = array[mid];
+                cmp = p.getNodeId().compareTo(nodeId);
+                if (cmp < 0) {
+                    if (nodeId.isPrecedingSiblingOf(p.getNodeId())) {
+                        return true;
+                    }
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Tests this nodeset contains a following sibling of the provided node (e.g. a preceding sibling).
+         *
+         * @param doc the document containing the node to test.
+         * @param nodeId the nodeId of the node to test.
+         *
+         * @return true if the node is a preceding sibling of a node in this nodeset.
+         */
+        boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#hasPrecedingSibling, a bug in one might indicate a bug in the other
+            sort();
+            int low = 0;
+            int high = length - 1;
+            int mid;
+            int cmp;
+            NodeProxy p;
+            while (low <= high) {
+                mid = (low + high) / 2;
+                p = array[mid];
+                cmp = p.getNodeId().compareTo(nodeId);
+                if (cmp > 0) {
+                    if (nodeId.isPrecedingSiblingOf(p.getNodeId())) {
+                        return true;
+                    }
+                    high = mid - 1;
+                } else {
+                    low = mid + 1;
+                }
+            }
+            return false;
         }
 
         NodeProxy hasDescendantsInSet(final NodeId ancestorId, final int contextId, final boolean includeSelf) {

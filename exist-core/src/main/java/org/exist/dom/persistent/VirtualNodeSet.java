@@ -298,6 +298,24 @@ public class VirtualNodeSet extends AbstractNodeSet {
         }
     }
 
+    @Override
+    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.containsPrecedingSiblingOf(doc, nodeId);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
+    @Override
+    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.containsFollowingSiblingOf(doc, nodeId);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
     /**
      * Realize the node set by recursively scanning the
      * DOM.

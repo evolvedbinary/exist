@@ -147,4 +147,14 @@ class SortTestNodeId implements NodeId {
 	public NodeId append(NodeId other) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public boolean isFollowingSiblingOf(final NodeId nodeId) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isPrecedingSiblingOf(final NodeId nodeId) {
+		throw new UnsupportedOperationException();
+	}
 }

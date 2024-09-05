@@ -386,4 +386,23 @@ public interface NodeSet extends Sequence, NodeList, Iterable<NodeProxy> {
 
     void setTrackMatches(boolean track);
 
+    /**
+     * Tests this nodeset contains a preceding sibling of the provided node (e.g. a following sibling).
+     *
+     * @param doc the document containing the node to test.
+     * @param nodeId the nodeId of the node to test.
+     *
+     * @return true if the node is a following sibling of a node in this nodeset.
+     */
+    boolean containsPrecedingSiblingOf(DocumentImpl doc, NodeId nodeId);
+
+    /**
+     * Tests this nodeset contains a following sibling of the provided node (e.g. a preceding sibling).
+     *
+     * @param doc the document containing the node to test.
+     * @param nodeId the nodeId of the node to test.
+     *
+     * @return true if the node is a preceding sibling of a node in this nodeset.
+     */
+    boolean containsFollowingSiblingOf(DocumentImpl doc, NodeId nodeId);
 }

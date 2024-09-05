@@ -914,6 +914,74 @@ public class NewArrayNodeSet extends AbstractArrayNodeSet implements ExtNodeSet,
     }
 
     @Override
+    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        final int docIdx = findDoc(doc);
+        if (docIdx < 0) {
+            return false;
+        }
+        return containsPrecedingSiblingOf(docIdx, nodeId);
+    }
+
+    private boolean containsPrecedingSiblingOf(final int docIdx, final NodeId nodeId) {
+        sort();
+        // NOTE(AR) this is almost a copy of the code in ExtArrayNodeSet#containsPrecedingSiblingOf, a bug in one might indicate a bug in the other
+        int low = documentNodesOffset[docIdx];
+        int high = low + (documentNodesCount[docIdx] - 1);
+        int mid;
+        int cmp;
+        NodeProxy p;
+        while (low <= high) {
+            mid = (low + high) / 2;
+            p = nodes[mid];
+            cmp = p.getNodeId().compareTo(nodeId);
+            if (cmp < 0) {
+                if (nodeId.isPrecedingSiblingOf(p.getNodeId())) {
+                    return true;
+                }
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        final int docIdx = findDoc(doc);
+        if (docIdx < 0) {
+            return false;
+        }
+        return containsFollowingSiblingOf(docIdx, nodeId);
+    }
+
+    private boolean containsFollowingSiblingOf(final int docIdx, final NodeId nodeId) {
+        sort();
+        // NOTE(AR) this is almost a copy of the code in ExtArrayNodeSet.Part#containsFollowingSiblingOf, a bug in one might indicate a bug in the other
+        int low = documentNodesOffset[docIdx];
+        int high = low + (documentNodesCount[docIdx] - 1);
+        int mid;
+        int cmp;
+        NodeProxy p;
+        while (low <= high) {
+            mid = (low + high) / 2;
+            p = nodes[mid];
+            cmp = p.getNodeId().compareTo(nodeId);
+            if (cmp > 0) {
+                if (nodeId.isPrecedingSiblingOf(p.getNodeId())) {
+                    return true;
+                }
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public NodeSet except(final NodeSet other) {
         final NewArrayNodeSet result = new NewArrayNodeSet();
         for(int i = 0; i < size; i++) {
