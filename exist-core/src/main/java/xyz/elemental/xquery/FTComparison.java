@@ -5,11 +5,14 @@
  */
 package xyz.elemental.xquery;
 
+import com.ibm.icu.text.Collator;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.exist.dom.memtree.ElementImpl;
 import org.exist.xquery.*;
+import org.exist.xquery.value.AtomicValue;
 import org.exist.xquery.value.BooleanValue;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
@@ -70,16 +73,87 @@ public class FTComparison extends BinaryOp {
             try {
                 //context.resolveVariable(qname)
 
-                var score = memoryIndex.search(queryParser.parse(rightString));
+                var score = memoryIndex.search(queryParser.parse(rightString + "~10"));
                 if(score > 0) {
-                    return BooleanValue.TRUE;
+                    return new ScoredBoolean(score, BooleanValue.TRUE);
                 }
-            } catch (ParseException e) {
+            } catch (final ParseException e) {
                 throw new XPathException(getRight(), new ErrorCodes.JavaErrorCode(e), "Unable to parse search query");
             }
 
         }
 
-        return BooleanValue.valueOf(false);
+        return BooleanValue.FALSE;
     }
+
+    public static class ScoredElementImpl extends ElementImpl {
+        private float score;
+//        private ElementImpl value;
+
+        public ScoredElementImpl(final float score, final ElementImpl value) {
+            super(value.getExpression(), value.getOwnerDocument(), value.getNodeNumber());
+            this.score = score;
+//            this.value = value;
+        }
+
+        public float getScore() {
+            return score;
+        }
+    }
+
+    public static class ScoredBoolean extends BooleanValue {
+        private float score;
+//        private BooleanValue value;
+
+        public ScoredBoolean(final float score, final BooleanValue value) {
+            super(value.getValue());
+            this.score = score;
+//            this.value = value;
+        }
+
+        public float getScore() {
+            return score;
+        }
+
+//        @Override
+//        public boolean compareTo(Collator collator, Constants.Comparison operator, AtomicValue other) throws XPathException {
+//            return value.compareTo(collator, operator, other);
+//        }
+//
+//        @Override
+//        public String getStringValue() throws XPathException {
+//            return value.getStringValue();
+//        }
+//
+//        @Override
+//        public int compareTo(Collator collator, AtomicValue other) throws XPathException {
+//            return value.compareTo(collator, other);
+//        }
+//
+//        @Override
+//        public AtomicValue max(Collator collator, AtomicValue other) throws XPathException {
+//            return value.max(collator, other);
+//        }
+//
+//        @Override
+//        public AtomicValue min(Collator collator, AtomicValue other) throws XPathException {
+//            return value.min(collator, other);
+//        }
+//
+//        @Override
+//        public AtomicValue convertTo(int requiredType) throws XPathException {
+//            return value.convertTo(requiredType);
+//        }
+//
+//        @Override
+//        public boolean effectiveBooleanValue() throws XPathException {
+//            return value.effectiveBooleanValue();
+//        }
+//
+//        @Override
+//        public int getItemCount() {
+//            return value.getItemCount();
+//        }
+    }
+
 }

@@ -22,6 +22,7 @@
 package org.exist.xquery;
 
 import com.evolvedbinary.j8fu.tuple.Tuple2;
+import org.exist.dom.memtree.ElementImpl;
 import org.exist.dom.persistent.ContextItem;
 import org.exist.dom.persistent.DocumentImpl;
 import org.exist.dom.persistent.DocumentSet;
@@ -36,6 +37,7 @@ import org.exist.xquery.value.Sequence;
 import org.exist.xquery.value.SequenceIterator;
 import org.exist.xquery.value.Type;
 import org.exist.xquery.value.ValueSequence;
+import xyz.elemental.xquery.FTComparison;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -350,7 +352,12 @@ public class Predicate extends PathExpr {
                             positions.add(nv);
                         }
                     } else if (innerSeq.effectiveBooleanValue()) {
-                        result.add(item);
+
+                        if (innerSeq instanceof FTComparison.ScoredBoolean scoredBoolean && item instanceof ElementImpl element) {
+                            result.add(new FTComparison.ScoredElementImpl(scoredBoolean.getScore(), element));
+                        } else {
+                            result.add(item);
+                        }
                     }
                 }
                 for (final NumericValue pos : positions) {

@@ -26,6 +26,7 @@ import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
 import org.exist.xquery.value.Type;
+import xyz.elemental.xquery.FTComparison;
 
 /**
  * Implements a where clause inside a FLWOR expressions.
@@ -144,6 +145,11 @@ public class WhereClause extends AbstractFLWORClause {
             return true;
         }
         final Sequence innerSeq = whereExpr.eval(null, null);
+
+        if (getPreviousClause() instanceof ForExpr forExpr && innerSeq instanceof FTComparison.ScoredBoolean scoredBoolean) {
+            forExpr.setScore(scoredBoolean.getScore());
+        }
+
         return innerSeq.effectiveBooleanValue();
     }
 

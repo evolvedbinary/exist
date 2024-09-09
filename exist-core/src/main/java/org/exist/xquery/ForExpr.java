@@ -33,6 +33,7 @@ import org.exist.dom.QName;
 import org.exist.dom.persistent.NodeSet;
 import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.*;
+import xyz.elemental.xquery.FTComparison;
 
 import java.util.Random;
 
@@ -47,6 +48,8 @@ public class ForExpr extends BindingExpression {
     private QName scoreVariable = null;
     private boolean allowEmpty = false;
     private boolean isOuterFor = true;
+
+    private LocalVariable score = null;
 
     public ForExpr(XQueryContext context, boolean allowingEmpty) {
         super(context);
@@ -163,7 +166,7 @@ public class ForExpr extends BindingExpression {
                 at.setSequenceType(POSITIONAL_VAR_TYPE);
                 context.declareVariableBinding(at);
             }
-            LocalVariable score = null;
+
             if(scoreVariable != null) {
                 score = new LocalVariable(scoreVariable);
                 score.setStaticType(Type.FLOAT);
@@ -270,7 +273,13 @@ public class ForExpr extends BindingExpression {
             at.setValue(new IntegerValue(this, p + 1));
         }
         if(scoreVariable != null) {
-            score.setValue(new FloatValue(this, r.nextFloat()));
+            if (contextItem instanceof FTComparison.ScoredElementImpl scoredElement) {
+                score.setValue(new FloatValue(scoredElement.getScore()));
+            } else {
+//                score.setValue(new FloatValue(this, r.nextFloat()));
+//                score.setValue(calculaterScore(contextItem));
+                score.setValue(FloatValue.ZERO);
+            }
         }
 
         final Sequence contextSequence = contextItem.toSequence();
@@ -345,14 +354,17 @@ public class ForExpr extends BindingExpression {
     public String toString() {
         final StringBuilder result = new StringBuilder();
         result.append("for ");
-        result.append("$").append(varName);
+        result.append('$').append(varName);
         if (sequenceType != null)
             {result.append(" as ").append(sequenceType);}
         if (allowEmpty) {
             result.append(" allowing empty ");
         }
         if (positionalVariable != null) {
-            result.append(" at ").append(positionalVariable);
+            result.append(" at ").append('$').append(positionalVariable);
+        }
+        if (scoreVariable != null) {
+            result.append(" score ").append('$').append(scoreVariable);
         }
         result.append(" in ");
         result.append(inputSequence.toString());
@@ -377,5 +389,9 @@ public class ForExpr extends BindingExpression {
         visitor.visitForExpression(this);
     }
 
-    private Random r = new Random();
+//    private Random r = new Random();
+
+    public void setScore(float score) {
+        this.score.setValue(new FloatValue(score));
+    }
 }
