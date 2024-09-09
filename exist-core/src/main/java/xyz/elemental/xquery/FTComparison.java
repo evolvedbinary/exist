@@ -18,6 +18,8 @@ import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
 import org.apache.lucene.index.memory.MemoryIndex;
 
+import javax.annotation.Nullable;
+
 /*
     Using left & right give us free analyze method from BinaryOp.
     Do we need to use BinaryOp? Or we should inherit directly from PathExpr ?
@@ -48,8 +50,18 @@ public class FTComparison extends BinaryOp {
         super.analyze(contextInfo); //Always call super!!!
     }
 
+    @Nullable Sequence result;
+
+    public void clearResult() {
+        result = null;
+    }
+
     @Override
     public Sequence eval(Sequence contextSequence, Item contextItem) throws XPathException {
+
+        if (result != null) {
+            return result;
+        }
 
         var left = getLeft().eval(contextSequence, contextItem);
 
@@ -75,7 +87,8 @@ public class FTComparison extends BinaryOp {
 
                 var score = memoryIndex.search(queryParser.parse(rightString + "~10"));
                 if(score > 0) {
-                    return new ScoredBoolean(score, BooleanValue.TRUE);
+                    result = new ScoredBoolean(score, BooleanValue.TRUE);
+                    return result;
                 }
             } catch (final ParseException e) {
                 throw new XPathException(getRight(), new ErrorCodes.JavaErrorCode(e), "Unable to parse search query");
@@ -83,8 +96,12 @@ public class FTComparison extends BinaryOp {
 
         }
 
-        return BooleanValue.FALSE;
+        result = BooleanValue.FALSE;
+
+        return result;
     }
+
+
 
     public static class ScoredElementImpl extends ElementImpl {
         private float score;

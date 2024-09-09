@@ -35,6 +35,9 @@ import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.*;
 import xyz.elemental.xquery.FTComparison;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -290,6 +293,18 @@ public class ForExpr extends BindingExpression {
         //Reset the context position
         context.setContextSequencePosition(0, null);
 
+        // EXPERIMENT
+        final List<FTComparison> ftComparisons = new ArrayList<>();
+        findContainsText(returnExpr, ftComparisons);
+
+        for (final FTComparison ftComparison : ftComparisons) {
+            ftComparison.clearResult();
+            final Sequence ftComparisonResult = ftComparison.eval(contextSequence, contextItem);
+            if (ftComparisonResult instanceof FTComparison.ScoredBoolean scoredBoolean) {
+                // TODO(AR) how to combine scores if there is more than one
+                setScore(scoredBoolean.getScore());
+            }
+        }
 
         //Expression have list of steps,
         // clause wraps probably expression
@@ -298,6 +313,31 @@ public class ForExpr extends BindingExpression {
 
         // free resources
         var.destroy(context, resultSequence);
+    }
+
+    private void findContainsText(Expression ex, final List<FTComparison> ftComparisons) {
+        if (ex instanceof DebuggableExpression debuggableExpression) {
+            ex = debuggableExpression.getFirst();
+        } else if (ex instanceof WhereClause whereClause) {
+            if (whereClause.getReturnExpression() instanceof WhereClause returnWhereClause) {
+                findContainsText(returnWhereClause, ftComparisons);
+//                if (deeperFtComparisons != null) {
+//                    ftComparisons.addAll(deeperFtComparisons);
+//                }
+            }
+            ex = whereClause.getWhereExpr();
+        } else if (ex instanceof FTComparison ftComparison) {
+            ftComparisons.add(ftComparison);
+            ex = null;
+        } else {
+            ex = null;
+        }
+
+        if (ex != null) {
+            findContainsText(ex, ftComparisons);
+        }
+
+        return;
     }
 
     private boolean callPostEval() {
