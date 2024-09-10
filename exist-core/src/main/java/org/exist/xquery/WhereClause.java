@@ -145,11 +145,6 @@ public class WhereClause extends AbstractFLWORClause {
             return true;
         }
         final Sequence innerSeq = whereExpr.eval(null, null);
-
-        if (getPreviousClause() instanceof ForExpr forExpr && innerSeq instanceof FTComparison.ScoredBoolean scoredBoolean) {
-            forExpr.setScore(scoredBoolean.getScore());
-        }
-
         return innerSeq.effectiveBooleanValue();
     }
 

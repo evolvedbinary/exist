@@ -52,8 +52,6 @@ public class ForExpr extends BindingExpression {
     private boolean allowEmpty = false;
     private boolean isOuterFor = true;
 
-    private LocalVariable score = null;
-
     public ForExpr(XQueryContext context, boolean allowingEmpty) {
         super(context);
         this.allowEmpty = allowingEmpty;
@@ -170,6 +168,7 @@ public class ForExpr extends BindingExpression {
                 context.declareVariableBinding(at);
             }
 
+            LocalVariable score = null;
             if(scoreVariable != null) {
                 score = new LocalVariable(scoreVariable);
                 score.setStaticType(Type.FLOAT);
@@ -275,15 +274,6 @@ public class ForExpr extends BindingExpression {
         if (positionalVariable != null) {
             at.setValue(new IntegerValue(this, p + 1));
         }
-        if(scoreVariable != null) {
-            if (contextItem instanceof FTComparison.ScoredElementImpl scoredElement) {
-                score.setValue(new FloatValue(scoredElement.getScore()));
-            } else {
-//                score.setValue(new FloatValue(this, r.nextFloat()));
-//                score.setValue(calculaterScore(contextItem));
-                score.setValue(FloatValue.ZERO);
-            }
-        }
 
         final Sequence contextSequence = contextItem.toSequence();
         // set variable value to current item
@@ -294,15 +284,15 @@ public class ForExpr extends BindingExpression {
         context.setContextSequencePosition(0, null);
 
         // EXPERIMENT
-        final List<FTComparison> ftComparisons = new ArrayList<>();
-        findContainsText(returnExpr, ftComparisons);
+        if(score != null) {
+            final List<FTComparison> ftComparisons = new ArrayList<>();
+            findContainsText(returnExpr, ftComparisons);
 
-        for (final FTComparison ftComparison : ftComparisons) {
-            ftComparison.clearResult();
-            final Sequence ftComparisonResult = ftComparison.eval(contextSequence, contextItem);
-            if (ftComparisonResult instanceof FTComparison.ScoredBoolean scoredBoolean) {
-                // TODO(AR) how to combine scores if there is more than one
-                setScore(scoredBoolean.getScore());
+            for (final FTComparison ftComparison : ftComparisons) {
+                ftComparison.clearResult();
+                final var scoreValue = ftComparison.evalScore(contextSequence, contextItem);
+
+                score.setValue(new FloatValue(this, scoreValue)); //TODO - Maybe better ftComparison than "this"?
             }
         }
 
@@ -316,28 +306,24 @@ public class ForExpr extends BindingExpression {
     }
 
     private void findContainsText(Expression ex, final List<FTComparison> ftComparisons) {
-        if (ex instanceof DebuggableExpression debuggableExpression) {
-            ex = debuggableExpression.getFirst();
+        if (ex instanceof FTComparison ftComparison) {
+            ftComparisons.add(ftComparison);
+
+        } else if (ex instanceof PathExpr pathExpr) {
+            for (int i = 0; i < pathExpr.getSubExpressionCount(); i++) {
+                findContainsText(pathExpr.getSubExpression(i), ftComparisons);
+            }
+
         } else if (ex instanceof WhereClause whereClause) {
             if (whereClause.getReturnExpression() instanceof WhereClause returnWhereClause) {
                 findContainsText(returnWhereClause, ftComparisons);
-//                if (deeperFtComparisons != null) {
-//                    ftComparisons.addAll(deeperFtComparisons);
-//                }
             }
-            ex = whereClause.getWhereExpr();
-        } else if (ex instanceof FTComparison ftComparison) {
-            ftComparisons.add(ftComparison);
-            ex = null;
-        } else {
-            ex = null;
+            findContainsText(whereClause.getWhereExpr(), ftComparisons);
+
+        } else if (ex instanceof DebuggableExpression debuggableExpression) {
+            findContainsText(debuggableExpression.getFirst(), ftComparisons);
         }
 
-        if (ex != null) {
-            findContainsText(ex, ftComparisons);
-        }
-
-        return;
     }
 
     private boolean callPostEval() {
@@ -427,11 +413,5 @@ public class ForExpr extends BindingExpression {
 
     public void accept(ExpressionVisitor visitor) {
         visitor.visitForExpression(this);
-    }
-
-//    private Random r = new Random();
-
-    public void setScore(float score) {
-        this.score.setValue(new FloatValue(score));
     }
 }

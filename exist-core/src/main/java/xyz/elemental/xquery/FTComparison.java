@@ -5,14 +5,11 @@
  */
 package xyz.elemental.xquery;
 
-import com.ibm.icu.text.Collator;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.exist.dom.memtree.ElementImpl;
 import org.exist.xquery.*;
-import org.exist.xquery.value.AtomicValue;
 import org.exist.xquery.value.BooleanValue;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
@@ -50,17 +47,15 @@ public class FTComparison extends BinaryOp {
         super.analyze(contextInfo); //Always call super!!!
     }
 
-    @Nullable Sequence result;
+    @Nullable Float score;
 
     public void clearResult() {
-        result = null;
+        score = null;
     }
 
-    @Override
-    public Sequence eval(Sequence contextSequence, Item contextItem) throws XPathException {
-
-        if (result != null) {
-            return result;
+    public Float evalScore(Sequence contextSequence, Item contextItem) throws XPathException {
+        if (score != null) {
+            return score;
         }
 
         var left = getLeft().eval(contextSequence, contextItem);
@@ -83,94 +78,35 @@ public class FTComparison extends BinaryOp {
             var queryParser = new QueryParser(FIELD_NAME, STANDARD_ANALYZER);
 
             try {
-                //context.resolveVariable(qname)
-
-                var score = memoryIndex.search(queryParser.parse(rightString + "~10"));
-                if(score > 0) {
-                    result = new ScoredBoolean(score, BooleanValue.TRUE);
-                    return result;
-                }
+                this.score = memoryIndex.search(queryParser.parse(rightString + "~10"));
+                return score;
             } catch (final ParseException e) {
                 throw new XPathException(getRight(), new ErrorCodes.JavaErrorCode(e), "Unable to parse search query");
             }
-
         }
-
-        result = BooleanValue.FALSE;
-
-        return result;
+        throw new XPathException(getLeft(), "No elements to perate on");
     }
 
 
-
-    public static class ScoredElementImpl extends ElementImpl {
-        private float score;
-//        private ElementImpl value;
-
-        public ScoredElementImpl(final float score, final ElementImpl value) {
-            super(value.getExpression(), value.getOwnerDocument(), value.getNodeNumber());
-            this.score = score;
-//            this.value = value;
+    @Override
+    public Sequence eval(Sequence contextSequence, Item contextItem) throws XPathException {
+        if(score == null) {
+            evalScore(contextSequence, contextItem);
         }
-
-        public float getScore() {
-            return score;
-        }
+        return BooleanValue.valueOf(score > 0);
     }
 
-    public static class ScoredBoolean extends BooleanValue {
-        private float score;
-//        private BooleanValue value;
-
-        public ScoredBoolean(final float score, final BooleanValue value) {
-            super(value.getValue());
-            this.score = score;
-//            this.value = value;
-        }
-
-        public float getScore() {
-            return score;
-        }
-
-//        @Override
-//        public boolean compareTo(Collator collator, Constants.Comparison operator, AtomicValue other) throws XPathException {
-//            return value.compareTo(collator, operator, other);
+//    public static class ScoredBoolean extends BooleanValue {
+//        private float score;
+//
+//        public ScoredBoolean(final float score, final BooleanValue value) {
+//            super(value.getValue());
+//            this.score = score;
 //        }
 //
-//        @Override
-//        public String getStringValue() throws XPathException {
-//            return value.getStringValue();
+//        public float getScore() {
+//            return score;
 //        }
-//
-//        @Override
-//        public int compareTo(Collator collator, AtomicValue other) throws XPathException {
-//            return value.compareTo(collator, other);
-//        }
-//
-//        @Override
-//        public AtomicValue max(Collator collator, AtomicValue other) throws XPathException {
-//            return value.max(collator, other);
-//        }
-//
-//        @Override
-//        public AtomicValue min(Collator collator, AtomicValue other) throws XPathException {
-//            return value.min(collator, other);
-//        }
-//
-//        @Override
-//        public AtomicValue convertTo(int requiredType) throws XPathException {
-//            return value.convertTo(requiredType);
-//        }
-//
-//        @Override
-//        public boolean effectiveBooleanValue() throws XPathException {
-//            return value.effectiveBooleanValue();
-//        }
-//
-//        @Override
-//        public int getItemCount() {
-//            return value.getItemCount();
-//        }
-    }
+//    }
 
 }
