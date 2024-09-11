@@ -148,6 +148,7 @@ imaginaryTokenDefinitions
 	XPOINTER_ID
 	VARIABLE_REF
 	VARIABLE_BINDING
+	SCORE_VARIABLE_BINDING
 	ELEMENT
 	ATTRIBUTE
 	ATTRIBUTE_CONTENT
@@ -883,6 +884,13 @@ letVarBinding throws XPathException
 		#letVarBinding= #(#[VARIABLE_BINDING, varName], #letVarBinding);
 		#letVarBinding.copyLexInfo(#v);
 	}
+	|
+	"score"! DOLLAR! varName=ss:varName!
+	COLON! EQ! exprSingle
+	{
+    		#letVarBinding= #(#[SCORE_VARIABLE_BINDING, varName], #letVarBinding);
+    		#letVarBinding.copyLexInfo(#ss);
+    }
 	;
 
 orderByClause throws XPathException

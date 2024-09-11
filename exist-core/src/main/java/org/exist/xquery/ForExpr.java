@@ -320,7 +320,10 @@ public class ForExpr extends BindingExpression {
             }
             findContainsText(whereClause.getWhereExpr(), ftComparisons);
 
-        } else if (ex instanceof DebuggableExpression debuggableExpression) {
+        }else if(ex instanceof AbstractFLWORClause flworClause) {
+            findContainsText(flworClause.getReturnExpression(), ftComparisons);
+        }
+        else if (ex instanceof DebuggableExpression debuggableExpression) {
             findContainsText(debuggableExpression.getFirst(), ftComparisons);
         }
 

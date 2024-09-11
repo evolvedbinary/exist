@@ -26,6 +26,7 @@ import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import xyz.elemental.xquery.FTComparison;
 
 /**
  * Implements an XQuery let-expression.
@@ -33,6 +34,8 @@ import org.w3c.dom.Element;
  * @author <a href="mailto:wolfgang@exist-db.org">Wolfgang Meier</a>
  */
 public class LetExpr extends BindingExpression {
+
+    private boolean scoreLet = false;
 
     public LetExpr(XQueryContext context) {
         super(context);
@@ -93,7 +96,11 @@ public class LetExpr extends BindingExpression {
             Sequence resultSequence = null;
             try {
                 // evaluate input sequence
-                in = inputSequence.eval(contextSequence, null);
+                if (scoreLet) {
+                    in = new FloatValue(this, ((FTComparison)inputSequence).evalScore(contextSequence, contextItem));
+                } else {
+                    in = inputSequence.eval(contextSequence, null);
+                }
                 clearContext(getExpressionId(), in);
                 // Declare the iteration variable
                 var = createVariable(varName);
@@ -228,5 +235,13 @@ public class LetExpr extends BindingExpression {
     @Override
     public boolean allowMixedNodesInReturn() {
         return true;
+    }
+
+    public boolean isScoreLet() {
+        return scoreLet;
+    }
+
+    public void setScoreLet(boolean scoreLet) {
+        this.scoreLet = scoreLet;
     }
 }

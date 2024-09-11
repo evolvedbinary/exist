@@ -148,6 +148,7 @@ options {
         List<GroupSpec> groupSpecs = null;
         List<OrderSpec> orderSpecs = null;
         boolean allowEmpty = false;
+        boolean isScoreLet = false;
     }
 
     /**
@@ -1666,6 +1667,35 @@ throws PermissionDeniedException, EXistException, XPathException
                             clauses.add(clause);
                         }
                     )
+                    |
+                    #(
+                                            scoreLetVarName:SCORE_VARIABLE_BINDING
+                                            {
+                                                ForLetClause clause= new ForLetClause();
+                                                clause.ast = scoreLetVarName;
+                                                clause.type = FLWORClause.ClauseType.LET;
+                                                clause.isScoreLet = true;
+                                                PathExpr inputSequence= new PathExpr(context);
+                                                inputSequence.setASTNode(expr_AST_in);
+                                            }
+                                            (
+                                                #(
+                                                    "as"
+                                                    { clause.sequenceType= new SequenceType(); }
+                                                    sequenceType [clause.sequenceType]
+                                                )
+                                            )?
+                                            step=expr [inputSequence]
+                                            {
+                                                try {
+                                                    clause.varName = QName.parse(staticContext, scoreLetVarName.getText(), null);
+                                                } catch (final IllegalQNameException iqe) {
+                                                    throw new XPathException(scoreLetVarName.getLine(), scoreLetVarName.getColumn(), ErrorCodes.XPST0081, "No namespace defined for prefix " + scoreLetVarName.getText());
+                                                }
+                                                clause.inputSequence= inputSequence;
+                                                clauses.add(clause);
+                                            }
+                                        )
                 )+
             )
             |
@@ -1822,6 +1852,7 @@ throws PermissionDeniedException, EXistException, XPathException
                     case LET:
                         expr = new LetExpr(context);
                         expr.setASTNode(expr_AST_in);
+                        ((LetExpr)expr).setScoreLet(clause.isScoreLet);
                         break;
                     case GROUPBY:
                         expr = new GroupByClause(context);
