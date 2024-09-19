@@ -47,7 +47,8 @@ public class FTComparison extends BinaryOp {
         super.analyze(contextInfo); //Always call super!!!
     }
 
-    @Nullable Float score;
+    @Nullable
+    Float score;
 
     public void clearResult() {
         score = null;
@@ -57,8 +58,17 @@ public class FTComparison extends BinaryOp {
         if (score != null) {
             return score;
         }
+        //TODO - Most classes do this, Should we also do it. If item is present, probably yes.
+        if (contextItem != null) {
+            contextSequence = contextItem.toSequence();
+        }
 
         var left = getLeft().eval(contextSequence, contextItem);
+
+        if (left.isEmpty()) { //No elements, return 0 ==> cause false.
+            score = 0f;
+            return score;
+        }
 
         //Assume it's just string at the moment.
         // Can we some kind of cache this?
@@ -66,32 +76,33 @@ public class FTComparison extends BinaryOp {
 
         var rightString = right.getStringValue();
 
+        float results = 0;
         var lefIt = left.iterate();
-        while(lefIt.hasNext()) {
+        while (lefIt.hasNext()) {
             var itemStringValue = lefIt.nextItem().getStringValue();
 
             var memoryIndex = new MemoryIndex(); //Instantiate in analyze.
             memoryIndex.reset();
-
             memoryIndex.addField(FIELD_NAME, itemStringValue, STANDARD_ANALYZER);
-
             var queryParser = new QueryParser(FIELD_NAME, STANDARD_ANALYZER);
 
             try {
-                this.score = memoryIndex.search(queryParser.parse(rightString + "~10"));
-                return score;
+                results += memoryIndex.search(queryParser.parse(rightString));
             } catch (final ParseException e) {
                 throw new XPathException(getRight(), new ErrorCodes.JavaErrorCode(e), "Unable to parse search query");
             }
         }
-        throw new XPathException(getLeft(), "No elements to perate on");
+        score = results / left.getItemCount();
+        return score;
     }
-
 
     @Override
     public Sequence eval(Sequence contextSequence, Item contextItem) throws XPathException {
-        if(score == null) {
+        if (score == null) {
             evalScore(contextSequence, contextItem);
+            var ret = BooleanValue.valueOf(score > 0);
+            score = null;
+            return ret;
         }
         return BooleanValue.valueOf(score > 0);
     }
