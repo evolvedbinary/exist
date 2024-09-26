@@ -61,6 +61,30 @@ public class FtSearchParserTest {
         parse(query);
     }
 
+    @Test
+    void parseFtOr() throws Exception {
+        final var query = """
+                xquery version "3.1";
+                    for $w in ('aaaa', 'bbbb', 'ccccc')
+                   where $w contains text "aaaa" ftor "cccc"
+                  return <text>{ $w }</text>
+                """;
+        parse(query);
+    }
+
+    @Test
+    void parseFtOrFtOr() throws Exception {
+        final var query = """
+                xquery version "3.1";
+                for $w in ('aaaa', 'bbbb', 'ccccc')
+                   where $w contains text "aaaa" ftor "bbbb" ftor "cccc"
+                  return <text>{ $w }</text>
+                """;
+        parse(query);
+    }
+
+
+
     private PathExpr parse(String query) throws TokenStreamException, XPathException, RecognitionException {
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();

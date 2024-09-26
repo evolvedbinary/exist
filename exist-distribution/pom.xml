@@ -681,6 +681,7 @@
                             <repoUri>${public.xar.repo.uri}</repoUri>
                             <outputDirectory>${expath.pkg.dir}</outputDirectory>
                             <existDbVersion>${project.version}</existDbVersion>
+                            <offline>true</offline>
                             <packages>
                                 <package>
                                     <abbrev>dashboard</abbrev>

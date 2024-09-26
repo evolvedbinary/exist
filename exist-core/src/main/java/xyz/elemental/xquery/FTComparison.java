@@ -10,45 +10,33 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.exist.xquery.*;
+import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.BooleanValue;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
 import org.apache.lucene.index.memory.MemoryIndex;
+import org.exist.xquery.value.Type;
 
 import javax.annotation.Nullable;
 
-/*
-    Using left & right give us free analyze method from BinaryOp.
-    Do we need to use BinaryOp? Or we should inherit directly from PathExpr ?
-     */
-public class FTComparison extends BinaryOp {
+public class FTComparison extends AbstractExpression {
 
     private static final String FIELD_NAME = "data";
 
-    //TODO - Is this thread safe ?
-    //     - Context safe?
-    //     - Thread Local better ? Who will then delete them ?
-    //     - Pool better?
-
     private static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer();
 
-    public FTComparison(XQueryContext context) {
-        super(context);
-    }
+    private final Expression leftExpression;
 
-    public FTComparison(XQueryContext context, Expression left, Expression right) {
-        super(context);
-        setLeft(left);
-        setRight(right);
-    }
-
-    @Override
-    public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
-        super.analyze(contextInfo); //Always call super!!!
-    }
+    private final FTMatch ftSelection;
 
     @Nullable
     Float score;
+
+    public FTComparison(XQueryContext context, Expression left, FTMatch ftSelection) {
+        super(context);
+        this.ftSelection = ftSelection;
+        this.leftExpression = left;
+    }
 
     public void clearResult() {
         score = null;
@@ -63,18 +51,14 @@ public class FTComparison extends BinaryOp {
             contextSequence = contextItem.toSequence();
         }
 
-        var left = getLeft().eval(contextSequence, contextItem);
+        var left = leftExpression.eval(contextSequence, contextItem);
 
         if (left.isEmpty()) { //No elements, return 0 ==> cause false.
             score = 0f;
             return score;
         }
 
-        //Assume it's just string at the moment.
-        // Can we some kind of cache this?
-        var right = getRight().eval(contextSequence, contextItem);
-
-        var rightString = right.getStringValue();
+        var rightString = ftSelection.toString();
 
         float results = 0;
         var lefIt = left.iterate();
@@ -89,7 +73,7 @@ public class FTComparison extends BinaryOp {
             try {
                 results += memoryIndex.search(queryParser.parse(rightString));
             } catch (final ParseException e) {
-                throw new XPathException(getRight(), new ErrorCodes.JavaErrorCode(e), "Unable to parse search query");
+                throw new XPathException(new ErrorCodes.JavaErrorCode(e), "Unable to parse search query");
             }
         }
         score = results / left.getItemCount();
@@ -105,6 +89,22 @@ public class FTComparison extends BinaryOp {
             return ret;
         }
         return BooleanValue.valueOf(score > 0);
+    }
+
+    @Override
+    public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
+
+    }
+
+    @Override
+    public int returnsType() {
+        return Type.BOOLEAN;
+    }
+
+    @Override
+    public void dump(ExpressionDumper dumper) {
+        //TODO
+        dumper.display("FTExpression - Dump not implemented");
     }
 
 //    public static class ScoredBoolean extends BooleanValue {

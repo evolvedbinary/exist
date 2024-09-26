@@ -1066,11 +1066,24 @@ ftContainsExpr throws XPathException
             ("contains" "text") =>
             (
               m:"contains"^ {#m.setType(FT_CONTAINS); #m.setText("FT-CONTAINS");}
-              "text"!
-              stringConcatExpr
+              "text"!                                 // TODO - Remove setText. It's wrong pattern.
+              ftSelection   //ftSelection                   //        setType should be enough
             )
         )?
 	;
+
+ftSelection throws XPathException
+    : ftPrimary
+         (
+            "ftor"^
+            ftPrimary
+         )*
+    ;
+
+ftPrimary throws XPathException
+    : stringConcatExpr | ("("! ftSelection ")"!)
+    ;
+
 
 stringConcatExpr throws XPathException
 { boolean isConcat = false; }

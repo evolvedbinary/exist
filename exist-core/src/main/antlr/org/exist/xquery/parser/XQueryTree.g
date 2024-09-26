@@ -65,7 +65,7 @@ header {
     import org.exist.storage.ElementValue;
     import org.exist.xquery.functions.map.MapExpr;
     import org.exist.xquery.functions.array.ArrayConstructor;
-    import xyz.elemental.xquery.FTComparison;
+    import xyz.elemental.xquery.*;
 
     import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 }
@@ -3226,16 +3226,51 @@ throws PermissionDeniedException, EXistException, XPathException
         }
     )
     |
+    {
+        FTMatch ftSelection;
+    }
     #(
-            ftContainsExpr:FT_CONTAINS step=expr [left]
-            step=expr [right]
+            ftContainsExpr:FT_CONTAINS
+            step=expr [left]
+            ftSelection=ftPrimary
             {
-                step= new FTComparison(context, left, right);
+                step= new FTComparison(context, left, ftSelection);
                 step.setASTNode(ftContainsExpr);
                 path.add(step);
             }
         )
     ;
+
+
+ftPrimary
+returns [FTMatch match]
+throws PermissionDeniedException, EXistException, XPathException
+{
+    match = null;
+    FTMatch left = null;
+    FTMatch right = null;
+}
+:
+    #(
+        "ftor"
+        left = ftPrimary
+        right = ftPrimary
+    )
+    {
+        System.out.println("FtOr left: " + left.toString() + " right: " + right.toString());
+        match = new FtOr(left, right);
+    }
+    |
+    {
+        Expression literal = null;
+    }
+    literal = literalExpr [null]
+    {
+        System.out.println("String literal: " + literal.toString() + " clazz: " + literal.getClass().toString());
+        match = StringMatch.newInstance((LiteralValue)literal);
+    }
+    ;
+
 
 generalComp [PathExpr path]
 returns [Expression step]
