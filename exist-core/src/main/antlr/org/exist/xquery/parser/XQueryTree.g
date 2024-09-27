@@ -3260,6 +3260,15 @@ throws PermissionDeniedException, EXistException, XPathException
         match = new FtOr(left, right);
     }
     |
+    #(
+        "ftand"
+        left = ftPrimary
+        right = ftPrimary
+    )
+    {
+        match = new FtAnd(left, right);
+    }
+    |
     {
         Expression literal = null;
     }

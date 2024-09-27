@@ -49,6 +49,18 @@ function ftsearch:ftOrElementInSequence() {
 };
 
 declare
+    %test:assertTrue
+function ftsearch:ftAndElementInSequence() {
+    ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'cc' ftand 'bb'
+};
+
+declare
+    %test:assertFalse
+function ftsearch:ftAndElementNotInSequence() {
+    ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'cc' ftand 'gg'
+};
+
+declare
     %test:assertEquals('cc bb, 0.13076457', 'bb aa, 0.13076457')
 function ftsearch:ftOrTest() {
     for $w score $s in ('bbbb', 'ccccc', 'cc bb', 'bb aa')

@@ -1073,9 +1073,17 @@ ftContainsExpr throws XPathException
 	;
 
 ftSelection throws XPathException
-    : ftPrimary
+    : ftAnd
          (
             "ftor"^
+            ftAnd
+         )*
+    ;
+
+ftAnd throws XPathException
+    : ftPrimary
+         (
+            "ftand"^
             ftPrimary
          )*
     ;
