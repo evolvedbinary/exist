@@ -13,7 +13,7 @@ public class FTSelection implements LuceneQueryProducer {
     }
 
     @Override
-    public Query evaluateToQuery(Sequence contextSequence, Item contextItem) throws Exception {
+    public Query evaluateToQuery(Sequence contextSequence, Item contextItem) {
         return ftSelection.evaluateToQuery(contextSequence, contextItem);
     }
 }

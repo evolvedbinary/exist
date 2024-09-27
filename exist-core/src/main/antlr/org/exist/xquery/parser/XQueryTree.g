@@ -3257,7 +3257,6 @@ throws PermissionDeniedException, EXistException, XPathException
         right = ftPrimary
     )
     {
-        System.out.println("FtOr left: " + left.toString() + " right: " + right.toString());
         match = new FtOr(left, right);
     }
     |
@@ -3266,7 +3265,6 @@ throws PermissionDeniedException, EXistException, XPathException
     }
     literal = literalExpr [null]
     {
-        System.out.println("String literal: " + literal.toString() + " clazz: " + literal.getClass().toString());
         match = StringMatch.newInstance((LiteralValue)literal);
     }
     ;

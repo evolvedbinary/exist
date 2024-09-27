@@ -19,9 +19,9 @@ import org.exist.xquery.value.Type;
 
 import javax.annotation.Nullable;
 
-public class FTComparison extends AbstractExpression {
+import static xyz.elemental.xquery.LuceneQueryProducer.FIELD_NAME;
 
-    private static final String FIELD_NAME = "data";
+public class FTComparison extends AbstractExpression {
 
     private static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer();
 
@@ -46,7 +46,6 @@ public class FTComparison extends AbstractExpression {
         if (score != null) {
             return score;
         }
-        //TODO - Most classes do this, Should we also do it. If item is present, probably yes.
         if (contextItem != null) {
             contextSequence = contextItem.toSequence();
         }
@@ -58,23 +57,17 @@ public class FTComparison extends AbstractExpression {
             return score;
         }
 
-        var rightString = ftSelection.toString();
+        var luceneQuery = ftSelection.evaluateToQuery(contextSequence, contextItem);
 
         float results = 0;
         var lefIt = left.iterate();
-        while (lefIt.hasNext()) {
+        while (lefIt.hasNext()) {   //TODO - Should we index items first and then query?
             var itemStringValue = lefIt.nextItem().getStringValue();
 
-            var memoryIndex = new MemoryIndex(); //Instantiate in analyze.
+            var memoryIndex = new MemoryIndex();
             memoryIndex.reset();
             memoryIndex.addField(FIELD_NAME, itemStringValue, STANDARD_ANALYZER);
-            var queryParser = new QueryParser(FIELD_NAME, STANDARD_ANALYZER);
-
-            try {
-                results += memoryIndex.search(queryParser.parse(rightString));
-            } catch (final ParseException e) {
-                throw new XPathException(new ErrorCodes.JavaErrorCode(e), "Unable to parse search query");
-            }
+            results += memoryIndex.search(luceneQuery);
         }
         score = results / left.getItemCount();
         return score;
@@ -93,7 +86,7 @@ public class FTComparison extends AbstractExpression {
 
     @Override
     public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
-
+        //TODO - Setup dependencies.
     }
 
     @Override
@@ -103,21 +96,7 @@ public class FTComparison extends AbstractExpression {
 
     @Override
     public void dump(ExpressionDumper dumper) {
-        //TODO
         dumper.display("FTExpression - Dump not implemented");
     }
-
-//    public static class ScoredBoolean extends BooleanValue {
-//        private float score;
-//
-//        public ScoredBoolean(final float score, final BooleanValue value) {
-//            super(value.getValue());
-//            this.score = score;
-//        }
-//
-//        public float getScore() {
-//            return score;
-//        }
-//    }
 
 }
