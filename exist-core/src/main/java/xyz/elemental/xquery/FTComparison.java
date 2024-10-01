@@ -6,9 +6,8 @@
 package xyz.elemental.xquery;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.exist.xquery.*;
 import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.BooleanValue;
@@ -23,7 +22,7 @@ import static xyz.elemental.xquery.LuceneQueryProducer.FIELD_NAME;
 
 public class FTComparison extends AbstractExpression {
 
-    private static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer();
+    private static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
 
     private final Expression leftExpression;
 
@@ -87,6 +86,7 @@ public class FTComparison extends AbstractExpression {
     @Override
     public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
         //TODO - Setup dependencies.
+        //TODO - Compile Lucene query when possible.
     }
 
     @Override
