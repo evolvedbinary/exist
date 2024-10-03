@@ -872,13 +872,14 @@ public class LocationStep extends Step {
 
                     final NodeSelector nodeSelector;
                     if (axis == Constants.PRECEDING_SIBLING_AXIS) {
-                        nodeSelector = new PrecedingSiblingSelector(contextSet);
+                        nodeSelector = new PrecedingSiblingSelector(contextSet, contextId, this);
                     } else if (axis == Constants.FOLLOWING_SIBLING_AXIS) {
-                        nodeSelector = new FollowingSiblingSelector(contextSet);
+                        nodeSelector = new FollowingSiblingSelector(contextSet, contextId, this);
                     } else {
                         throw new IllegalArgumentException("Unsupported axis specified");
                     }
 
+                    // TODO(AR) (2) if the outer expression is fn:exists or fn:empty we could simply find-first, i.e. any match - how about calling index.matchElementsByTagName instead, or can we shortcut the search with a node selector? Perhaps update the NodeSelector interface to permit this and then create a FirstNodeSelector(nodeSelector) implementation that can wrap any other NodeSelector?
                     currentSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), nodeSelector, this);
 
                     currentDocs = docs;

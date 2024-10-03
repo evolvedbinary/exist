@@ -27,6 +27,8 @@ import org.exist.xquery.value.Item;
 import org.exist.xquery.value.SequenceIterator;
 import org.w3c.dom.Node;
 
+import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -109,13 +111,43 @@ public final class EmptyNodeSet extends AbstractNodeSet {
     }
 
     @Override
-    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
-        return false;
+    public @Nullable NodeProxy containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        return null;
     }
 
     @Override
-    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
-        return false;
+    public @Nullable NodeProxy containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        return null;
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
+        return Collections.emptyIterator();
     }
 
     @Override

@@ -36,7 +36,7 @@ import org.exist.xquery.value.Sequence;
  * logger. The profiler can be enabled/disabled and configured
  * via an XQuery pragma or "declare option" expression. Example:
  * 
- * <pre>declare option exist:profiling "enabled=yes verbosity=10 logger=profiler";</pre>
+ * <pre>declare option exist:profiling "enabled=yes verbosity=10 logger=xquery.profiling";</pre>
  * 
  * @author wolf
  *
