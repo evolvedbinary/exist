@@ -29,6 +29,7 @@ import org.exist.xquery.value.Sequence;
 import org.exist.xquery.value.Type;
 import org.w3c.dom.NodeList;
 
+import javax.annotation.Nullable;
 import java.util.Iterator;
 
 /**
@@ -387,22 +388,35 @@ public interface NodeSet extends Sequence, NodeList, Iterable<NodeProxy> {
     void setTrackMatches(boolean track);
 
     /**
-     * Tests this nodeset contains a preceding sibling of the provided node (e.g. a following sibling).
+     * Searches for an immediate preceding sibling of the provided node (a following sibling).
      *
      * @param doc the document containing the node to test.
      * @param nodeId the nodeId of the node to test.
      *
-     * @return true if the node is a following sibling of a node in this nodeset.
+     * @return the immediate preceding-sibling node if the node is a following sibling of a node in this set, else null.
      */
-    boolean containsPrecedingSiblingOf(DocumentImpl doc, NodeId nodeId);
+    @Nullable NodeProxy containsPrecedingSiblingOf(DocumentImpl doc, NodeId nodeId);
 
     /**
-     * Tests this nodeset contains a following sibling of the provided node (e.g. a preceding sibling).
+     * Searches for an immediate following sibling of the provided node (a preceding sibling).
      *
      * @param doc the document containing the node to test.
      * @param nodeId the nodeId of the node to test.
      *
-     * @return true if the node is a preceding sibling of a node in this nodeset.
+     * @return the immediate following-sibling node if the node is a preceding sibling of a node in this set, else null.
      */
-    boolean containsFollowingSiblingOf(DocumentImpl doc, NodeId nodeId);
+    @Nullable NodeProxy containsFollowingSiblingOf(DocumentImpl doc, NodeId nodeId);
+
+
+    Iterator<NodeProxy> precedingSiblingsOf(DocumentImpl doc, NodeId nodeId);
+
+    Iterator<NodeProxy> precedingSiblingsOfReverse(DocumentImpl doc, NodeId nodeId);
+
+    Iterator<NodeProxy> precedingSiblingsOf(DocumentImpl doc, NodeId nodeId, NodeRangeIterator it);
+
+    Iterator<NodeProxy> followingSiblingsOf(DocumentImpl doc, NodeId nodeId);
+
+    Iterator<NodeProxy> followingSiblingsOfReverse(DocumentImpl doc, NodeId nodeId);
+
+    Iterator<NodeProxy> followingSiblingsOf(DocumentImpl doc, NodeId nodeId, NodeRangeIterator it);
 }

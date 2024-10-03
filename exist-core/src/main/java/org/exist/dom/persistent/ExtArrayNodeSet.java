@@ -44,6 +44,7 @@ import org.w3c.dom.Node;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -333,17 +334,59 @@ public class ExtArrayNodeSet extends AbstractArrayNodeSet implements DocumentSet
     }
 
     @Override
-    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+    public @Nullable NodeProxy containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
         sort();
         lastPart = getPart(doc, false, initialSize);
-        return lastPart == null ? null : lastPart.containsPrecedingSiblingOf(doc, nodeId);
+        return lastPart == null ? null : lastPart.containsPrecedingSiblingOf(nodeId);
     }
 
     @Override
-    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+    public @Nullable NodeProxy containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
         sort();
         lastPart = getPart(doc, false, initialSize);
-        return lastPart == null ? null : lastPart.containsFollowingSiblingOf(doc, nodeId);
+        return lastPart == null ? null : lastPart.containsFollowingSiblingOf(nodeId);
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.precedingSiblingsOf(nodeId);
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.precedingSiblingsOfReverse(nodeId);
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.precedingSiblingsOf(nodeId, it);
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.followingSiblingsOf(nodeId);
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.followingSiblingsOfReverse(nodeId);
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
+        sort();
+        lastPart = getPart(doc, false, initialSize);
+        return lastPart == null ? null : lastPart.followingSiblingsOf(nodeId, it);
     }
 
     /**
@@ -822,66 +865,346 @@ public class ExtArrayNodeSet extends AbstractArrayNodeSet implements DocumentSet
         }
 
         /**
-         * Tests this nodeset contains a preceding sibling of the provided node (e.g. a following sibling).
+         * Implements a right-most binary search for an immediate preceding sibling.
          *
-         * @param doc the document containing the node to test.
          * @param nodeId the nodeId of the node to test.
          *
-         * @return true if the node is a following sibling of a node in this nodeset.
+         * @return the immediate preceding sibling node, or null if there is no such node in this set.
          */
-        boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        @Nullable NodeProxy containsPrecedingSiblingOf(final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#containsPrecedingSiblingOf(int NodeId), a bug in one might indicate a bug in the other
             sort();
-            int low = 0;
-            int high = length - 1;
-            int mid;
-            int cmp;
-            NodeProxy p;
-            while (low <= high) {
-                mid = (low + high) / 2;
-                p = array[mid];
-                cmp = p.getNodeId().compareTo(nodeId);
-                if (cmp < 0) {
-                    if (nodeId.isPrecedingSiblingOf(p.getNodeId())) {
-                        return true;
-                    }
-                    low = mid + 1;
+
+            int l = 0;
+            int r = length;
+
+            int m;
+            int comparison;
+
+            while (l < r) {
+                m = (l + r) / 2;
+
+                comparison = array[m].getNodeId().compareTo(nodeId);
+                if (comparison >= 0) {
+                    r = m;
                 } else {
-                    high = mid - 1;
+                    l = m + 1;
                 }
             }
-            return false;
+
+            if (r > 0) {
+                final NodeProxy nodeR = array[r - 1];
+                if (nodeId.isFollowingSiblingOf(nodeR.getNodeId())) {
+                    return nodeR;
+                }
+            }
+
+            return null;
         }
 
         /**
-         * Tests this nodeset contains a following sibling of the provided node (e.g. a preceding sibling).
+         * Implements a left-most binary search for an immediate following sibling.
          *
-         * @param doc the document containing the node to test.
          * @param nodeId the nodeId of the node to test.
          *
-         * @return true if the node is a preceding sibling of a node in this nodeset.
+         * @return the immediate following sibling node, or null if there is no such node in this set.
          */
-        boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
-            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#hasPrecedingSibling, a bug in one might indicate a bug in the other
+        @Nullable NodeProxy containsFollowingSiblingOf(final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#containsFollowingSiblingOf(int, NodeId), a bug in one might indicate a bug in the other
             sort();
-            int low = 0;
-            int high = length - 1;
-            int mid;
-            int cmp;
-            NodeProxy p;
-            while (low <= high) {
-                mid = (low + high) / 2;
-                p = array[mid];
-                cmp = p.getNodeId().compareTo(nodeId);
-                if (cmp > 0) {
-                    if (nodeId.isPrecedingSiblingOf(p.getNodeId())) {
-                        return true;
-                    }
-                    high = mid - 1;
+
+            int l = 0;
+            int r = length;
+
+            int m;
+            int comparison;
+
+            while (l < r) {
+                m = (l + r) / 2;
+
+                comparison = array[m].getNodeId().compareTo(nodeId);
+                if (comparison <= 0) {
+                    l = m + 1;
                 } else {
-                    low = mid + 1;
+                    r = m;
                 }
             }
-            return false;
+
+            if (l < length) {
+                final NodeProxy nodeL = array[l];
+                if (nodeId.isPrecedingSiblingOf(nodeL.getNodeId())) {
+                    return nodeL;
+                }
+            }
+
+            return null;
+        }
+
+        public Iterator<NodeProxy> precedingSiblingsOf(final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#precedingSiblingsOf(DocumentImpl, NodeId), a bug in one might indicate a bug in the other
+            return precedingSiblingsOf(nodeId, new BackwardNodeRangeIterator());
+        }
+
+        public Iterator<NodeProxy> precedingSiblingsOfReverse(final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#precedingSiblingsOfReverse(DocumentImpl, NodeId), a bug in one might indicate a bug in the other
+            return precedingSiblingsOf(nodeId, new ForwardNodeRangeIterator());
+        }
+
+        public Iterator<NodeProxy> precedingSiblingsOf(final NodeId nodeId, final NodeRangeIterator it) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#precedingSiblingsOf(int, NodeId, NodeRangeIterator), a bug in one might indicate a bug in the other
+            sort();
+
+            int l = 0;
+            int n = length;
+
+            l = lastPrecedingSiblingOf(l, n, nodeId);
+            if (l == -1) {
+                return Collections.emptyIterator();
+            }
+
+            n = n - l;
+            final int r = firstPrecedingSiblingOf(l, n, nodeId);
+
+            it.reset(array, l, r);
+            return it;
+        }
+
+        /**
+         * Finds the last preceding sibling, e.g. preceding-sibling::node()[last()].
+         * For example the following returns {@code <a/>} as the last preceding sibling of {@code <d/>}:
+         * <pre>{@code
+         * document {
+         *      <letters>
+         *      <a/>
+         *      <b/>
+         *      <c/>
+         *      <d/>
+         *      <e/>
+         *      </letters>
+         * }/letters/d/preceding-sibling::element()[last()]
+         * }</pre>
+         *
+         * Implements a left-most binary search for a preceding sibling.
+         *
+         * @param l the left-most starting index within {@code documentNodesOffset}.
+         * @param n - the number of the nodes to search from {@code l}.
+         * @param nodeId the node to search for a preceding sibling of.
+         *
+         * @return the index of the last preceding sibling node, or -1 if there is no such node in this set.
+         */
+        private int lastPrecedingSiblingOf(int l, final int n, final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#lastPrecedingSiblingOf(int, int, NodeId), a bug in one might indicate a bug in the other
+            int r = l + n;
+
+            final NodeId parentId = nodeId.getParentId();
+            int m;
+            int comparison;
+
+            while (l < r) {
+                m = (l + r) / 2;
+                comparison = array[m].getNodeId().compareTo(nodeId);
+                if (!array[m].getNodeId().getParentId().equals(parentId) || comparison > 0) {
+                    // NOT matched!
+                    l = m + 1;
+                } else {
+                    // Maybe matched...
+                    r = m;
+                }
+            }
+
+            if (l < n) {
+                final NodeProxy nodeL = array[l];
+                if (nodeId.isFollowingSiblingOf(nodeL.getNodeId())) {
+                    return l;
+                }
+            }
+
+            return -1;
+        }
+
+        /**
+         * Finds the first preceding sibling, e.g. preceding-sibling::node()[1].
+         * For example the following returns {@code <c/>} as the first preceding sibling of {@code <d/>}:
+         * <pre>{@code
+         * document {
+         *      <letters>
+         *      <a/>
+         *      <b/>
+         *      <c/>
+         *      <d/>
+         *      <e/>
+         *      </letters>
+         * }/letters/d/preceding-sibling::element()[1]
+         * }</pre>
+         *
+         * Implements a right-most binary search for a preceding sibling.
+         *
+         * @param l the left-most starting index within {@code documentNodesOffset}.
+         * @param n - the number of the nodes to search from {@code l}.
+         * @param nodeId the node to search for a preceding sibling of.
+         *
+         * @return the index of the first preceding sibling, or -1 if there is no such node in this set.
+         */
+        private int firstPrecedingSiblingOf(int l, final int n, final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#firstPrecedingSiblingOf(int, int, NodeId), a bug in one might indicate a bug in the other
+            int r = l + n;
+
+            int m;
+            int comparison;
+
+            while (l < r) {
+                m = (l + r) / 2;
+
+                comparison = array[m].getNodeId().compareTo(nodeId);
+                if (comparison >= 0) {
+                    r = m;
+                } else {
+                    l = m + 1;
+                }
+            }
+
+
+            if (r > 0) {
+                final NodeProxy nodeR = array[r - 1];
+                if (nodeId.isFollowingSiblingOf(nodeR.getNodeId())) {
+                    return r - 1;
+                }
+            }
+
+            return -1;
+        }
+
+        public Iterator<NodeProxy> followingSiblingsOf(final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#followingSiblingsOf(DocumentImpl, NodeId), a bug in one might indicate a bug in the other
+            return followingSiblingsOf(nodeId, new ForwardNodeRangeIterator());
+        }
+
+        public Iterator<NodeProxy> followingSiblingsOfReverse(final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#followingSiblingsOfReverse(DocumentImpl, NodeId), a bug in one might indicate a bug in the other
+            return followingSiblingsOf(nodeId, new BackwardNodeRangeIterator());
+        }
+
+        public Iterator<NodeProxy> followingSiblingsOf(final NodeId nodeId, final NodeRangeIterator it) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#followingSiblingsOf(int, NodeId, NodeRangeIterator), a bug in one might indicate a bug in the other
+            sort();
+
+            int l = 0;
+            int n = length;
+
+            l = firstFollowingSiblingOf(l, n, nodeId);
+            if (l == -1) {
+                return Collections.emptyIterator();
+            }
+
+            n = n - l;
+            final int r = lastFollowingSiblingOf(l, n, nodeId);
+
+            it.reset(array, l, r);
+            return it;
+        }
+
+        /**
+         * Finds the first following sibling, e.g. following-sibling::node()[1].
+         * For example the following returns {@code <c/>} as the first following sibling of {@code <b/>}:
+         * <pre>{@code
+         * document {
+         *      <letters>
+         *      <a/>
+         *      <b/>
+         *      <c/>
+         *      <d/>
+         *      <e/>
+         *      </letters>
+         * }/letters/b/following-sibling::element()[1]
+         * }</pre>
+         *
+         * Implements a left-most binary search for a following sibling.
+         *
+         * @param l the left-most starting index within {@code documentNodesOffset}.
+         * @param n - the number of the nodes to search from {@code l}.
+         * @param nodeId the node to search for a preceding sibling of.
+         *
+         * @return the index of the first following sibling, or -1 if there is no such node in this set.
+         */
+        private int firstFollowingSiblingOf(int l, final int n, final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#firstFollowingSiblingOf(int, int, NodeId), a bug in one might indicate a bug in the other
+            int r = l + n;
+
+            int m;
+            int comparison;
+
+            while (l < r) {
+                m = (l + r) / 2;
+
+                comparison = array[m].getNodeId().compareTo(nodeId);
+                if (comparison <= 0) {
+                    l = m + 1;
+                } else {
+                    r = m;
+                }
+            }
+
+            if (l < n) {
+                final NodeProxy nodeL = array[l];
+                if (nodeId.isPrecedingSiblingOf(nodeL.getNodeId())) {
+                    return l;
+                }
+            }
+
+            return -1;
+        }
+
+        /**
+         * Finds the last following sibling, e.g. following-sibling::node()[last()].
+         * For example the following returns {@code <e/>} as the last preceding sibling of {@code <b/>}:
+         * <pre>{@code
+         * document {
+         *      <letters>
+         *      <a/>
+         *      <b/>
+         *      <c/>
+         *      <d/>
+         *      <e/>
+         *      </letters>
+         * }/letters/b/following-sibling::element()[last()]
+         * }</pre>
+         *
+         * Implements a right-most binary search for a following sibling.
+         *
+         * @param l the left-most starting index within {@code documentNodesOffset}.
+         * @param n - the number of the nodes to search from {@code l}.
+         * @param nodeId the node to search for a preceding sibling of.
+         *
+         * @return the index of the last following sibling node, or -1 if there is no such node in this set.
+         */
+        private int lastFollowingSiblingOf(int l, final int n, final NodeId nodeId) {
+            // NOTE(AR) this is almost a copy of the code in NewArrayNodeSet#lastFollowingSiblingOf(int, int, NodeId), a bug in one might indicate a bug in the other
+            int r = l + n;
+
+            final NodeId parentId = nodeId.getParentId();
+            int m;
+            int comparison;
+
+            while (l < r) {
+                m = (l + r) / 2;
+                comparison = array[m].getNodeId().compareTo(nodeId);
+                if (!array[m].getNodeId().getParentId().equals(parentId) || comparison < 0) {
+                    // NOT matched!
+                    r = m;
+                } else {
+                    // Maybe matched...
+                    l = m + 1;
+                }
+            }
+
+            if (r > 0) {
+                final NodeProxy nodeR = array[r - 1];
+                if (nodeId.isPrecedingSiblingOf(nodeR.getNodeId())) {
+                    return r - 1;
+                }
+            }
+
+            return -1;
         }
 
         NodeProxy hasDescendantsInSet(final NodeId ancestorId, final int contextId, final boolean includeSelf) {

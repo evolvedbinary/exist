@@ -37,6 +37,10 @@ import org.exist.dom.persistent.NodeProxy;
 import org.exist.dom.persistent.NodeSet;
 import org.exist.numbering.NodeId;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A node selector for preceding siblings.
  *
@@ -45,15 +49,108 @@ import org.exist.numbering.NodeId;
 public class PrecedingSiblingSelector implements NodeSelector {
 
   private final NodeSet contextSet;
+  private final int contextId;
+  private @Nullable final Expression expression;
 
-  public PrecedingSiblingSelector(final NodeSet contextSet) {
+//  private @Nullable List<NodeProxy> followingSiblings;
+  private @Nullable List<NodeProxy> precedingSiblings;
+
+  public PrecedingSiblingSelector(final NodeSet contextSet, final int contextId, @Nullable final Expression expression) {
     this.contextSet = contextSet;
+    this.contextId = contextId;
+    this.expression = expression;
   }
 
+//  @Override
+//  public @Nullable NodeProxy match(final DocumentImpl doc, final NodeId nodeId) {
+//    final @Nullable NodeProxy followingSibling = contextSet.containsFollowingSiblingOf(doc, nodeId);
+//    if (followingSibling != null) {
+//      final NodeProxy precedingSibling = new NodeProxy(expression, doc, nodeId);
+//      if (Expression.IGNORE_CONTEXT != contextId) {
+//        if (Expression.NO_CONTEXT_ID == contextId) {
+//          precedingSibling.copyContext(followingSibling);
+//        } else {
+//          precedingSibling.addContextNode(contextId, followingSibling);
+//        }
+//      }
+//      return precedingSibling;
+//    }
+//    return null;
+//  }
+
+//  @Override
+//  public @Nullable NodeProxy match(final DocumentImpl doc, final NodeId nodeId) {
+//    final @Nullable NodeProxy followingSibling = contextSet.containsFollowingSiblingOf(doc, nodeId);
+//    if (followingSibling != null) {
+//
+//      if (followingSiblings == null) {
+//        this.followingSiblings = new ArrayList<>();
+//      }
+//      followingSiblings.add(followingSibling);
+//
+//      final NodeProxy precedingSibling = new NodeProxy(expression, doc, nodeId);
+//
+//      System.out.println("currentId=" + precedingSibling.getNodeId());
+//
+//      if (Expression.IGNORE_CONTEXT != contextId) {
+//        int i = 0;
+//        for (final NodeProxy contextNode : followingSiblings) {
+//          System.out.println("\t\tSTART INNER LOOP: " + i);
+//
+//          if (Expression.NO_CONTEXT_ID == contextId) {
+//            System.out.println("\t\t\t" + precedingSibling.getNodeId().toString() + " .copyContext(" + contextNode.getNodeId().toString() + ")");
+//            precedingSibling.copyContext(contextNode);
+//          } else {
+//            System.out.println("\t\t\t" + precedingSibling.getNodeId().toString() + " .addContextNode(" + contextId + ", " + contextNode.getNodeId().toString() + ")");
+//            precedingSibling.addContextNode(contextId, contextNode);
+//          }
+//
+//          System.out.println("\t\tEND INNER LOOP: " + i);
+//          i++;
+//        }
+//      }
+//      return precedingSibling;
+//    }
+//    return null;
+//  }
+
   @Override
-  public NodeProxy match(final DocumentImpl doc, final NodeId nodeId) {
-    if (contextSet.containsFollowingSiblingOf(doc, nodeId)) {
-      return new NodeProxy(doc, nodeId);
+  public @Nullable NodeProxy match(final DocumentImpl doc, final NodeId nodeId) {
+    final @Nullable NodeProxy followingSibling = contextSet.containsFollowingSiblingOf(doc, nodeId);
+    if (followingSibling != null) {
+
+//      if (followingSiblings == null) {
+//        this.followingSiblings = new ArrayList<>();
+//      }
+//      followingSiblings.add(followingSibling);
+
+      final NodeProxy newPrecedingSibling = new NodeProxy(expression, doc, nodeId);
+
+//      System.out.println("currentId=" + newPrecedingSibling.getNodeId());
+
+      if (precedingSiblings == null) {
+        this.precedingSiblings = new ArrayList<>();
+      }
+      precedingSiblings.add(newPrecedingSibling);
+
+      if (Expression.IGNORE_CONTEXT != contextId) {
+//        int i = 0;
+        for (final NodeProxy precedingSibling : precedingSiblings) {
+//          System.out.println("\t\tSTART INNER LOOP: " + i);
+
+          if (Expression.NO_CONTEXT_ID == contextId) {
+//            System.out.println("\t\t\t" + precedingSibling.getNodeId().toString() + " .copyContext(" + followingSibling.getNodeId().toString() + ")");
+            precedingSibling.copyContext(followingSibling);
+          } else {
+//            System.out.println("\t\t\t" + precedingSibling.getNodeId().toString() + " .addContextNode(" + contextId + ", " + followingSibling.getNodeId().toString() + ")");
+            precedingSibling.addContextNode(contextId, followingSibling);
+          }
+
+//          System.out.println("\t\tEND INNER LOOP: " + i);
+//          i++;
+        }
+      }
+      return newPrecedingSibling;
     }
     return null;
   }

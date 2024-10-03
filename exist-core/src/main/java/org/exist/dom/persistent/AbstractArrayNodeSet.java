@@ -92,7 +92,7 @@ public abstract class AbstractArrayNodeSet extends AbstractNodeSet implements Do
 
         addInternal(proxy, sizeHint);
 
-        this.isSorted = false;
+        this.isSorted = false; // TODO(AR) make this more intelligent by comparing the entry we are adding with the last entry added; if they are added in order we don't need to sort them! Then also apply that approach to other NodeSet implementations
         setHasChanged();
         checkItemType(proxy.getType());
         this.lastAdded = proxy;

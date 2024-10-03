@@ -39,9 +39,11 @@ import org.exist.xquery.value.Type;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.annotation.Nullable;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -299,7 +301,7 @@ public class VirtualNodeSet extends AbstractNodeSet {
     }
 
     @Override
-    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+    public @Nullable NodeProxy containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
         if (realSet != null && realSetIsComplete) {
             return realSet.containsPrecedingSiblingOf(doc, nodeId);
         } else {
@@ -308,9 +310,63 @@ public class VirtualNodeSet extends AbstractNodeSet {
     }
 
     @Override
-    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+    public @Nullable NodeProxy containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
         if (realSet != null && realSetIsComplete) {
             return realSet.containsFollowingSiblingOf(doc, nodeId);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.precedingSiblingsOf(doc, nodeId);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.precedingSiblingsOfReverse(doc, nodeId);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.precedingSiblingsOf(doc, nodeId, it);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.followingSiblingsOf(doc, nodeId);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.followingSiblingsOfReverse(doc, nodeId);
+        } else {
+            throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
+        }
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
+        if (realSet != null && realSetIsComplete) {
+            return realSet.followingSiblingsOf(doc, nodeId, it);
         } else {
             throw new UnsupportedOperationException("TODO(AR) do we need to implement this");
         }

@@ -40,6 +40,7 @@ import org.exist.xquery.value.SequenceIterator;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.annotation.Nullable;
 import java.io.StringReader;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -222,12 +223,43 @@ public class SortedNodeSet extends AbstractNodeSet {
     }
 
     @Override
-    public boolean containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+    public @Nullable NodeProxy containsPrecedingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
         throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
     }
 
     @Override
-    public boolean containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+    public @Nullable NodeProxy containsFollowingSiblingOf(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOfReverse(final DocumentImpl doc, final NodeId nodeId) {
+        throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl doc, final NodeId nodeId, final NodeRangeIterator it) {
         throw new UnsupportedOperationException("TODO(AR) do we need to implement this?");
     }
 

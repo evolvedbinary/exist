@@ -49,6 +49,7 @@ import javax.annotation.Nullable;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Properties;
@@ -540,6 +541,7 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
         final NodeProxy contextNode = (NodeProxy) node;
         if(context == null) {
             context = new ContextItem(contextId, contextNode);
+//            System.out.println("\t\t\t***SET newContextItem= " + context.getNode().getNodeId());
             return;
         }
         ContextItem next = context;
@@ -556,6 +558,9 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
                     // context item, it will be shared. we thus have to create
                     // a copy before appending a new item.
                     next = new ContextItem(next.getContextId(), next.getNode());
+
+//                    System.out.println("\t\t\t*** SET context= " + context.getNode().getNodeId());
+
                     context = next;
                 }
                 next.setNextContextItem(new ContextItem(contextId, contextNode));
@@ -1009,19 +1014,55 @@ public class NodeProxy implements NodeSet, NodeValue, NodeHandle, DocumentSet, C
     }
 
     @Override
-    public boolean containsPrecedingSiblingOf(final DocumentImpl otherDoc, final NodeId otherId) {
-        if (otherDoc.getDocId() != doc.getDocId()) {
-            return false;
+    public @Nullable NodeProxy containsPrecedingSiblingOf(final DocumentImpl otherDoc, final NodeId otherId) {
+        if (otherDoc.getDocId() == doc.getDocId() && otherId.isFollowingSiblingOf(nodeId)) {
+            return this;
         }
-        return otherId.isFollowingSiblingOf(nodeId);
+        return null;
     }
 
     @Override
-    public boolean containsFollowingSiblingOf(final DocumentImpl otherDoc, final NodeId otherId) {
-        if (otherDoc.getDocId() != doc.getDocId()) {
-            return false;
+    public @Nullable NodeProxy containsFollowingSiblingOf(final DocumentImpl otherDoc, final NodeId otherId) {
+        if (otherDoc.getDocId() == doc.getDocId() && otherId.isPrecedingSiblingOf(nodeId)) {
+            return this;
         }
-        return otherId.isPrecedingSiblingOf(nodeId);
+        return null;
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl otherDoc, final NodeId otherId) {
+        return precedingSiblingsOf(otherDoc, otherId, null);
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOfReverse(final DocumentImpl otherDoc, final NodeId otherId) {
+        return precedingSiblingsOf(otherDoc, otherId, null);
+    }
+
+    @Override
+    public Iterator<NodeProxy> precedingSiblingsOf(final DocumentImpl otherDoc, final NodeId otherId, final NodeRangeIterator it) {
+        if (otherDoc.getDocId() == doc.getDocId() && otherId.isFollowingSiblingOf(nodeId)) {
+            return Collections.singletonList(this).iterator();
+        }
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl otherDoc, final NodeId otherId) {
+        return followingSiblingsOf(otherDoc, otherId, null);
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOfReverse(final DocumentImpl otherDoc, final NodeId otherId) {
+        return followingSiblingsOf(otherDoc, otherId, null);
+    }
+
+    @Override
+    public Iterator<NodeProxy> followingSiblingsOf(final DocumentImpl otherDoc, final NodeId otherId, final NodeRangeIterator it) {
+        if (otherDoc.getDocId() == doc.getDocId() && otherId.isPrecedingSiblingOf(nodeId)) {
+            return Collections.singletonList(this).iterator();
+        }
+        return Collections.emptyIterator();
     }
 
     @Override

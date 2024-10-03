@@ -506,6 +506,9 @@ public final class NodeSetHelper {
      */
     public static NodeSet selectFollowingSiblings(final NodeSet candidates,
             final NodeSet references, final int contextId) {
+
+        // TODO(AR) rewrite this used DLN.isPrecedingSiblingOf and DLN.isFollowingSiblingOf
+
         if(references.isEmpty() || candidates.isEmpty()) {
             return NodeSet.EMPTY_SET;
         }
