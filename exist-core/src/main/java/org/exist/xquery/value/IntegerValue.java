@@ -375,7 +375,7 @@ public class IntegerValue extends NumericValue {
 
     @Override
     public ComputableValue minus(final ComputableValue other) throws XPathException {
-        if (Type.subTypeOf(other.getType(), Type.INTEGER))
+        if (Type.subTypeOf(other.getType(), Type.INTEGER) || (other instanceof IntegerValue && other.getType() == Type.NUMERIC))
         // return new IntegerValue(value - ((IntegerValue) other).value, type);
         {
             return new IntegerValue(getExpression(), value.subtract(((IntegerValue) other).value), type);
@@ -386,7 +386,7 @@ public class IntegerValue extends NumericValue {
 
     @Override
     public ComputableValue plus(final ComputableValue other) throws XPathException {
-        if (Type.subTypeOf(other.getType(), Type.INTEGER))
+        if (Type.subTypeOf(other.getType(), Type.INTEGER) || (other instanceof IntegerValue && other.getType() == Type.NUMERIC))
         // return new IntegerValue(value + ((IntegerValue) other).value, type);
         {
             return new IntegerValue(getExpression(), value.add(((IntegerValue) other).value), type);
@@ -397,7 +397,7 @@ public class IntegerValue extends NumericValue {
 
     @Override
     public ComputableValue mult(final ComputableValue other) throws XPathException {
-        if (Type.subTypeOf(other.getType(), Type.INTEGER)) {
+        if (Type.subTypeOf(other.getType(), Type.INTEGER) || (other instanceof IntegerValue && other.getType() == Type.NUMERIC)) {
             return new IntegerValue(getExpression(), value.multiply(((IntegerValue) other).value), type);
         } else if (Type.subTypeOf(other.getType(), Type.DURATION)) {
             return other.mult(this);
@@ -441,7 +441,7 @@ public class IntegerValue extends NumericValue {
 
     @Override
     public NumericValue mod(final NumericValue other) throws XPathException {
-        if (Type.subTypeOf(other.getType(), Type.INTEGER)) {
+        if (Type.subTypeOf(other.getType(), Type.INTEGER) || (other instanceof IntegerValue && other.getType() == Type.NUMERIC)) {
             if (other.isZero()) {
                 throw new XPathException(getExpression(), ErrorCodes.FOAR0001, "division by zero");
             }
@@ -466,7 +466,7 @@ public class IntegerValue extends NumericValue {
 
     @Override
     public AtomicValue max(final Collator collator, final AtomicValue other) throws XPathException {
-        if (Type.subTypeOf(other.getType(), Type.INTEGER)) {
+        if (Type.subTypeOf(other.getType(), Type.INTEGER) || (other instanceof IntegerValue && other.getType() == Type.NUMERIC)) {
             return new IntegerValue(getExpression(), value.max(((IntegerValue) other).value));
         } else {
             return convertTo(other.getType()).max(collator, other);
@@ -475,7 +475,7 @@ public class IntegerValue extends NumericValue {
 
     @Override
     public AtomicValue min(final Collator collator, final AtomicValue other) throws XPathException {
-        if (Type.subTypeOf(other.getType(), Type.INTEGER)) {
+        if (Type.subTypeOf(other.getType(), Type.INTEGER) || (other instanceof IntegerValue && other.getType() == Type.NUMERIC)) {
             return new IntegerValue(getExpression(), value.min(((IntegerValue) other).value));
         } else {
             return convertTo(other.getType()).min(collator, other);
