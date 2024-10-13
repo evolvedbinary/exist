@@ -37,6 +37,14 @@ function ftsearch:scoreVariable() {
 };
 
 declare
+    %test:assertEquals('bb aa, 0.13076457')
+function ftsearch:scoreVariableWithExpr() {
+    for $w score $s in ('bbbb', 'ccccc', 'cc bb', 'bb aa')
+        where $w contains text {'asdasd', 'asdasdad', fn:concat($w, 'aasdasdads'), 'aa'}
+        return concat($w, ", ", $s)
+};
+
+declare
     %test:assertTrue
 function ftsearch:listSearchContext2() {
     ('bbbb', 'ccccc', 'cc bb', 'bb aa') contains text 'bb'

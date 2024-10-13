@@ -6,8 +6,11 @@
 package xyz.elemental.xquery;
 
 import org.apache.lucene.search.Query;
+import org.exist.xquery.XPathException;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
+
+import java.util.Optional;
 
 public class FTSelection implements LuceneQueryProducer {
 
@@ -18,7 +21,7 @@ public class FTSelection implements LuceneQueryProducer {
     }
 
     @Override
-    public Query evaluateToQuery(Sequence contextSequence, Item contextItem) {
+    public Optional<Query> evaluateToQuery(Sequence contextSequence, Item contextItem) throws XPathException {
         return ftSelection.evaluateToQuery(contextSequence, contextItem);
     }
 }

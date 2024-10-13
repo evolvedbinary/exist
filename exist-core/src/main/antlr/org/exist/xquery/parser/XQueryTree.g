@@ -3276,6 +3276,15 @@ throws PermissionDeniedException, EXistException, XPathException
     {
         match = StringMatch.newInstance((LiteralValue)literal);
     }
+    |
+    {
+        PathExpr seqPath = new PathExpr(context);
+        seqPath.setASTNode(ftPrimary_AST_in);
+    }
+        expr [seqPath]
+    {
+        match = new FtExpressionMatch(seqPath);
+    }
     ;
 
 

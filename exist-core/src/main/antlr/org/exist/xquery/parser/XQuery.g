@@ -1089,7 +1089,16 @@ ftAnd throws XPathException
     ;
 
 ftPrimary throws XPathException
-    : stringConcatExpr | ("("! ftSelection ")"!)
+    : ftWords | (LPAREN! ftSelection RPAREN!)
+    ;
+
+
+ftWords throws XPathException
+    : ftWordsValue //ftAnyAllOption?
+    ;
+
+ftWordsValue throws XPathException
+    : stringConcatExpr | (LCURLY! expr RCURLY!)
     ;
 
 

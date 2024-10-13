@@ -22,8 +22,6 @@ import static xyz.elemental.xquery.LuceneQueryProducer.FIELD_NAME;
 
 public class FTComparison extends AbstractExpression {
 
-    private static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
-
     private final Expression leftExpression;
 
     private final FTMatch ftSelection;
@@ -58,6 +56,10 @@ public class FTComparison extends AbstractExpression {
 
         var luceneQuery = ftSelection.evaluateToQuery(contextSequence, contextItem);
 
+        if (luceneQuery.isEmpty()) {    //If the sequence is empty, the FTWords yields no matches, Section 3.2
+            return 0f;
+        }
+
         float results = 0;
         var lefIt = left.iterate();
         while (lefIt.hasNext()) {   //TODO - Should we index items first and then query?
@@ -65,8 +67,8 @@ public class FTComparison extends AbstractExpression {
 
             var memoryIndex = new MemoryIndex();
             memoryIndex.reset();
-            memoryIndex.addField(FIELD_NAME, itemStringValue, STANDARD_ANALYZER);
-            results += memoryIndex.search(luceneQuery);
+            memoryIndex.addField(FIELD_NAME, itemStringValue, LuceneQueryProducer.analyzer);
+            results += memoryIndex.search(luceneQuery.get());
         }
         score = results / left.getItemCount();
         return score;
