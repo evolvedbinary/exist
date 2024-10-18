@@ -57,6 +57,7 @@ public class FTComparison extends AbstractExpression {
         var luceneQuery = ftSelection.evaluateToQuery(contextSequence, contextItem);
 
         if (luceneQuery.isEmpty()) {    //If the sequence is empty, the FTWords yields no matches, Section 3.2
+            score = 0f;
             return 0f;
         }
 

@@ -19,6 +19,7 @@ import org.exist.xquery.value.Sequence;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public interface LuceneQueryProducer {
@@ -37,17 +38,22 @@ public interface LuceneQueryProducer {
      */
     public static final Analyzer analyzer = new StandardAnalyzer(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
 
-    public static Optional<Query> stringToQuery(String phrase) {
+    public static List<String> tokenize(String phrase) {
         var tokens = new ArrayList<String>();
-
         try (var tokenStream = analyzer.tokenStream(FIELD_NAME, phrase)) {
             var charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
             for (tokenStream.reset(); tokenStream.incrementToken(); ) {
                 tokens.add(charTermAttribute.toString());
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unable to tokenize String", e);
         }
+
+        return tokens;
+    }
+
+    public static Optional<Query> stringToQuery(String phrase) {
+        var tokens = tokenize(phrase);
 
         if(tokens.isEmpty()) {
             return Optional.empty();

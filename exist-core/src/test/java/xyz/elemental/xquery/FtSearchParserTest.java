@@ -84,6 +84,18 @@ public class FtSearchParserTest {
     }
 
 
+    @Test
+    void parserAnyWord() throws Exception {
+        final var query = """
+                xquery version "3.1";
+                for $w in ('aaaa', 'bbbb', 'ccccc')
+                   where $w contains text {"aaaa", "bbbb", "cccc"} any word
+                  return <text>{ $w }</text>
+                """;
+        parse(query);
+    }
+
+
 
     private PathExpr parse(String query) throws TokenStreamException, XPathException, RecognitionException {
         // parse the query into the internal syntax tree

@@ -1094,11 +1094,20 @@ ftPrimary throws XPathException
 
 
 ftWords throws XPathException
-    : ftWordsValue //ftAnyAllOption?
+    : ftWordsValue (ftAnyAllOption)?
     ;
 
 ftWordsValue throws XPathException
     : stringConcatExpr | (LCURLY! expr RCURLY!)
+    ;
+
+ftAnyAllOption throws XPathException
+    :
+    ("any") => ("any" ("word")?)
+    |
+    ("all") => ("all" ("words")?)
+    |
+    ("phrase") => ("phrase")
     ;
 
 

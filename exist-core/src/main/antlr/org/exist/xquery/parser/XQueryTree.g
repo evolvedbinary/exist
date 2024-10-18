@@ -3270,22 +3270,63 @@ throws PermissionDeniedException, EXistException, XPathException
     }
     |
     {
-        Expression literal = null;
-    }
-    literal = literalExpr [null]
+        Expression le = null;
+        AnyAllOptions anyAllOptions = null;
+    }               // parameter on literalExpr is not used. Why? Historical?
+        (le=literalExpr[null]) (anyAllOptions = ftAnyAllOption)?
     {
-        match = StringMatch.newInstance((LiteralValue)literal);
+        match = new FtExpressionMatch(le, anyAllOptions);
     }
     |
     {
+        AnyAllOptions anyAllOptions = null;
         PathExpr seqPath = new PathExpr(context);
         seqPath.setASTNode(ftPrimary_AST_in);
     }
-        expr [seqPath]
+        expr [seqPath] (anyAllOptions = ftAnyAllOption)?
     {
-        match = new FtExpressionMatch(seqPath);
+        match = new FtExpressionMatch(seqPath, anyAllOptions);
     }
     ;
+
+
+ftAnyAllOption
+returns [AnyAllOptions option]
+throws PermissionDeniedException, EXistException, XPathException
+{
+    option = null;
+}
+:
+    (
+        "any"
+        {
+            option = xyz.elemental.xquery.AnyAllOptions.ANY;
+        }
+        ( "word"
+            {
+            option = xyz.elemental.xquery.AnyAllOptions.ANY_WORD;
+            }
+        )?
+    )
+    |
+    (
+        "all"
+        {
+            option = xyz.elemental.xquery.AnyAllOptions.ALL;
+        }
+        ( "words"
+            {
+                option = xyz.elemental.xquery.AnyAllOptions.ALL_WORDS;
+            }
+        )?
+    )
+    |
+    "phrase"
+    {
+        option = xyz.elemental.xquery.AnyAllOptions.PHRASE;
+    }
+    ;
+
 
 
 generalComp [PathExpr path]
