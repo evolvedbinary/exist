@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Optional;
 
 
-public class FtExpressionMatch extends FTMatch {
+public class FtExpressionMatch extends FtSelection {
 
     final Expression expression;
     final Optional<AnyAllOptions> anyAllOptions;

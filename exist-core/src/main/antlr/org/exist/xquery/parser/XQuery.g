@@ -1073,6 +1073,10 @@ ftContainsExpr throws XPathException
 	;
 
 ftSelection throws XPathException
+    : ftOr //(ftPosFilter)*
+    ;
+
+ftOr throws XPathException
     : ftAnd
          (
             "ftor"^
@@ -1080,16 +1084,22 @@ ftSelection throws XPathException
          )*
     ;
 
+
 ftAnd throws XPathException
-    : ftPrimary
+    : ftPrimaryWithOptions
          (
             "ftand"^
-            ftPrimary
+            ftPrimaryWithOptions
          )*
     ;
 
+ftPrimaryWithOptions throws XPathException
+    : ftPrimary //TODO (ftMatchOptions)? (ftWeight)?
+    ;
+
 ftPrimary throws XPathException
-    : ftWords | (LPAREN! ftSelection RPAREN!)
+     // TODO: (ftTimes)?
+    : ftWords | (LPAREN! ftSelection RPAREN!) | ftExtensionSelection
     ;
 
 
@@ -1098,7 +1108,7 @@ ftWords throws XPathException
     ;
 
 ftWordsValue throws XPathException
-    : stringConcatExpr | (LCURLY! expr RCURLY!)
+    : STRING_LITERAL | (LCURLY! expr RCURLY!)
     ;
 
 ftAnyAllOption throws XPathException
@@ -1108,6 +1118,11 @@ ftAnyAllOption throws XPathException
     ("all") => ("all" ("words")?)
     |
     ("phrase") => ("phrase")
+    ;
+
+// TODO - Pragma is vendor specific. Let's ignore it at the moment.
+ftExtensionSelection throws XPathException
+    : (( pragma )+)! LCURLY! (ftSelection)+ RCURLY!
     ;
 
 

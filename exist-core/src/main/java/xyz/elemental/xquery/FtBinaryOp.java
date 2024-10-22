@@ -5,20 +5,20 @@
  */
 package xyz.elemental.xquery;
 
-public abstract class FtBinaryOp extends FTMatch {
-    private final FTMatch left;
-    private final FTMatch right;
+public abstract class FtBinaryOp extends FtSelection {
+    private final FtSelection left;
+    private final FtSelection right;
 
-    public FtBinaryOp(FTMatch left, FTMatch right) {
+    public FtBinaryOp(FtSelection left, FtSelection right) {
         this.left = left;
         this.right = right;
     }
 
-    public FTMatch getLeft() {
+    public FtSelection getLeft() {
         return left;
     }
 
-    public FTMatch getRight() {
+    public FtSelection getRight() {
         return right;
     }
 }

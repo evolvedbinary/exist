@@ -3227,34 +3227,33 @@ throws PermissionDeniedException, EXistException, XPathException
     )
     |
     {
-        FTMatch ftSelection;
+        FtSelection ftSelectionVar;
     }
     #(
             ftContainsExpr:FT_CONTAINS
             step=expr [left]
-            ftSelection=ftPrimary
+            ftSelectionVar=ftSelection
             {
-                step= new FTComparison(context, left, ftSelection);
+                step= new FTComparison(context, left, ftSelectionVar);
                 step.setASTNode(ftContainsExpr);
                 path.add(step);
             }
         )
     ;
 
-
-ftPrimary
-returns [FTMatch match]
+ftSelection
+returns [FtSelection match]
 throws PermissionDeniedException, EXistException, XPathException
 {
     match = null;
-    FTMatch left = null;
-    FTMatch right = null;
+    FtSelection left = null;
+    FtSelection right = null;
 }
 :
     #(
         "ftor"
-        left = ftPrimary
-        right = ftPrimary
+        left = ftSelection
+        right = ftSelection
     )
     {
         match = new FtOr(left, right);
@@ -3262,8 +3261,8 @@ throws PermissionDeniedException, EXistException, XPathException
     |
     #(
         "ftand"
-        left = ftPrimary
-        right = ftPrimary
+        left = ftSelection
+        right = ftSelection
     )
     {
         match = new FtAnd(left, right);
@@ -3272,16 +3271,20 @@ throws PermissionDeniedException, EXistException, XPathException
     {
         Expression le = null;
         AnyAllOptions anyAllOptions = null;
-    }               // parameter on literalExpr is not used. Why? Historical?
-        (le=literalExpr[null]) (anyAllOptions = ftAnyAllOption)?
+    }
+    c:STRING_LITERAL (anyAllOptions = ftAnyAllOption)?
     {
+        StringValue val = new StringValue(c.getText());
+        val.expand();
+        le= new LiteralValue(context, val);
+        le.setASTNode(c);
         match = new FtExpressionMatch(le, anyAllOptions);
     }
     |
     {
         AnyAllOptions anyAllOptions = null;
         PathExpr seqPath = new PathExpr(context);
-        seqPath.setASTNode(ftPrimary_AST_in);
+        seqPath.setASTNode(ftSelection_AST_in);
     }
         expr [seqPath] (anyAllOptions = ftAnyAllOption)?
     {

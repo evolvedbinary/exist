@@ -95,6 +95,18 @@ public class FtSearchParserTest {
         parse(query);
     }
 
+    @Test
+    void parserExtendedSelection() throws Exception {
+        final var query = """
+                xquery version "3.1";
+                declare namespace exq = "http://example.org/XQueryImplementation";
+                for $w in ('aaaa', 'bbbb', 'ccccc')
+                   where $w contains text (# exq:use-index #) {"aaaa" any word}
+                  return <text>{ $w }</text>
+                """;
+        parse(query);
+    }
+
 
 
     private PathExpr parse(String query) throws TokenStreamException, XPathException, RecognitionException {

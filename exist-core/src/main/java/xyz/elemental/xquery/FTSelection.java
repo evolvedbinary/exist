@@ -14,9 +14,9 @@ import java.util.Optional;
 
 public class FTSelection implements LuceneQueryProducer {
 
-    private final FTMatch ftSelection;
+    private final FtSelection ftSelection;
 
-    public FTSelection(final FTMatch ftMatch) {
+    public FTSelection(final FtSelection ftMatch) {
         this.ftSelection = ftMatch;
     }
 

@@ -16,7 +16,7 @@ import java.util.Optional;
 
 public class FtAnd extends FtBinaryOp {
 
-    public FtAnd(FTMatch left, FTMatch right) {
+    public FtAnd(FtSelection left, FtSelection right) {
         super(left, right);
     }
 

@@ -5,9 +5,6 @@
  */
 package xyz.elemental.xquery;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.en.EnglishAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.exist.xquery.*;
 import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.BooleanValue;
@@ -24,12 +21,12 @@ public class FTComparison extends AbstractExpression {
 
     private final Expression leftExpression;
 
-    private final FTMatch ftSelection;
+    private final FtSelection ftSelection;
 
     @Nullable
     Float score;
 
-    public FTComparison(XQueryContext context, Expression left, FTMatch ftSelection) {
+    public FTComparison(XQueryContext context, Expression left, FtSelection ftSelection) {
         super(context);
         this.ftSelection = ftSelection;
         this.leftExpression = left;

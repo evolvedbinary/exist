@@ -9,6 +9,7 @@ xquery version "3.1";
 
 module namespace ftsearch="http://exist-db.org/xquery/test/ft-search";
 declare namespace test="http://exist-db.org/xquery/xqsuite";
+declare namespace exq = "http://example.org/XQueryImplementation";
 
 declare
     %test:assertEquals("aa bb")
@@ -74,4 +75,12 @@ function ftsearch:ftOrTest() {
     for $w score $s in ('bbbb', 'ccccc', 'cc bb', 'bb aa')
         where $w contains text 'aa' ftor 'cc'
         return concat($w, ", ", $s)
+};
+
+declare
+    %test:assertEquals("aa bb")
+function ftsearch:ignorePragma() {
+    for $w in ('aa bb', 'bbbb', 'ccccc')
+        where $w contains text (# exq:use-index #) {'aa' any word}
+        return $w
 };
