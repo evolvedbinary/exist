@@ -483,9 +483,9 @@
     <test output="text">
         <task>Following sibling axis 8</task>
         <code>
-			doc("/db/axes-test/axes2.xml")//b/following-sibling::c
+			doc("/db/axes-test/axes2.xml")//c/following-sibling::d
 		</code>
-        <expected>C2 C4</expected>
+        <expected>C3</expected>
     </test>
     <test output="text">
         <task>Following sibling axis 9</task>
@@ -497,7 +497,7 @@
     <test output="text">
         <task>Following sibling axis 10</task>
         <code>
-			doc("/db/axes-test/axes2.xml")//c[following-sibling::c]
+			doc("/db/axes-test/axes2.xml")//c[following-sibling::e]
 		</code>
         <expected>C2</expected>
     </test>
