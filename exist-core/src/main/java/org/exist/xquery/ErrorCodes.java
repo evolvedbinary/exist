@@ -1,4 +1,13 @@
 /*
+/*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -23,6 +32,7 @@ package org.exist.xquery;
 
 import org.exist.Namespaces;
 import org.exist.dom.QName;
+import org.exist.xquery.parser.XQueryAST;
 
 /**
  *
@@ -238,6 +248,14 @@ public class ErrorCodes {
     public static final ErrorCode FOXT0006 = new W3CErrorCode("FOXT0006", "XSLT output contains non-accepted characters");
 
     public static final ErrorCode XTSE0165 = new W3CErrorCode("XTSE0165","It is a static error if the processor is not able to retrieve the resource identified by the URI reference [ in the href attribute of xsl:include or xsl:import] , or if the resource that is retrieved does not contain a stylesheet module conforming to this specification.");
+
+    /*
+     * XQuery FT search 3.0 error codes.
+     */
+
+    public static final ErrorCode FTST0013 = new W3CErrorCode("FTST0013", "No support for language option");
+
+
 
     /* eXist specific XQuery and XPath errors
      *

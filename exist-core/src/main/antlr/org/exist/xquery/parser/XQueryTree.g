@@ -43,6 +43,7 @@ header {
     import java.util.TreeSet;
     import java.util.HashMap;
     import java.util.HashSet;
+    import java.util.Optional;
     import java.util.Stack;
     import javax.xml.XMLConstants;
     import org.apache.xerces.util.XMLChar;
@@ -66,6 +67,7 @@ header {
     import org.exist.xquery.functions.map.MapExpr;
     import org.exist.xquery.functions.array.ArrayConstructor;
     import xyz.elemental.xquery.*;
+    import xyz.elemental.xquery.options.*;
 
     import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 }
@@ -3268,29 +3270,165 @@ throws PermissionDeniedException, EXistException, XPathException
         match = new FtAnd(left, right);
     }
     |
-    {
-        Expression le = null;
-        AnyAllOptions anyAllOptions = null;
-    }
-    c:STRING_LITERAL (anyAllOptions = ftAnyAllOption)?
-    {
-        StringValue val = new StringValue(c.getText());
-        val.expand();
-        le= new LiteralValue(context, val);
-        le.setASTNode(c);
-        match = new FtExpressionMatch(le, anyAllOptions);
-    }
-    |
-    {
-        AnyAllOptions anyAllOptions = null;
-        PathExpr seqPath = new PathExpr(context);
-        seqPath.setASTNode(ftSelection_AST_in);
-    }
-        expr [seqPath] (anyAllOptions = ftAnyAllOption)?
-    {
-        match = new FtExpressionMatch(seqPath, anyAllOptions);
-    }
+        match = ftPrimaryWithOptions
     ;
+
+ftPrimaryWithOptions
+returns [FtExpressionMatch match]
+throws PermissionDeniedException, EXistException, XPathException
+{
+    match = null;
+    MatchOptions matchOptions = context.getMatchOptions().copy();
+}
+    :
+    (
+        match = ftWords
+        {
+            match.setMatchOptions(matchOptions);
+        }
+    )
+    (
+        (
+            ftMatchOptions [matchOptions]
+        )
+    )?
+    ;
+
+ftMatchOptions [MatchOptions matchOptions]
+throws PermissionDeniedException, EXistException, XPathException
+    :
+    (
+        ("using")
+        ftMatchOption [matchOptions]
+    )+
+    ;
+
+ftMatchOption [MatchOptions matchOptions]
+throws PermissionDeniedException, EXistException, XPathException
+    :
+    (
+        {
+            WildcardOption option = null;
+        }
+        option = ftWildCardOption
+        {
+            matchOptions.setWildcardOption(option);
+        }
+    )
+    |
+    (
+       {
+            StemOption option = null;
+       }
+       option = ftStemOption
+       {
+           matchOptions.setStemOption(option);
+       }
+    )
+    |
+    (
+        {
+            DiacriticsOption option = null;
+        }
+        option = ftDiacriticsOption
+        {
+            matchOptions.setDiacriticsOption(option);
+        }
+    )
+    |
+    ftExtensionOption
+    ;
+
+
+ftWildCardOption
+returns [WildcardOption wildCardOption]
+throws PermissionDeniedException, EXistException, XPathException
+    : WILDCARDS { wildCardOption = WildcardOption.WILDCARDS;}
+    | NO_WILDCARDS { wildCardOption = WildcardOption.NO_WILDCARDS;}
+   ;
+
+ftStemOption
+returns [StemOption stemOption]
+throws PermissionDeniedException, EXistException, XPathException
+    : STEMMING { stemOption = StemOption.STEMMING;}
+    | NO_STEMMING { stemOption = StemOption.NO_STEMMING;}
+    ;
+
+
+ftDiacriticsOption
+returns [DiacriticsOption diacriticsOption]
+throws PermissionDeniedException, EXistException, XPathException
+{
+    diacriticsOption = null;
+}
+    :
+    "diacritics"
+    (
+        (
+            "insensitive"
+            {
+                diacriticsOption = DiacriticsOption.INSENSITIVE;
+            }
+        )
+        |
+        (
+            "sensitive"
+            {
+                diacriticsOption = DiacriticsOption.SENSITIVE;
+            }
+        )
+    )
+    ;
+
+
+//Do nothing, allow us easily throw away "using" keywords.
+//All option text already removed in parser.
+ftExtensionOption
+    : FT_EXTENSION_OPTION
+    ;
+
+
+ftWords
+returns [FtExpressionMatch match]
+throws PermissionDeniedException, EXistException, XPathException
+{
+    match = null;
+}
+    :
+    (
+        (
+            c:STRING_LITERAL
+            {
+                StringValue val = new StringValue(c.getText());
+                val.expand();
+                Expression le = new LiteralValue(context, val);
+                le.setASTNode(c);
+                match = new FtExpressionMatch(le, null);
+            }
+        )
+        |
+        (
+            {
+                PathExpr seqPath = new PathExpr(context);
+                seqPath.setASTNode(ftWords_AST_in);
+            }
+                expr [seqPath]
+            {
+                match = new FtExpressionMatch(seqPath, null);
+            }
+        )
+    )   //End of match for ftWordsValue and we are now matching ftAnyAllOption
+    (
+        {
+            AnyAllOptions anyAllOptions = null;
+        }
+        anyAllOptions = ftAnyAllOption
+        {
+            match.setAnyAllOptions(Optional.ofNullable(anyAllOptions));
+        }
+    )?
+    ;
+
 
 
 ftAnyAllOption

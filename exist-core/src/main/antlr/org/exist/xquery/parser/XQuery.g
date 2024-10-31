@@ -196,6 +196,11 @@ imaginaryTokenDefinitions
 	GTEQ
 	SEQUENCE
 	FT_CONTAINS
+	WILDCARDS
+	NO_WILDCARDS
+	STEMMING
+	NO_STEMMING
+	FT_EXTENSION_OPTION
 	;
 
 // === XPointer ===
@@ -1094,7 +1099,7 @@ ftAnd throws XPathException
     ;
 
 ftPrimaryWithOptions throws XPathException
-    : ftPrimary //TODO (ftMatchOptions)? (ftWeight)?
+    : ftPrimary (ftMatchOptions)? //TODO - We are not implementing (ftWeight)? yet
     ;
 
 ftPrimary throws XPathException
@@ -1120,7 +1125,57 @@ ftAnyAllOption throws XPathException
     ("phrase") => ("phrase")
     ;
 
-// TODO - Pragma is vendor specific. Let's ignore it at the moment.
+
+ftMatchOptions throws XPathException
+    : ("using" ftMatchOption)+
+    ;
+
+ftMatchOption throws XPathException
+    : ftLanguageOption
+    | ftOptionsWithNo
+    | ftDiacriticsOption
+    | ftExtensionOption
+    ;
+    //TODO ftThesaurusOption FTThesaurusOption, FTCaseOption, FTStopWordOption
+
+//TODO - ftLanguageOption is not supported at the moment
+ftLanguageOption throws XPathException
+    : ("language" STRING_LITERAL)
+        {
+            throw new XPathException(ftLanguageOption_AST, ErrorCodes.FTST0013, "Language feature is not supported");
+        }
+    ;
+
+ftOptionsWithNo throws XPathException
+{String optionName;}
+    : ("no") => (
+        "no"!
+        (
+         "wildcards"! {#ftOptionsWithNo = #[NO_WILDCARDS,"no wildcards"]; }
+         | "stemming"!  {#ftOptionsWithNo = #[NO_STEMMING,"no stemming"]; }
+        )
+    )
+    |
+    (
+       "wildcards"! {#ftOptionsWithNo = #[WILDCARDS,"wildcards"]; }
+       | "stemming"!  {#ftOptionsWithNo = #[STEMMING,"stemming"]; }
+    )
+    ;
+
+ftDiacriticsOption throws XPathException
+    : "diacritics"
+        (
+            "insensitive" | "sensitive"
+        )
+    ;
+
+// TODO - ftExtensionOption is vendor specific. Let's ignore the content
+ftExtensionOption throws XPathException
+    : ("option" eqName STRING_LITERAL)!
+      {#ftExtensionOption = #[FT_EXTENSION_OPTION,"ftExtensionOption"]; }
+    ;
+
+// TODO - Pragma is vendor specific. Let's ignore the content
 ftExtensionSelection throws XPathException
     : (( pragma )+)! LCURLY! (ftSelection)+ RCURLY!
     ;

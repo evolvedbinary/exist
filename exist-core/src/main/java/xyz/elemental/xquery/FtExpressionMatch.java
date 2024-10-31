@@ -11,19 +11,24 @@ import org.exist.xquery.Expression;
 import org.exist.xquery.XPathException;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
+import xyz.elemental.xquery.options.MatchOptions;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 
 public class FtExpressionMatch extends FtSelection {
 
     final Expression expression;
-    final Optional<AnyAllOptions> anyAllOptions;
+    private Optional<AnyAllOptions> anyAllOptions;
+
+    private MatchOptions matchOptions;
 
     public FtExpressionMatch(Expression expression, AnyAllOptions anyAllOptions) {
         this.expression = expression;
+
         this.anyAllOptions = Optional.ofNullable(anyAllOptions);
     }
 
@@ -113,5 +118,15 @@ public class FtExpressionMatch extends FtSelection {
         return "FTExpressionMatch [expression=" + expression + "]";
     }
 
+    public void setAnyAllOptions(Optional<AnyAllOptions> anyAllOptions) {
+        this.anyAllOptions = anyAllOptions;
+    }
 
+    public MatchOptions getMatchOptions() {
+        return matchOptions;
+    }
+
+    public void setMatchOptions(MatchOptions matchOptions) {
+        this.matchOptions = matchOptions;
+    }
 }

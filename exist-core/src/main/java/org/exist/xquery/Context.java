@@ -1,4 +1,12 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ * ---------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -62,6 +70,7 @@ import org.exist.xquery.value.AnyURIValue;
 import org.exist.xquery.value.BinaryValue;
 import org.exist.xquery.value.NodeValue;
 import org.exist.xquery.value.Sequence;
+import xyz.elemental.xquery.options.MatchOptions;
 
 public interface Context {
 
@@ -844,6 +853,14 @@ public interface Context {
      * @return the option
      */
     Option getOption(QName qname);
+
+
+    /**
+     * Return existing FT match options which can be modified via prolog;
+     * @return FT MatchOptions
+     */
+    MatchOptions getMatchOptions();
+
 
     Pragma getPragma(String name, String contents) throws XPathException;
 

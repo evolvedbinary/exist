@@ -1,4 +1,12 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ * ---------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -103,6 +111,7 @@ import org.jgrapht.opt.graph.fastutil.FastutilMapGraph;
 import org.jgrapht.util.ConcurrencyUtil;
 import org.jgrapht.util.SupplierUtil;
 import org.w3c.dom.Node;
+import xyz.elemental.xquery.options.MatchOptions;
 
 import static com.evolvedbinary.j8fu.OptionalUtil.or;
 import static com.evolvedbinary.j8fu.tuple.Tuple.Tuple;
@@ -206,6 +215,8 @@ public class XQueryContext implements BinaryValueManager, Context {
 
     // List of options declared for this query at run time - i.e. util:declare-option()
     private List<Option> dynamicOptions = null;
+
+    private MatchOptions ftMatchOptions = MatchOptions.defaultMatchOptions();
 
     //The Calendar for this context : may be changed by some options
     private XMLGregorianCalendar calendar = null;
@@ -3040,6 +3051,11 @@ public class XQueryContext implements BinaryValueManager, Context {
         }
 
         return null;
+    }
+
+    @Override
+    public MatchOptions getMatchOptions() {
+        return ftMatchOptions;
     }
 
     @Override

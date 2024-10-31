@@ -5,6 +5,8 @@
  */
 package xyz.elemental.xquery;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
 import org.exist.xquery.*;
 import org.exist.xquery.util.ExpressionDumper;
 import org.exist.xquery.value.BooleanValue;
@@ -65,7 +67,15 @@ public class FTComparison extends AbstractExpression {
 
             var memoryIndex = new MemoryIndex();
             memoryIndex.reset();
+            /*
+            We can create multiple fields, each for different analyzer settings.
+            memoryIndex.addField(fieldName, text, analyzer);
+            */
+
             memoryIndex.addField(FIELD_NAME, itemStringValue, LuceneQueryProducer.analyzer);
+
+
+
             results += memoryIndex.search(luceneQuery.get());
         }
         score = results / left.getItemCount();
