@@ -34,8 +34,11 @@ import org.junit.jupiter.params.provider.CsvSource;
 import javax.annotation.Nullable;
 
 import java.util.Iterator;
+import java.util.Map;
 
+import static com.evolvedbinary.j8fu.tuple.Tuple.Tuple;
 import static org.easymock.EasyMock.*;
+import static org.exist.util.MapUtil.hashMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NewArrayNodeSetTest {
@@ -627,6 +630,348 @@ public class NewArrayNodeSetTest {
             assertTrue(it.hasNext());
             final NodeId actual = it.next().getNodeId();
             assertEquals(expected, actual);
+        }
+    }
+
+    //    //c[following-sibling::c]
+    @Test
+    public void containsPrecedingSiblingOfMatches_mixedLevels_sameNodes() {
+        final DLN[] contextSet = {
+                new DLN("1.2.2.2"),
+                new DLN("1.2.4"),
+                new DLN("1.2.8.2.2"),
+                new DLN("1.2.10")
+        };
+
+        final DLN[] attemptMatches = {
+                new DLN("1.2.2.2"),
+                new DLN("1.2.4"),
+                new DLN("1.2.8.2.2"),
+                new DLN("1.2.10")
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+                Tuple(new DLN("1.2.10"), new DLN("1.2.4"))
+        );
+
+        assertContainsPrecedingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    @Test
+    public void containsPrecedingSiblingOfMatches_mixedLevels_differentNodes() {
+        final DLN[] contextSet = {
+            new DLN("1.2.2.2"),
+            new DLN("1.2.3"),
+            new DLN("1.2.8.2.2"),
+            new DLN("1.2.9")
+        };
+
+        final DLN[] attemptMatches = {
+            new DLN("1.2.2.3"),
+            new DLN("1.2.4"),
+            new DLN("1.2.8"),
+            new DLN("1.2.8.2.3"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.2.3"), new DLN("1.2.2.2")),
+            Tuple(new DLN("1.2.4"), new DLN("1.2.3")),
+            Tuple(new DLN("1.2.8"), new DLN("1.2.3")),
+            Tuple(new DLN("1.2.8.2.3"), new DLN("1.2.8.2.2"))
+        );
+
+        assertContainsPrecedingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    //    //e[following-sibling::c]
+    @Test
+    public void containsPrecedingSiblingOfMatches_mixedLevels_differentNodes2() {
+        final DLN[] contextSet = {
+                new DLN("1.2.6"),
+                new DLN("1.2.8.2"),
+        };
+
+        final DLN[] attemptMatches = {
+                new DLN("1.2.2.2"),
+                new DLN("1.2.4"),
+                new DLN("1.2.8.2.2"),
+                new DLN("1.2.10")
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+                Tuple(new DLN("1.2.10"), new DLN("1.2.6"))
+        );
+
+        assertContainsPrecedingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    private void assertContainsPrecedingSiblingOfMatches(final DLN[] contextSet, final DLN[] attemptMatches, final Map<DLN, DLN> expectedMatches) {
+        final int documentId = 2033;
+        final DocumentImpl mockDocument = createMock(DocumentImpl.class);
+        expect(mockDocument.getDocId()).andReturn(documentId).atLeastOnce();
+        expect(mockDocument.getExpression()).andReturn(null).atLeastOnce();
+        replay(mockDocument);
+
+        final NewArrayNodeSet newArrayNodeSet = new NewArrayNodeSet();
+        for (int i = 0; i < contextSet.length; i++) {
+            newArrayNodeSet.add(new NodeProxy(mockDocument, new DLN(contextSet[i])));
+        }
+
+        for (int i = 0; i < attemptMatches.length; i++) {
+            final DLN attemptMatch = new DLN(attemptMatches[i]);
+            @Nullable final DLN expectedMatch = expectedMatches.get(attemptMatch);
+
+            @Nullable final NodeProxy nextPrecedingSibling = newArrayNodeSet.containsPrecedingSiblingOf(mockDocument, attemptMatch);
+
+            if (expectedMatch != null) {
+                assertNotNull(nextPrecedingSibling, "Expected: " + expectedMatch + " for attempt match on: " + attemptMatch);
+                assertEquals(documentId, nextPrecedingSibling.getDoc().getDocId());
+                assertEquals(expectedMatch, nextPrecedingSibling.getNodeId());
+            } else {
+                assertNull(nextPrecedingSibling);
+            }
+        }
+    }
+
+    //    //c[preceding-sibling::c]
+    @Test
+    public void containsFollowingSiblingOfMatches_mixedLevels_sameNodes() {
+        final DLN[] contextSet = {
+            new DLN("1.2.2.2"),
+            new DLN("1.2.4"),
+            new DLN("1.2.8.2.2"),
+            new DLN("1.2.10")
+        };
+
+        final DLN[] attemptMatches = {
+                new DLN("1.2.2.2"),
+                new DLN("1.2.4"),
+                new DLN("1.2.8.2.2"),
+                new DLN("1.2.10")
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.4"), new DLN("1.2.10"))
+        );
+
+        assertContainsFollowingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    //    //c[preceding-sibling::c]
+    @Test
+    public void containsFollowingSiblingOfMatches_mixedLevels_differentNodes() {
+        final DLN[] contextSet = {
+                new DLN("1.2.2.2"),
+                new DLN("1.2.3"),
+                new DLN("1.2.8.2.2"),
+                new DLN("1.2.10")
+        };
+
+        final DLN[] attemptMatches = {
+                new DLN("1.2.2.1"),
+                new DLN("1.2.4"),
+                new DLN("1.2.8"),
+                new DLN("1.2.8.2.1"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.2.1"), new DLN("1.2.2.2")),
+            Tuple(new DLN("1.2.4"), new DLN("1.2.10")),
+            Tuple(new DLN("1.2.8"), new DLN("1.2.10")),
+            Tuple(new DLN("1.2.8.2.1"), new DLN("1.2.8.2.2"))
+        );
+
+        assertContainsFollowingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    //    //e[preceding-sibling::c]
+    @Test
+    public void containsFollowingSiblingOfMatches_mixedLevels_differentNodes2() {
+        final DLN[] contextSet = {
+                new DLN("1.2.6"),
+                new DLN("1.2.8.2"),
+        };
+
+        final DLN[] attemptMatches = {
+                new DLN("1.2.2.2"),
+                new DLN("1.2.4"),
+                new DLN("1.2.8.2.2"),
+                new DLN("1.2.10")
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+                Tuple(new DLN("1.2.4"), new DLN("1.2.6"))
+        );
+
+        assertContainsFollowingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    //    //c[../preceding-sibling::a]
+    @Test
+    public void containsFollowingSiblingOfMatches_XXXXX() {
+        final DLN[] contextSet = {
+                new DLN("1.4"),
+                new DLN("1.6"),
+        };
+
+        final DLN[] attemptMatches = {
+                new DLN("1.2"),
+                new DLN("1.4"),
+                new DLN("1.6"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+                Tuple(new DLN("1.2"), new DLN("1.4")),
+                Tuple(new DLN("1.4"), new DLN("1.6"))
+        );
+
+        assertContainsFollowingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    @Test
+    public void containsFollowingSiblingOf_oneEntry() {
+        final DLN[] contextSet = {
+            new DLN("1.2.6"),
+        };
+
+        final DLN[] attemptMatches = {
+            new DLN("1.2.4"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.4"), new DLN("1.2.6"))
+        );
+
+        assertContainsFollowingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    @Test
+    public void containsFollowingSiblingOf_lowerBound() {
+        final DLN[] contextSet = {
+            new DLN("1.2.6"),
+            new DLN("1.2.8.2"),
+        };
+
+        final DLN[] attemptMatches = {
+            new DLN("1.2.4"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.4"), new DLN("1.2.6"))
+        );
+
+        assertContainsFollowingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    @Test
+    public void containsFollowingSiblingOf_upperBound() {
+        final DLN[] contextSet = {
+            new DLN("1.2.6"),
+            new DLN("1.2.8.2"),
+        };
+
+        final DLN[] attemptMatches = {
+            new DLN("1.2.8.0"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.8.0"), new DLN("1.2.8.2"))
+        );
+
+        assertContainsFollowingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    @Test
+    public void containsPrecedingSiblingOf_oneEntry() {
+        final DLN[] contextSet = {
+            new DLN("1.2.6"),
+        };
+
+        final DLN[] attemptMatches = {
+            new DLN("1.2.10"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.10"), new DLN("1.2.6"))
+        );
+
+        assertContainsPrecedingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    @Test
+    public void containsPrecedingSiblingOf_lowerBound() {
+        final DLN[] contextSet = {
+            new DLN("1.2.6"),
+            new DLN("1.2.8.2"),
+        };
+
+        final DLN[] attemptMatches = {
+            new DLN("1.2.10"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.10"), new DLN("1.2.6"))
+        );
+
+        assertContainsPrecedingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    @Test
+    public void containsPrecedingSiblingOf_upperBound() {
+        final DLN[] contextSet = {
+            new DLN("1.2.6"),
+            new DLN("1.2.8.2"),
+        };
+
+        final DLN[] attemptMatches = {
+            new DLN("1.2.8.4"),
+        };
+
+        // attemptMatches -> contextSet
+        final Map<DLN, DLN> expectedMatches = hashMap(
+            Tuple(new DLN("1.2.8.4"), new DLN("1.2.8.2"))
+        );
+
+        assertContainsPrecedingSiblingOfMatches(contextSet, attemptMatches, expectedMatches);
+    }
+
+    private void assertContainsFollowingSiblingOfMatches(final DLN[] contextSet, final DLN[] attemptMatches, final Map<DLN, DLN> expectedMatches) {
+        final int documentId = 2033;
+        final DocumentImpl mockDocument = createMock(DocumentImpl.class);
+        expect(mockDocument.getDocId()).andReturn(documentId).atLeastOnce();
+        expect(mockDocument.getExpression()).andReturn(null).atLeastOnce();
+        replay(mockDocument);
+
+        final NewArrayNodeSet newArrayNodeSet = new NewArrayNodeSet();
+        for (int i = 0; i < contextSet.length; i++) {
+            newArrayNodeSet.add(new NodeProxy(mockDocument, new DLN(contextSet[i])));
+        }
+
+        for (int i = 0; i < attemptMatches.length; i++) {
+            final DLN attemptMatch = new DLN(attemptMatches[i]);
+            @Nullable final DLN expectedMatch = expectedMatches.get(attemptMatch);
+
+            @Nullable final NodeProxy nextFollowingSibling = newArrayNodeSet.containsFollowingSiblingOf(mockDocument, attemptMatch);
+
+            if (expectedMatch != null) {
+                assertNotNull(nextFollowingSibling, "Expected: " + expectedMatch + " for attempt match on: " + attemptMatch);
+                assertEquals(documentId, nextFollowingSibling.getDoc().getDocId());
+                assertEquals(expectedMatch, nextFollowingSibling.getNodeId());
+            } else {
+                assertNull(nextFollowingSibling);
+            }
         }
     }
 
