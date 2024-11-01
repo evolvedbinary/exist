@@ -23,6 +23,8 @@ package org.exist.numbering;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
+
 import org.exist.storage.io.VariableByteInput;
 
 /**
@@ -494,7 +496,12 @@ public class DLNBase {
         return Arrays.equals(bits, other.bits);
     }
 
-//    public int compareTo(final DLNBase other) {
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.hashCode(bits), bitIndex);
+    }
+
+    //    public int compareTo(final DLNBase other) {
 //        if (other == null)
 //            return 1;
 //        final int a1len = bits.length;
