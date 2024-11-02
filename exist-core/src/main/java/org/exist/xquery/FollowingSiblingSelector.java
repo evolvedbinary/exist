@@ -103,13 +103,19 @@ private @Nullable List<NodeProxy> precedingSiblings;
         for (final NodeProxy contextNode : precedingSiblings) {
 //          System.out.println("\t\tSTART INNER LOOP: " + i);
 
-          if (Expression.NO_CONTEXT_ID == contextId) {
-//            System.out.println("\t\t\t" + followingSibling.getNodeId().toString() + " .copyContext(" + contextNode.getNodeId().toString() + ")");
-            followingSibling.copyContext(contextNode);
-          } else {
-//            System.out.println("\t\t\t" + followingSibling.getNodeId().toString() + " .addContextNode(" + contextId + ", " + contextNode.getNodeId().toString() + ")");
-            followingSibling.addContextNode(contextId, contextNode);
-          }
+          // START TEMP
+          if (followingSibling.getContext() == null || contextNode.getContext() == null
+                  || followingSibling.getContext().getContextId() != contextNode.getContext().getContextId()) {
+
+            if (Expression.NO_CONTEXT_ID == contextId) {
+  //            System.out.println("\t\t\t" + followingSibling.getNodeId().toString() + " .copyContext(" + contextNode.getNodeId().toString() + ")");
+              followingSibling.copyContext(contextNode);
+            } else {
+  //            System.out.println("\t\t\t" + followingSibling.getNodeId().toString() + " .addContextNode(" + contextId + ", " + contextNode.getNodeId().toString() + ")");
+              followingSibling.addContextNode(contextId, contextNode);
+            }
+
+          } // END TEMP
 
 //          System.out.println("\t\tEND INNER LOOP: " + i);
 //          i++;

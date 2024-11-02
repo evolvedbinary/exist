@@ -138,13 +138,19 @@ public class PrecedingSiblingSelector implements NodeSelector {
         for (final NodeProxy precedingSibling : precedingSiblings) {
 //          System.out.println("\t\tSTART INNER LOOP: " + i);
 
-          if (Expression.NO_CONTEXT_ID == contextId) {
+          // START TEMP
+          if (precedingSibling.getContext() == null || followingSibling.getContext() == null
+                  || precedingSibling.getContext().getContextId() != followingSibling.getContext().getContextId()) {
+
+            if (Expression.NO_CONTEXT_ID == contextId) {
 //            System.out.println("\t\t\t" + precedingSibling.getNodeId().toString() + " .copyContext(" + followingSibling.getNodeId().toString() + ")");
-            precedingSibling.copyContext(followingSibling);
-          } else {
+              precedingSibling.copyContext(followingSibling);
+            } else {
 //            System.out.println("\t\t\t" + precedingSibling.getNodeId().toString() + " .addContextNode(" + contextId + ", " + followingSibling.getNodeId().toString() + ")");
-            precedingSibling.addContextNode(contextId, followingSibling);
-          }
+              precedingSibling.addContextNode(contextId, followingSibling);
+            }
+
+          } // END TEMP
 
 //          System.out.println("\t\tEND INNER LOOP: " + i);
 //          i++;
