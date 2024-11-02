@@ -73,7 +73,7 @@ public class OptimizeFieldPragma extends AbstractPragma {
         final LocationStep locationStep = (LocationStep) expression;
         @Nullable final Predicate[] preds = locationStep.getPredicates();
         if (preds != null) {
-            final Expression parentExpr = locationStep.getParentExpression();
+            final Expression parentExpr = locationStep.getParent();
             if (!(parentExpr instanceof RewritableExpression)) {
                 return;
             }

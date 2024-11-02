@@ -41,8 +41,6 @@ public abstract class LogicalOp extends BinaryOp {
 	 */
 	protected boolean optimize = false;
 	protected boolean rewritable = false;
-	
-    protected Expression parent;
 
 	public LogicalOp(XQueryContext context) {
 		super(context);
@@ -56,10 +54,8 @@ public abstract class LogicalOp extends BinaryOp {
 		Item contextItem)
 		throws XPathException;
 
-	/* (non-Javadoc)
-	 * @see org.exist.xquery.BinaryOp#analyze(org.exist.xquery.Expression, int)
-	 */
-	public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
+	@Override
+	public void analyze(final AnalyzeContextInfo contextInfo) throws XPathException {
         this.parent = contextInfo.getParent();
         super.analyze(contextInfo);		
 		//To optimize, we want nodes
@@ -102,10 +98,6 @@ public abstract class LogicalOp extends BinaryOp {
 		else
 			{return Dependency.CONTEXT_SET;}
 	}
-
-    public Expression getParent() {
-        return this.parent;
-    }
     
     public boolean isRewritable() {
     	return rewritable;

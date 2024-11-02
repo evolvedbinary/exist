@@ -60,12 +60,8 @@ public abstract class BinaryOp extends PathExpr {
     	getRight().setContextDocSet(contextSet);
     }
     
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.exist.xquery.PathExpr#analyze(org.exist.xquery.Expression)
-     */
-    public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
+    @Override
+    public void analyze(final AnalyzeContextInfo contextInfo) throws XPathException {
     	inPredicate = (contextInfo.getFlags() & IN_PREDICATE) != 0;
     	contextId = contextInfo.getContextId();
     	inWhereClause = (contextInfo.getFlags() & IN_WHERE_CLAUSE) != 0;

@@ -1182,7 +1182,8 @@ public class LocationStep extends Step {
      *
      * @return the parent expression
      */
-    public Expression getParentExpression() {
+    @Override
+    public Expression getParent() {
         return this.parent;
     }
 

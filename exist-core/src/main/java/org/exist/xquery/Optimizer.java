@@ -112,7 +112,7 @@ public class Optimizer extends DefaultExpressionVisitor {
             }
         }
 
-        final Expression parent = locationStep.getParentExpression();
+        final Expression parent = locationStep.getParent();
 
         if (optimize) {
             // we found at least one Optimizable. Rewrite the whole expression and

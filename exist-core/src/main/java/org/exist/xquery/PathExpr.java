@@ -182,7 +182,7 @@ public class PathExpr extends AbstractExpression implements CompiledXQuery,
             if (i > 1) {
                 contextInfo.setContextStep(steps.get(i - 1));
             }
-            contextInfo.setParent(this);
+            contextInfo.setParent(this);  // TODO(AR) it seems we have to repeatedly mutate the parent contextInfo here... it would be better to have some immutable structure!
             expr.analyze(contextInfo);
         }
     }

@@ -70,11 +70,6 @@ public abstract class Function extends PathExpr {
     private FunctionSignature mySignature;
 
     /**
-     * The parent expression from which this function is called.
-     */
-    private Expression parent;
-
-    /**
      * Flag to indicate if argument types are statically checked.
      * This is set to true by default (meaning: no further checks needed).
      * Method {@link #setArguments(java.util.List)} will set it to false
@@ -191,16 +186,6 @@ public abstract class Function extends PathExpr {
      */
     public void setParent(final Expression parent) {
         this.parent = parent;
-    }
-
-    /**
-     * Returns the expression from which this function gets called.
-     *
-     * @return the parent expression
-     */
-    @Override
-    public Expression getParent() {
-        return parent;
     }
 
     /**
@@ -394,6 +379,7 @@ public abstract class Function extends PathExpr {
 
     @Override
     public void analyze(final AnalyzeContextInfo contextInfo) throws XPathException {
+        this.parent = contextInfo.getParent();
         inPredicate = (contextInfo.getFlags() & IN_PREDICATE) > 0;
         unordered = (contextInfo.getFlags() & UNORDERED) > 0;
         contextId = contextInfo.getContextId();

@@ -64,8 +64,6 @@ public class Predicate extends PathExpr {
 
     private int outerContextId;
 
-    private Expression parent;
-
     public Predicate(final XQueryContext context) {
         super(context);
     }
@@ -92,7 +90,6 @@ public class Predicate extends PathExpr {
 
     @Override
     public void analyze(final AnalyzeContextInfo contextInfo) throws XPathException {
-        parent = contextInfo.getParent();
         AnalyzeContextInfo newContextInfo = createContext(contextInfo);
         super.analyze(newContextInfo);
         final Expression inner = getSubExpression(0);
@@ -134,7 +131,7 @@ public class Predicate extends PathExpr {
         outerContextId = newContextInfo.getContextId();
         newContextInfo.setContextId(getExpressionId());
         newContextInfo.setStaticType(contextInfo.getStaticType());
-        newContextInfo.setParent(this);
+        newContextInfo.setParent(contextInfo.getParent());
         return newContextInfo;
     }
 
@@ -634,11 +631,6 @@ public class Predicate extends PathExpr {
         if (!postOptimization) {
             cached = null;
         }
-    }
-
-    @Override
-    public Expression getParent() {
-        return parent;
     }
 
     @Override

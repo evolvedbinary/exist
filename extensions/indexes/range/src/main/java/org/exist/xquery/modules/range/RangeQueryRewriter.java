@@ -52,7 +52,7 @@ public class RangeQueryRewriter extends QueryRewriter {
 
         @Nullable final Predicate[] preds = locationStep.getPredicates();
         if (preds != null) {
-            final Expression parentExpr = locationStep.getParentExpression();
+            final Expression parentExpr = locationStep.getParent();
             if ((parentExpr instanceof RewritableExpression)) {
                 // Step 1: replace all optimizable expressions within predicates with
                 // calls to the range functions. If those functions are used or not will
@@ -239,7 +239,7 @@ public class RangeQueryRewriter extends QueryRewriter {
     }
 
     protected static List<LocationStep> getPrecedingSteps(LocationStep current) {
-        Expression parentExpr = current.getParentExpression();
+        Expression parentExpr = current.getParent();
         if (!(parentExpr instanceof RewritableExpression parent)) {
             return null;
         }

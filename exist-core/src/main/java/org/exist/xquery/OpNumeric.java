@@ -205,7 +205,9 @@ public class OpNumeric extends BinaryOp {
         return returnType;
     }
 
-    public void analyze(AnalyzeContextInfo contextInfo) throws XPathException {
+    @Override
+    public void analyze(final AnalyzeContextInfo contextInfo) throws XPathException {
+        this.parent = contextInfo.getParent();
         super.analyze(contextInfo);
         contextInfo.setStaticReturnType(returnType);
     }
