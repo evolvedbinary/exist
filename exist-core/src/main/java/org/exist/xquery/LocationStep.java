@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -1182,7 +1191,8 @@ public class LocationStep extends Step {
      *
      * @return the parent expression
      */
-    public Expression getParentExpression() {
+    @Override
+    public Expression getParent() {
         return this.parent;
     }
 
