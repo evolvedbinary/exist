@@ -21,7 +21,7 @@ public class FTSelection implements LuceneQueryProducer {
     }
 
     @Override
-    public Optional<Query> evaluateToQuery(Sequence contextSequence, Item contextItem) throws XPathException {
+    public Optional<FtQuery> evaluateToQuery(Sequence contextSequence, Item contextItem) throws XPathException {
         return ftSelection.evaluateToQuery(contextSequence, contextItem);
     }
 }

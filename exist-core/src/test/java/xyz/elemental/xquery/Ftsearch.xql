@@ -84,3 +84,11 @@ function ftsearch:ignorePragma() {
         where $w contains text (# exq:use-index #) {'aa' any word}
         return $w
 };
+
+declare
+    %test:assertEquals('bikes', 'mošt')
+function ftsearch:optionsTest() {
+    for $w in ('bikes', 'mošt', 'HellO')
+        where $w contains text 'mošt' using diacritics sensitive ftor 'bike' using stemming
+        return $w
+};

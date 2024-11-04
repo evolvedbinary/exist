@@ -5,6 +5,7 @@
  */
 package xyz.elemental.xquery;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
 import org.exist.xquery.*;
@@ -14,10 +15,10 @@ import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.exist.xquery.value.Type;
+import xyz.elemental.xquery.analyzer.ExistFtSearchAnalyzer;
+import xyz.elemental.xquery.options.MatchOptions;
 
 import javax.annotation.Nullable;
-
-import static xyz.elemental.xquery.LuceneQueryProducer.FIELD_NAME;
 
 public class FTComparison extends AbstractExpression {
 
@@ -53,30 +54,28 @@ public class FTComparison extends AbstractExpression {
             return score;
         }
 
-        var luceneQuery = ftSelection.evaluateToQuery(contextSequence, contextItem);
+        var maybeFtQuery = ftSelection.evaluateToQuery(contextSequence, contextItem);
 
-        if (luceneQuery.isEmpty()) {    //If the sequence is empty, the FTWords yields no matches, Section 3.2
+        if (maybeFtQuery.isEmpty()) {    //If the sequence is empty, the FTWords yields no matches, Section 3.2
             score = 0f;
             return 0f;
         }
 
         float results = 0;
         var lefIt = left.iterate();
+        var ftQuery = maybeFtQuery.get();
         while (lefIt.hasNext()) {   //TODO - Should we index items first and then query?
             var itemStringValue = lefIt.nextItem().getStringValue();
 
             var memoryIndex = new MemoryIndex();
             memoryIndex.reset();
-            /*
-            We can create multiple fields, each for different analyzer settings.
-            memoryIndex.addField(fieldName, text, analyzer);
-            */
 
-            memoryIndex.addField(FIELD_NAME, itemStringValue, LuceneQueryProducer.analyzer);
+            for (MatchOptions matchOptions: ftQuery.getMatchOptions()) {
+                var fieldName = matchOptions.fieldName();
+                memoryIndex.addField(fieldName, itemStringValue, new ExistFtSearchAnalyzer(matchOptions));
+            }
 
-
-
-            results += memoryIndex.search(luceneQuery.get());
+            results += memoryIndex.search(ftQuery.getLuceneQuery());
         }
         score = results / left.getItemCount();
         return score;

@@ -118,8 +118,7 @@ public class FtSearchParserTest {
             "$w contains text 'aaa' using diacritics insensitive",
             "$w contains text 'aaa' using diacritics sensitive",
             "$w contains text 'aaa' using option exq:aiOption 'smartAi'",
-
-            "$w contains text ('usability' using stemming ftand 'testing' phrase) ftor ('users' using diacritics insensitive 'testing' phrase)"
+            "$w contains text ('usability' using stemming ftand 'testing' phrase) ftor ('users' using diacritics insensitive ftand 'testing' phrase)"
     })
     public void optionsParserTest(String where) throws Exception {
         final var queryHeader = """

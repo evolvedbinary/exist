@@ -694,6 +694,14 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analysis-icu</artifactId>
+            <version>9.10.0</version>
+            <scope>runtime</scope>
+        </dependency>
+
+
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
             <scope>test</scope>
@@ -708,7 +716,6 @@
             <artifactId>fluent-hc</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>

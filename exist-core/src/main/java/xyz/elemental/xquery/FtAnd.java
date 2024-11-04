@@ -21,15 +21,20 @@ public class FtAnd extends FtBinaryOp {
     }
 
     @Override
-    public Optional<Query> evaluateToQuery(Sequence contextSequence, Item contextItem) throws XPathException {
+    public Optional<FtQuery> evaluateToQuery(Sequence contextSequence, Item contextItem) throws XPathException {
         var leftQuery = getLeft().evaluateToQuery(contextSequence, contextItem);
         var rightQuery = getRight().evaluateToQuery(contextSequence, contextItem);
         var builder = new BooleanQuery.Builder();
 
         if (leftQuery.isPresent() && rightQuery.isPresent()) {
-            builder.add(leftQuery.get(), BooleanClause.Occur.MUST);
-            builder.add(rightQuery.get(), BooleanClause.Occur.MUST);
-            return Optional.of(builder.build());
+            builder.add(leftQuery.get().getLuceneQuery(), BooleanClause.Occur.MUST);
+            builder.add(rightQuery.get().getLuceneQuery(), BooleanClause.Occur.MUST);
+            var query = new FtQuery();
+            query.setLuceneQuery(builder.build());
+            query.getMatchOptions().addAll(leftQuery.get().getMatchOptions());
+            query.getMatchOptions().addAll(rightQuery.get().getMatchOptions());
+
+            return Optional.of(query);
         } else {
             return Optional.empty();
         }

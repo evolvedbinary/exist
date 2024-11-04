@@ -13,7 +13,7 @@ public class MatchOptions {
     private DiacriticsOption diacriticsOption;
     private StopWordOption stopWordOption;
 
-    public MatchOptions() {
+    private MatchOptions() {
     }
 
     public static MatchOptions defaultMatchOptions() {
@@ -108,4 +108,9 @@ public class MatchOptions {
     public int hashCode() {
         return Objects.hash(language, wildcardOption, thesaurusOption, stemOption, caseOption, diacriticsOption, stopWordOption);
     }
+
+    public String fieldName() {
+        return "data_" + this.hashCode();
+    }
+
 }
