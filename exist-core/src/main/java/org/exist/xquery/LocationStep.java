@@ -880,10 +880,13 @@ public class LocationStep extends Step {
                     }
 
                     // TODO(AR) (2) if the outer expression is fn:exists or fn:empty we could simply find-first, i.e. any match - how about calling index.matchElementsByTagName instead, or can we shortcut the search with a node selector? Perhaps update the NodeSelector interface to permit this and then create a FirstNodeSelector(nodeSelector) implementation that can wrap any other NodeSelector?
-                    currentSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), nodeSelector, this);
-
+                    //currentSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), nodeSelector, this);
+                    final NodeSet newSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), nodeSelector, this);
                     currentDocs = docs;
+
+
                     registerUpdateListener();
+                    return newSet;
                 }
 
                 return currentSet;
