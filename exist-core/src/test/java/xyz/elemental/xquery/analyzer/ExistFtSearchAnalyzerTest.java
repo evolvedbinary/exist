@@ -2,13 +2,17 @@ package xyz.elemental.xquery.analyzer;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.TermQuery;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import xyz.elemental.xquery.options.CaseOption;
-import xyz.elemental.xquery.options.DiacriticsOption;
-import xyz.elemental.xquery.options.MatchOptions;
-import xyz.elemental.xquery.options.StemOption;
+import xyz.elemental.xquery.options.*;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -108,6 +112,40 @@ public class ExistFtSearchAnalyzerTest {
         tokenStream.reset();
         assertThat(getTokens(tokenStream)).containsExactly("text", "bikes", "most", "krcma");
     }
+
+    @Test
+    public void testWildcards() throws IOException {
+        var options = MatchOptions.defaultMatchOptions();
+        options.setWildcardOption(WildcardOption.WILDCARDS);
+        ExistFtSearchAnalyzer analyzer = new ExistFtSearchAnalyzer(options, true);
+        var tokenStream = analyzer.tokenStream("fieldName", new StringReader("he.*o w.+ld .?site test.{3,4} un.{3,4}e specialist\\."));
+        tokenStream.reset();
+        assertThat(getTokens(tokenStream)).containsExactly("he.*o",  "w.+ld", ".?site",  "test.{3,4}", "un.{3,4}e", "specialist\\.");
+    }
+
+
+    //@Test
+    public void textQueryBuilder() throws ParseException {
+        var analyzer = new ExistFtSearchAnalyzer(MatchOptions.defaultMatchOptions(), true);
+        QueryParser parser = new QueryParser("data", analyzer);
+        //var query = parser.parse("data:hello AND /wor.d/");
+        var query = parser.parse("\"hello wor?d\"");
+        assertThat(query).isNotNull();
+
+        var term = new TermQuery(new Term("data", "hello"));
+        var regex = new RegexpQuery(new Term("data", "wor.d"));
+
+        var builder = new BooleanQuery.Builder();
+        builder.add(term, BooleanClause.Occur.MUST);
+        builder.add(regex, BooleanClause.Occur.MUST);
+        var query2 = builder.build();
+
+        assertThat(query2).isNotNull();
+        assertThat(query).isEqualTo(query2);
+
+    }
+
+
 
 
     public void printTokenStream(TokenStream tokenStream) {

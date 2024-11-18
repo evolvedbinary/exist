@@ -256,6 +256,12 @@ public class ErrorCodes {
     public static final ErrorCode FTST0013 = new W3CErrorCode("FTST0013", "No support for language option");
 
 
+    /*
+     * Implementation defined XQuery FT search error codes.
+     */
+
+    public static final ErrorCode FTSC001 = new EXistErrorCode("FTSC001", "Wildcards are not support for phrase queries");
+
 
     /* eXist specific XQuery and XPath errors
      *

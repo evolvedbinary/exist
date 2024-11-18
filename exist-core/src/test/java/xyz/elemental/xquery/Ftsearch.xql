@@ -89,6 +89,14 @@ declare
     %test:assertEquals('bikes', 'mošt')
 function ftsearch:optionsTest() {
     for $w in ('bikes', 'mošt', 'HellO')
-        where $w contains text 'mošt' using diacritics sensitive ftor 'bike' using stemming
+        where $w contains text 'mo.t' using wildcards using diacritics sensitive ftor 'bike' using stemming
+        return $w
+};
+
+declare
+    %test:assertError("FTSC001")
+function ftsearch:wildcardsPhraseError() {
+    for $w in ('bikes', 'mošt', 'HellO')
+        where $w contains text 'mo.t bike' using wildcards
         return $w
 };

@@ -1,34 +1,40 @@
 package xyz.elemental.xquery.analyzer;
 
-import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
-import com.ibm.icu.text.UnicodeFilter;
 import org.apache.lucene.analysis.*;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.en.EnglishPossessiveFilter;
 import org.apache.lucene.analysis.en.PorterStemFilter;
-import org.apache.lucene.analysis.icu.ICUFoldingFilter;
-import org.apache.lucene.analysis.icu.ICUNormalizer2Filter;
 import org.apache.lucene.analysis.icu.ICUTransformFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
-import xyz.elemental.xquery.options.CaseOption;
-import xyz.elemental.xquery.options.DiacriticsOption;
-import xyz.elemental.xquery.options.MatchOptions;
-import xyz.elemental.xquery.options.StemOption;
+import xyz.elemental.xquery.options.*;
 
 public class ExistFtSearchAnalyzer extends Analyzer {
 
     private static final int MAX_TOKEN_LEN = 255;
 
     private MatchOptions matchOptions;
+    private final boolean queryTokenizer;
 
     public ExistFtSearchAnalyzer(MatchOptions matchOptions) {
+        this.queryTokenizer = false;
+        this.matchOptions = matchOptions;
+    }
+
+    /**
+     * Create analyzer which is optimizer for query compilation.
+     * For example when we use wildcard, we want to present wildcards in tokens.
+     * @param matchOptions
+     * @param queryAnalyzer
+     */
+    public ExistFtSearchAnalyzer(MatchOptions matchOptions, boolean queryAnalyzer) {
+        this.queryTokenizer = queryAnalyzer;
         this.matchOptions = matchOptions;
     }
 
     @Override
     protected TokenStreamComponents createComponents(final String fieldName) {
-        StandardTokenizer src = new StandardTokenizer();
-        src.setMaxTokenLength(MAX_TOKEN_LEN);
+        Tokenizer src = createTokenizer();
 
         TokenStream tok = src;
         tok = new EnglishPossessiveFilter(tok); //remove 's
@@ -60,5 +66,15 @@ public class ExistFtSearchAnalyzer extends Analyzer {
         },
                 tok
         );
+    }
+
+    private Tokenizer createTokenizer() {
+        if(queryTokenizer && matchOptions.getWildcardOption() == WildcardOption.WILDCARDS) {
+            return new WhitespaceTokenizer();
+        }else  {
+            var tok = new StandardTokenizer();
+            tok.setMaxTokenLength(MAX_TOKEN_LEN);
+            return tok;
+        }
     }
 }

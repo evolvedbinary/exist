@@ -9,12 +9,14 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.exist.xquery.ErrorCodes;
 import org.exist.xquery.Expression;
 import org.exist.xquery.XPathException;
 import org.exist.xquery.value.Item;
 import org.exist.xquery.value.Sequence;
 import xyz.elemental.xquery.analyzer.ExistFtSearchAnalyzer;
 import xyz.elemental.xquery.options.MatchOptions;
+import xyz.elemental.xquery.options.WildcardOption;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,23 +57,22 @@ public class FtExpressionMatch extends FtSelection {
 
         var query = new FtQuery();
         query.getMatchOptions().add(matchOptions);
-        var fieldName = matchOptions.fieldName();
-        var analyzer = new ExistFtSearchAnalyzer(matchOptions);
+        var analyzer = new ExistFtSearchAnalyzer(matchOptions, true);
 
         for (var iterator = exprSeqResult.iterate(); iterator.hasNext(); ) {
             var stringValue = iterator.nextItem().getStringValue();
-            tokens.addAll(tokenize(stringValue, analyzer, fieldName));
+            tokens.addAll(tokenize(stringValue, analyzer));
         }
 
         if (tokens.isEmpty()) {
             return Optional.empty();
         } else if (tokens.size() == 1) {
-            query.setLuceneQuery(new TermQuery(new Term(fieldName, tokens.stream().findFirst().get())));
+            query.setLuceneQuery(tokenToQuery(tokens.stream().findFirst().get()));
             return Optional.of(query);
         } else {
             var builder = new BooleanQuery.Builder();
             tokens.stream().forEach(token -> {
-                builder.add(new TermQuery(new Term(fieldName, token)), occur);
+                builder.add(tokenToQuery(token), occur);
             });
             query.setLuceneQuery(builder.build());
             return Optional.of(query);
@@ -85,13 +86,13 @@ public class FtExpressionMatch extends FtSelection {
         var query = new FtQuery();
         query.getMatchOptions().add(matchOptions);
         var fieldName = matchOptions.fieldName();
-        var analyzer = new ExistFtSearchAnalyzer(matchOptions);
+        var analyzer = new ExistFtSearchAnalyzer(matchOptions, true);
 
         var tokens = new ArrayList<String>();
 
         for (var iterator = exprSeqResult.iterate(); iterator.hasNext(); ) {
             var stringValue = iterator.nextItem().getStringValue();
-            tokens.addAll(tokenize(stringValue, analyzer, fieldName));
+            tokens.addAll(tokenize(stringValue, analyzer));
         }
 
         if (tokens.isEmpty()) {
@@ -100,10 +101,14 @@ public class FtExpressionMatch extends FtSelection {
             query.setLuceneQuery(new TermQuery(new Term(fieldName, tokens.get(0))));
             return Optional.of(query);
         } else {
+            if(matchOptions.getWildcardOption() == WildcardOption.WILDCARDS) {
+                //This will need custom implementation of RegexPhraseQuery.
+                //Can't be achieved with BooleanQuery because tokens must be consecutive in text.
+                throw new XPathException(ErrorCodes.FTSC001, "Wildcards are not support for phrase queries, try add \"all words\"");
+            }
             query.setLuceneQuery(new PhraseQuery(fieldName, tokens.toArray(new String[0])));
             return Optional.of(query);
         }
-
     }
 
     public Optional<FtQuery> evaluateToQueryAnyAll(Sequence contextSequence, Item contextItem, boolean noMatchOnEmpty) throws XPathException {
@@ -111,15 +116,14 @@ public class FtExpressionMatch extends FtSelection {
 
         var query = new FtQuery();
         query.getMatchOptions().add(matchOptions);
-        var fieldName = matchOptions.fieldName();
-        var analyzer = new ExistFtSearchAnalyzer(matchOptions);
+        var analyzer = new ExistFtSearchAnalyzer(matchOptions, true);
 
 
         var queries = new ArrayList<Query>();
 
         for (var iterator = exprSeqResult.iterate(); iterator.hasNext(); ) {
             var stringifies = iterator.nextItem().getStringValue();
-            var maybeQuery = stringToQuery(stringifies, analyzer, fieldName);
+            var maybeQuery = stringToQuery(stringifies, analyzer);
             if (noMatchOnEmpty && maybeQuery.isEmpty()) {
                 return Optional.empty();
             }
@@ -133,29 +137,34 @@ public class FtExpressionMatch extends FtSelection {
             return Optional.of(query);
         } else {
             var builder = new BooleanQuery.Builder();
-            queries.forEach(x -> builder.add(x, BooleanClause.Occur.SHOULD));
+            queries.forEach(x -> builder.add(x, BooleanClause.Occur.SHOULD)); //TODO - SHOULD or MUST ??
             query.setLuceneQuery(builder.build());
             return Optional.of(query);
         }
     }
 
-    public static Optional<Query> stringToQuery(String phrase, Analyzer analyzer, String fieldName) {
-        var tokens = tokenize(phrase, analyzer, fieldName);
+    private Optional<Query> stringToQuery(String phrase, Analyzer analyzer) throws XPathException {
+        var tokens = tokenize(phrase, analyzer);
 
         if(tokens.isEmpty()) {
             return Optional.empty();
         }else {
             if (tokens.size() == 1) {
-                return Optional.of(new TermQuery(new Term(fieldName, tokens.get(0))));
+                return Optional.of(tokenToQuery(tokens.get(0)));
             } else {
-                return Optional.of(new PhraseQuery(fieldName, tokens.toArray(new String[0])));
+                if(matchOptions.getWildcardOption() == WildcardOption.WILDCARDS) {
+                    //This will need custom implementation of RegexPhraseQuery.
+                    //Can't be achieved with BooleanQuery because tokens must be consecutive in text.
+                    throw new XPathException(ErrorCodes.FTSC001, "Wildcards are not support for phrase queries");
+                }
+                return Optional.of(new PhraseQuery(matchOptions.fieldName(), tokens.toArray(new String[0])));
             }
         }
     }
 
-    public static List<String> tokenize(String phrase, Analyzer analyzer, String fieldName) {
+    private List<String> tokenize(String phrase, Analyzer analyzer) {
         var tokens = new ArrayList<String>();
-        try (var tokenStream = analyzer.tokenStream(fieldName, phrase)) {
+        try (var tokenStream = analyzer.tokenStream(matchOptions.fieldName(), phrase)) {
             var charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
             for (tokenStream.reset(); tokenStream.incrementToken(); ) {
                 tokens.add(charTermAttribute.toString());
@@ -165,6 +174,14 @@ public class FtExpressionMatch extends FtSelection {
         }
 
         return tokens;
+    }
+
+    private Query tokenToQuery(String token) {
+        if(matchOptions.getWildcardOption() == WildcardOption.WILDCARDS) {
+            return new RegexpQuery(new Term(matchOptions.fieldName(), token));
+        } else {
+            return new TermQuery(new Term(matchOptions.fieldName(), token));
+        }
     }
 
     @Override
