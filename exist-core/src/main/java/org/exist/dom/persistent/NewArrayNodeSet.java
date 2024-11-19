@@ -933,6 +933,9 @@ public class NewArrayNodeSet extends AbstractArrayNodeSet implements ExtNodeSet,
      * @return the immediate preceding sibling node, or null if there is no such node in this set.
      */
     private @Nullable NodeProxy containsPrecedingSiblingOf(final int docIdx, final NodeId nodeId) {
+
+        System.out.println("*** LOOKING for precedingSiblingOf: " + nodeId);
+
         // NOTE(AR) this is a copy of the code in {@link #firstPrecedingSiblingOf(int, int, NodeId)} with a small adaption to directly return {@code nodeR}
         final int n = documentNodesCount[docIdx];
         int l = documentNodesOffset[docIdx];
@@ -944,17 +947,48 @@ public class NewArrayNodeSet extends AbstractArrayNodeSet implements ExtNodeSet,
         while (l < r) {
             m = (l + r) / 2;
 
-            comparison = nodes[m].getNodeId().compareTo(nodeId);
-            if (comparison >= 0) {
-                r = m;
+            System.out.println("l=" + l + " r=" + r + " m=" + m);
+
+
+            comparison = nodes[m].getNodeId().getParentId().compareTo(nodeId.getParentId());
+            System.out.println("\t" + nodes[m].getNodeId() + (comparison == 0 ? " == " : (comparison < 0 ? " < " : " > ")) + nodeId);
+
+//            if (comparison != 0) {
+//                r = m;  // move left
+//            } else if(nodes[m].getNodeId().compareTo(nodeId) >= 0) {
+//                r = m;  // move left
+//            } else {
+//                l = m + 1;  // move right
+//            }
+            if (comparison < 0) {
+                // parent is less than the parent of node of interest
+                l = m + 1;  // move right
+            } else if (comparison > 0) {
+                // parent is greater than the parent of node of interest
+                r = m;  // move left
             } else {
-                l = m + 1;
+                comparison = nodes[m].getNodeId().compareTo(nodeId);
+                if (comparison >= 0) {
+                    r = m;  // move left
+                } else {
+                    l = m + 1;  // move right
+                }
             }
+
+//            comparison = nodes[m].getNodeId().compareTo(nodeId);
+//            System.out.println("\t" + nodes[m].getNodeId() + (comparison == 0 ? " == " : (comparison < 0 ? " < " : " > ")) + nodeId);
+//            if (comparison >= 0) {
+//                r = m;
+//            } else {
+//                l = m + 1;
+//            }
+
+            System.out.println("l=" + l + " r=" + r + " m=" + m);
         }
 
         if (r > 0) {
             final NodeProxy nodeR = nodes[r - 1];
-            if (nodeId.isFollowingSiblingOf(nodeR.getNodeId())) {
+            if (nodeId.isFollowingSiblingOf(nodeR.getNodeId())) {  // TODO(AR) is this check now redundant?
                 return nodeR;
             }
         }
@@ -1189,12 +1223,87 @@ public class NewArrayNodeSet extends AbstractArrayNodeSet implements ExtNodeSet,
         while (l < r) {
             m = (l + r) / 2;
 
-            comparison = nodes[m].getNodeId().compareTo(nodeId);
-            if (comparison <= 0) {
+// START attempt at implementing from scratch
+            comparison = nodes[m].getNodeId().getParentId().compareTo(nodeId.getParentId());
+            if (comparison < 0) {
+                // parent is less than the parent of node of interest
+                l = m + 1; // move right
+            } else if (comparison > 0) {
+                // parent is greater than the parent of node of interest
+                r = m; // move left
+
+                // TODO(AR) swapping the decision on whether to move right or left here with the branch ahead makes some tests pass or fail
+
+            } else {
+                // parent is equal to parent of the node of interest
+                comparison = nodes[m].getNodeId().compareTo(nodeId);
+                if(comparison <= 0) {
+                    // node is less than or equal to the node of interest
+                    l = m + 1; // move right
+                } else {
+                    // node is greater than the node of interest
+                    r = m; // move left
+                }
+            }
+// END attempt at implementing from scratch
+
+            // NOTE(AR) 3 failures in CoreTests and 1 failure in NewArrayNodeSetTest
+//            comparison = nodes[m].getNodeId().getParentId().compareTo(nodeId.getParentId());
+//            if (comparison > 0) {
+//                r = m;
+//            } else if (comparison < 0) {
+//                l = m + 1;
+//            } else if (nodes[m].getNodeId().compareTo(nodeId) <= 0) {
+//                l = m + 1;
+//            } else {
+//                r = m;
+//            }
+
+            // TODO(AR) could it be that we can't have two conditions for bigger and smaller - do we need to find the matching parentId first, and then find the nodeId? what happens when the nodeId matches after the parentId matches?
+
+// TODO(AR) draw out on paper what happens for the failure, and try and understand when and why we continue in the lower half or upper half
+
+// TODO(AR) the one below seemed most promising
+/*
+            // NOTE(AR) 1 failure in CoreTests and 1 failure in NewArrayNodeSetTest
+            comparison = nodes[m].getNodeId().getParentId().compareTo(nodeId.getParentId());
+            if (comparison > 0) {
+                l = m + 1;
+            } else if (comparison < 0) {
+                r = m;
+            } else if (nodes[m].getNodeId().compareTo(nodeId) <= 0) {
                 l = m + 1;
             } else {
                 r = m;
             }
+*/
+
+            // NOTE(AR) 3 failures in CoreTests and 1 failure in NewArrayNodeSetTest
+//            comparison = nodes[m].getNodeId().getParentId().compareTo(nodeId.getParentId());
+//            if (comparison != 0) {
+//               r = m;
+//            } else if (nodes[m].getNodeId().compareTo(nodeId) <= 0) {
+//                l = m + 1;
+//            } else {
+//                r = m;
+//            }
+
+            // NOTE(AR) 1 failure in CoreTests and 1 failure in NewArrayNodeSetTest
+//            comparison = nodes[m].getNodeId().getParentId().compareTo(nodeId.getParentId());
+//            if (comparison != 0) {
+//                l = m + 1;
+//            } else if (nodes[m].getNodeId().compareTo(nodeId) <= 0) {
+//                l = m + 1;
+//            } else {
+//                r = m;
+//            }
+
+//            comparison = nodes[m].getNodeId().compareTo(nodeId);
+//            if (comparison <= 0) {
+//                l = m + 1;
+//            } else {
+//                r = m;
+//            }
         }
 
         if (l < n) {
