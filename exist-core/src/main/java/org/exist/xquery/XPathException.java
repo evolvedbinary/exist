@@ -86,6 +86,15 @@ public class XPathException extends Exception implements XPathErrorProvider {
         this.column = column;
     }
 
+    public XPathException(final int line, final int column, final ErrorCode errorCode, final String message, Throwable cause) {
+        super(cause);
+        this.errorCode = errorCode;
+        this.message = message;
+        this.line = line;
+        this.column = column;
+    }
+
+
     /**
      * @param expr XPath expression
      * @param message Exception message

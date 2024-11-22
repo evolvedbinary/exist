@@ -226,7 +226,7 @@ xpath throws XPathException
         // TODO: WM: not sure if we need handleException anymore.
         // we could just throw the exception.
         handleException(
-	        new XPathException(e.getLine(), e.getColumn(), ErrorCodes.XPST0003, e.getMessage())
+	        new XPathException(e.getLine(), e.getColumn(), ErrorCodes.XPST0003, e.getMessage(), e)
         );
     }
 
@@ -274,6 +274,9 @@ prolog throws XPathException
             |
 			( "declare" "option" )
 			=> optionDecl { inSetters = false; }
+			|
+			( "declare" "ft-option")
+			=> "declare"! "ft-option" ftMatchOptions
 			|
 			( "declare" "function" )
 			=> functionDeclUp { inSetters = false; }
@@ -2393,6 +2396,8 @@ reservedKeywords returns [String name]
     "contains" { name = "contains"; }
     |
     "score" { name = "contains"; }
+    |
+    "ft-option" { name = "ft-option"; }
 	;
 
 /**

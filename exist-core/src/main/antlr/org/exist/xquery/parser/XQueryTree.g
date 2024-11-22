@@ -635,6 +635,10 @@ throws PermissionDeniedException, EXistException, XPathException
         functionDecl [path]
         |
         importDecl [path]
+        |
+        (
+        "ft-option" ftMatchOptions[context.getMatchOptions()]
+        )
     )*
     ;
 

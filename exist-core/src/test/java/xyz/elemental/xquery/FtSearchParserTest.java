@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class FtSearchParserTest {
 
     @Test
-    void parseFunction() throws TokenStreamException, XPathException, RecognitionException {
+    void parseFunction() throws Exception {
         String function =
                 "module namespace blabla = \"http://www.example.com\";" +
                         "declare namespace fn=\"http://www.w3.org/2005/xpath-functions\";\n" +
@@ -43,7 +43,7 @@ public class FtSearchParserTest {
     }
 
     @Test
-    void simpleContainsText() throws RecognitionException, XPathException, TokenStreamException, IOException {
+    void simpleContainsText() throws Exception {
         final String query = "xquery version \"3.1\";" +
                 "for $w in ('aaaa', 'bbbb', 'ccccc')\n" +
                 " where $w contains text \"aaaa\" " +
@@ -53,7 +53,7 @@ public class FtSearchParserTest {
     }
 
     @Test
-    void parseScore() throws RecognitionException, XPathException, TokenStreamException, IOException {
+    void parseScore() throws Exception {
         final var query = """
                 xquery version "3.1";
                 for $w score $s in ('aaaa', 'bbbb', 'ccccc')
@@ -132,7 +132,31 @@ public class FtSearchParserTest {
     }
 
 
-    private PathExpr parse(String query) throws TokenStreamException, XPathException, RecognitionException {
+    /*
+    declare ft-option  using case sensitive
+;
+declare ft-option  using stemming
+ using case insensitive
+;
+declare variable $input-context external ;
+     */
+    @Test
+    void parseProlog() throws Exception {
+        final String query = "xquery version \"3.1\"; \n" +
+                "declare ft-option using stemming ; \n" +
+                "declare namespace exq = \"http://example.org/XQueryImplementation\"; \n" +
+                //"declare ft-option ; \n" +
+                "declare namespace fff = \"http://example.org/ffff\"; \n" +
+
+                "for $w in ('aaaa', 'bbbb', 'ccccc')\n" +
+                " where $w contains text \"aaaa\" " +
+                "return <text>{ $w }</text>";
+
+        parse(query);
+    }
+
+
+    private PathExpr parse(String query) throws Exception {
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
 
@@ -140,7 +164,14 @@ public class FtSearchParserTest {
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
         if (xparser.foundErrors()) {
-            fail(xparser.getErrorMessage());
+
+            if(xparser.getLastException().getCause() != null) {
+                xparser.getLastException().getCause().printStackTrace();
+            }
+
+            System.err.println("=========================");
+
+            fail(xparser.getLastException());
         }
         final XQueryAST ast = (XQueryAST) xparser.getAST();
 
@@ -150,7 +181,13 @@ public class FtSearchParserTest {
         final PathExpr expr = new PathExpr(context);
         treeParser.xpath(ast, expr);
         if (treeParser.foundErrors()) {
-            fail(treeParser.getErrorMessage());
+            if(treeParser.getLastException().getCause() != null) {
+                treeParser.getLastException().getCause().printStackTrace();
+            }
+
+            System.err.println("=========================");
+
+            fail(treeParser.getLastException());
         }
         return expr;
     }
