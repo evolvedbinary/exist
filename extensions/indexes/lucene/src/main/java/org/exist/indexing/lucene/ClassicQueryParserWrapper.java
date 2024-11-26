@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -80,7 +89,7 @@ public class ClassicQueryParserWrapper extends QueryParserWrapper {
 
     public ClassicQueryParserWrapper(String field, Analyzer analyzer) {
         super(field, analyzer);
-        parser = new QueryParser(LuceneIndex.LUCENE_VERSION_IN_USE, field, analyzer);
+        parser = new QueryParser(field, analyzer);
     }
 
     public Query parse(String query) throws XPathException {

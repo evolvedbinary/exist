@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,20 +31,10 @@
 package org.exist.indexing.lucene;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.apache.lucene.facet.DrillDownQuery;
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.index.BinaryDocValues;
-import org.apache.lucene.index.Fields;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.util.AttributeSource;
 import org.apache.lucene.util.BytesRef;
@@ -71,7 +70,12 @@ public class LuceneUtil {
     }
 
     public static NodeId readNodeId(final int doc, final BinaryDocValues nodeIdValues, final BrokerPool pool) {
-        final BytesRef ref = nodeIdValues.get(doc);
+        final BytesRef ref;
+        try {
+            ref = nodeIdValues.binaryValue();
+        } catch (IOException e) {
+            throw new RuntimeException(e); //TODO - Refactor
+        }
         final int units = ByteConversion.byteToShort(ref.bytes, ref.offset);
         return pool.getNodeFactory().createFromData(units, ref.bytes, ref.offset + 2);
     }
@@ -164,7 +168,12 @@ public class LuceneUtil {
             // fallback to Lucene's Query.extractTerms if none of the
             // above matches
             final Set<Term> tempSet = new TreeSet<>();
-            query.extractTerms(tempSet);
+            query.visit(new QueryVisitor() {
+                @Override
+                public void consumeTerms(Query query, Term... terms) {
+                    tempSet.addAll(List.of(terms));
+                }
+            });
             for (final Term t : tempSet) {
                 if (includeFields) {
                     terms.put(t, query);
@@ -181,7 +190,7 @@ public class LuceneUtil {
     }
 
     private static void extractTermsFromBoolean(final BooleanQuery query, final Map<Object, Query> terms, final IndexReader reader, final boolean includeFields) throws IOException {
-        final BooleanClause clauses[] = query.getClauses();
+        final BooleanClause clauses[] = query.clauses().toArray(new BooleanClause[0]);
         for (final BooleanClause clause : clauses) {
             extractTerms(clause.getQuery(), terms, reader, includeFields);
         }
@@ -227,11 +236,12 @@ public class LuceneUtil {
     }
 
     private static Query rewrite(final MultiTermQuery query, final IndexReader reader) throws IOException {
-        query.setRewriteMethod(MultiTermQuery.CONSTANT_SCORE_AUTO_REWRITE_DEFAULT);
+        query.setRewriteMethod(MultiTermQuery.CONSTANT_SCORE_REWRITE);
         return query.rewrite(reader);
     }
 
     private static void extractTermsFromMultiTerm(final MultiTermQuery query, final Map<Object, Query> termsMap, final IndexReader reader, final boolean includeFields) throws IOException {
+
         TERM_EXTRACTOR.extractTerms(query, termsMap, reader, includeFields);
     }
 
@@ -246,14 +256,14 @@ public class LuceneUtil {
 
         public void extractTerms(final MultiTermQuery query, final Map<Object, Query> termsMap, final IndexReader reader, final boolean includeFields) throws IOException {
             final IndexReaderContext topReaderContext = reader.getContext();
-            for (final AtomicReaderContext context : topReaderContext.leaves()) {
-                final Fields fields = context.reader().fields();
-                if (fields == null) {
-                    // reader has no fields
-                    continue;
-                }
+            for (final LeafReaderContext context : topReaderContext.leaves()) {
+//                final Fields fields = context.reader().fields();
+//                if (fields == null) {
+//                    // reader has no fields
+//                    continue;
+//                }
 
-                final Terms terms = fields.terms(query.getField());
+                final Terms terms = context.reader().terms(query.getField());
                 if (terms == null) {
                     // field does not exist
                     continue;

@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -253,11 +262,12 @@ public class QueryOptions {
             parser.setAllowLeadingWildcard(true);
         phraseSlop.ifPresent(parser::setPhraseSlop);
         if (filterRewrite)
-            parser.setMultiTermRewriteMethod(MultiTermQuery.CONSTANT_SCORE_FILTER_REWRITE);
+            parser.setMultiTermRewriteMethod(MultiTermQuery.CONSTANT_SCORE_REWRITE);
         else
-            parser.setMultiTermRewriteMethod(MultiTermQuery.CONSTANT_SCORE_BOOLEAN_QUERY_REWRITE);
+            parser.setMultiTermRewriteMethod(MultiTermQuery.CONSTANT_SCORE_BOOLEAN_REWRITE);
         if (lowercaseExpandedTerms) {
-            parser.setLowercaseExpandedTerms(lowercaseExpandedTerms);
+            //TODO - Rewrite
+//            parser.setLowercaseExpandedTerms(lowercaseExpandedTerms);
         }
     }
 

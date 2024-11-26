@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -195,28 +204,28 @@ public class LuceneFieldConfig extends AbstractFieldConfig {
                 case Type.LONG:
                 case Type.UNSIGNED_LONG:
                     long lvalue = Long.parseLong(content);
-                    return new LongField(fieldName, lvalue, LongField.TYPE_STORED);
+                    return new LongField(fieldName, lvalue, Field.Store.YES);
                 case Type.INT:
                 case Type.UNSIGNED_INT:
                 case Type.SHORT:
                 case Type.UNSIGNED_SHORT:
                     int ivalue = Integer.parseInt(content);
-                    return new IntField(fieldName, ivalue, IntField.TYPE_STORED);
+                    return new IntField(fieldName, ivalue, Field.Store.YES);
                 case Type.DECIMAL:
                 case Type.DOUBLE:
                     double dvalue = Double.parseDouble(content);
-                    return new DoubleField(fieldName, dvalue, DoubleField.TYPE_STORED);
+                    return new DoubleField(fieldName, dvalue, Field.Store.YES);
                 case Type.FLOAT:
                     float fvalue = Float.parseFloat(content);
-                    return new FloatField(fieldName, fvalue, FloatField.TYPE_STORED);
+                    return new FloatField(fieldName, fvalue, Field.Store.YES);
                 case Type.DATE:
                     DateValue dv = new DateValue(content);
                     long dl = dateToLong(dv);
-                    return new LongField(fieldName, dl, LongField.TYPE_STORED);
+                    return new LongField(fieldName, dl, Field.Store.YES);
                 case Type.TIME:
                     TimeValue tv = new TimeValue(content);
                     long tl = timeToLong(tv);
-                    return new LongField(fieldName, tl, LongField.TYPE_STORED);
+                    return new LongField(fieldName, tl, Field.Store.YES);
                 case Type.DATE_TIME:
                     DateTimeValue dtv = new DateTimeValue(content);
                     String dateStr = dateTimeToString(dtv);

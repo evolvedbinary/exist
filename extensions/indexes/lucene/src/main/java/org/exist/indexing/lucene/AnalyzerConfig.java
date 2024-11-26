@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -38,7 +47,7 @@ import org.apache.logging.log4j.Logger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.analysis.CharArraySet ;
 import org.apache.lucene.util.Version;
 
 import org.exist.collections.CollectionConfiguration;
@@ -584,7 +593,7 @@ public class AnalyzerConfig {
      */
     private static CharArraySet getConstructorParameterCharArraySetValues(Element param) {
         final Set<String> set = getConstructorParameterSetValues(param);
-        return CharArraySet.copy(LuceneIndex.LUCENE_VERSION_IN_USE, set);
+        return CharArraySet.copy(set);
     }
 
     /**

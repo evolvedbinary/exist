@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -24,12 +33,12 @@ package org.exist.indexing.lucene;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.*;
+import org.apache.lucene.queries.spans.*;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.CompiledAutomaton;
@@ -88,7 +97,8 @@ public class XMLToQuery {
     private Query phraseQuery(String field, Element node, Analyzer analyzer) throws XPathException {
         NodeList termList = node.getElementsByTagName("term");
         if (termList.getLength() == 0) {
-            PhraseQuery query = new PhraseQuery();
+
+            PhraseQuery.Builder query = new PhraseQuery.Builder();
             String qstr = getText(node);
             try {
                 TokenStream stream = analyzer.tokenStream(field, new StringReader(qstr));
@@ -105,9 +115,9 @@ public class XMLToQuery {
             int slop = getSlop(node);
             if (slop > -1)
                 query.setSlop(slop);
-            return query;
+            return query.build();
         }
-        MultiPhraseQuery query = new MultiPhraseQuery();
+        MultiPhraseQuery.Builder query = new MultiPhraseQuery.Builder();
         for (int i = 0; i < termList.getLength(); i++) {
             Element elem = (Element) termList.item(i);
             String text = getText(elem);
@@ -128,7 +138,7 @@ public class XMLToQuery {
         int slop = getSlop(node);
         if (slop > -1)
             query.setSlop(slop);
-        return query;
+        return query.build();
     }
 
     private SpanQuery nearQuery(String field, Element node, Analyzer analyzer) throws XPathException {
@@ -246,7 +256,7 @@ public class XMLToQuery {
             final Automaton automaton = WildcardQuery.toAutomaton(new Term(field, queryStr));
             final CompiledAutomaton compiled = new CompiledAutomaton(automaton);
             final List<Term> termList = new ArrayList<>(8);
-            for (AtomicReaderContext atomic : reader.leaves()) {
+            for (LeafReaderContext atomic : reader.leaves()) {
                 Terms terms = atomic.reader().terms(field);
                 if (terms != null) {
                     TermsEnum termsEnum = compiled.getTermsEnum(terms);
@@ -320,7 +330,7 @@ public class XMLToQuery {
     }
 
     private Query booleanQuery(String field, Element node, Analyzer analyzer, QueryOptions options) throws XPathException {
-        BooleanQuery query = new BooleanQuery();
+        BooleanQuery.Builder query = new BooleanQuery.Builder();
 
         // Specifies a minimum number of the optional BooleanClauses which must be satisfied.
         String minOpt = node.getAttribute("min");
@@ -345,7 +355,7 @@ public class XMLToQuery {
             }
             child = child.getNextSibling();
         }
-        return query;
+        return query.build();
     }
 
     private void setRewriteMethod(MultiTermQuery query, Element node, QueryOptions options) {
@@ -355,9 +365,9 @@ public class XMLToQuery {
             doFilterRewrite = option.equalsIgnoreCase("yes");
         }
         if (doFilterRewrite) {
-            query.setRewriteMethod(MultiTermQuery.CONSTANT_SCORE_FILTER_REWRITE);
+            query.setRewriteMethod(MultiTermQuery.CONSTANT_SCORE_REWRITE);
         } else {
-            query.setRewriteMethod(MultiTermQuery.CONSTANT_SCORE_AUTO_REWRITE_DEFAULT);
+            query.setRewriteMethod(MultiTermQuery.CONSTANT_SCORE_REWRITE);
         }
     }
 
@@ -382,13 +392,16 @@ public class XMLToQuery {
             if (child.getNodeType() == Node.ELEMENT_NODE) {
                 Query childQuery = parse(field, (Element) child, analyzer, options);
                 if (query != null) {
-                    if (query instanceof BooleanQuery)
-                        ((BooleanQuery) query).add(childQuery, BooleanClause.Occur.SHOULD);
-                    else {
-                        BooleanQuery boolQuery = new BooleanQuery();
-                        boolQuery.add(query, BooleanClause.Occur.SHOULD);
-                        boolQuery.add(childQuery, BooleanClause.Occur.SHOULD);
-                        query = boolQuery;
+                    if (query instanceof BooleanQuery) {
+                        var builder = new BooleanQuery.Builder();
+                        builder.add(query, BooleanClause.Occur.SHOULD);
+                        builder.add(childQuery, BooleanClause.Occur.SHOULD);
+                        query = builder.build();
+                    } else {
+                        var builder = new BooleanQuery.Builder();
+                        builder.add(query, BooleanClause.Occur.SHOULD);
+                        builder.add(childQuery, BooleanClause.Occur.SHOULD);
+                        query = builder.build();
                     }
                 } else
                     query = childQuery;
@@ -399,14 +412,16 @@ public class XMLToQuery {
     }
 
     private void setBoost(Element node, Query query) throws XPathException {
-        String boost = node.getAttribute("boost");
-        if (boost != null && !boost.isEmpty()) {
-            try {
-                query.setBoost(Float.parseFloat(boost));
-            } catch (NumberFormatException e) {
-                throw new XPathException((Expression) null, "Bad value for boost in query parameter. Got: " + boost);
-            }
-        }
+        //TODO - Refactor
+        
+        //        String boost = node.getAttribute("boost");
+//        if (boost != null && !boost.isEmpty()) {
+//            try {
+//                query.setBoost(Float.parseFloat(boost));
+//            } catch (NumberFormatException e) {
+//                throw new XPathException((Expression) null, "Bad value for boost in query parameter. Got: " + boost);
+//            }
+//        }
     }
 
     private String getText(Element root) {

@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -24,6 +33,7 @@ package org.exist.indexing.lucene;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.util.AttributeImpl;
+import org.apache.lucene.util.AttributeReflector;
 import org.apache.lucene.util.BytesRef;
 
 /**
@@ -61,10 +71,6 @@ public final class BinaryTokenStream extends TokenStream {
         private BytesRef bytes;
 
         @Override
-        public void fillBytesRef() {
-        }
-
-        @Override
         public BytesRef getBytesRef() {
             return bytes;
         }
@@ -76,6 +82,11 @@ public final class BinaryTokenStream extends TokenStream {
 
         @Override
         public void clear() {}
+
+        @Override
+        public void reflectWith(AttributeReflector reflector) {
+            //TODO - Refactor
+        }
 
         @Override
         public void copyTo(AttributeImpl target) {
