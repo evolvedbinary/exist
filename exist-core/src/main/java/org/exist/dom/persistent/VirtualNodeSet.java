@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -29,6 +38,9 @@ import org.exist.stax.ExtendedXMLStreamReader;
 import org.exist.storage.DBBroker;
 import org.exist.storage.ElementValue;
 import org.exist.storage.dom.INodeIterator;
+import org.exist.storage.dom.ManualLockNodeIterator;
+import org.exist.storage.lock.ManagedLock;
+import org.exist.util.LockException;
 import org.exist.xquery.Constants;
 import org.exist.xquery.Expression;
 import org.exist.xquery.NodeTest;
@@ -43,6 +55,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This node set is called virtual because it is just a placeholder for
@@ -354,12 +367,13 @@ public class VirtualNodeSet extends AbstractNodeSet {
                             final NodeProxy contextNode = new NodeProxy(null, p);
                             contextNode.deepCopyContext(proxy);
                             //TODO : is this StoredNode construction necessary ?
-                            try (final INodeIterator domIter = broker.getNodeIterator(contextNode.asStoredNode())) {
+                            try (final ManualLockNodeIterator domIter = broker.getManualLockNodeIterator(contextNode.asStoredNode());
+                                 final ManagedLock<ReentrantLock> domIterLock = domIter.acquireReadLock()) {
                                 domIter.next();
                                 contextNode.setMatches(proxy.getMatches());
                                 addChildren(contextNode, result, node, domIter, 0);
-                            } catch (final IOException ioe) {
-                                LOG.warn("Unable to close iterator", ioe);
+                            } catch (final IOException | LockException e) {
+                                LOG.warn("Unable to acquire/close iterator", e);
                             }
                         }
                         if (node.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE

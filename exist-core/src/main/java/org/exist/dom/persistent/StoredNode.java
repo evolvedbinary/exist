@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -31,6 +40,9 @@ import org.exist.storage.NodePath;
 import org.exist.storage.NodePath2;
 import org.exist.storage.Signatures;
 import org.exist.storage.dom.INodeIterator;
+import org.exist.storage.dom.ManualLockNodeIterator;
+import org.exist.storage.lock.ManagedLock;
+import org.exist.util.LockException;
 import org.exist.util.pool.NodePool;
 import org.exist.xquery.Constants;
 import org.exist.xquery.Expression;
@@ -41,6 +53,7 @@ import org.w3c.dom.Node;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The base class for all persistent DOM nodes in the database.
@@ -517,10 +530,11 @@ public abstract class StoredNode<T extends StoredNode> extends NodeImpl<T> imple
 
     public boolean accept(final NodeVisitor visitor) {
         try(final DBBroker broker = ownerDocument.getBrokerPool().getBroker();
-                final INodeIterator iterator = broker.getNodeIterator(this)) {
+                final ManualLockNodeIterator iterator = broker.getManualLockNodeIterator(this);
+                final ManagedLock<ReentrantLock> iteratorLock = iterator.acquireReadLock()) {
             iterator.next();
             return accept(iterator, visitor);
-        } catch(final EXistException | IOException e) {
+        } catch(final EXistException | IOException | LockException e) {
             LOG.error("Exception while reading node: {}", e.getMessage(), e);
             //TODO : throw exception -pb
         }
