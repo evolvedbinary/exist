@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -49,10 +58,7 @@ import org.exist.stax.IEmbeddedXMLStreamReader;
 import org.exist.storage.blob.BlobId;
 import org.exist.storage.blob.BlobStore;
 import org.exist.storage.btree.*;
-import org.exist.storage.dom.DOMFile;
-import org.exist.storage.dom.DOMTransaction;
-import org.exist.storage.dom.NodeIterator;
-import org.exist.storage.dom.RawNodeIterator;
+import org.exist.storage.dom.*;
 import org.exist.storage.index.BFile;
 import org.exist.storage.index.CollectionStore;
 import org.exist.storage.io.VariableByteInput;
@@ -95,7 +101,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.exist.storage.dom.INodeIterator;
 import com.evolvedbinary.j8fu.tuple.Tuple2;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -632,15 +637,18 @@ public class NativeBroker implements DBBroker {
 
     @Override
     public INodeIterator getNodeIterator(final NodeHandle node) {
-        if(node == null) {
+        if (node == null) {
             throw new IllegalArgumentException("The node parameter cannot be null.");
         }
-        try {
-            return new NodeIterator(this, domDb, node, false);
-        } catch(final BTreeException | IOException e) {
-            LOG.error("failed to create node iterator", e);
+        return new GranularNodeIterator(this, domDb, node, false);
+    }
+
+    @Override
+    public ManualLockNodeIterator getManualLockNodeIterator(final NodeHandle node) {
+        if (node == null) {
+            throw new IllegalArgumentException("The node parameter cannot be null.");
         }
-        return null;
+        return new ManualLockNodeIterator(this, domDb, node, false);
     }
 
     @Override
@@ -2809,6 +2817,7 @@ public class NativeBroker implements DBBroker {
         final long start = System.currentTimeMillis();
         final StreamListener listener = getIndexController().getStreamListener(newDoc, ReindexMode.STORE);
         final NodeList nodes = oldDoc.getChildNodes();
+
         for(int i = 0; i < nodes.getLength(); i++) {
             final IStoredNode<?> node = (IStoredNode<?>) nodes.item(i);
             try(final INodeIterator iterator = getNodeIterator(node)) {
