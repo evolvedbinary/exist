@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 package org.exist.security;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
@@ -33,8 +43,6 @@ import org.exist.xquery.value.Sequence;
 import org.junit.ClassRule;
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -140,11 +148,11 @@ public class XqueryApiTest extends AbstractApiSecurityTest {
 
     private String serialize(final Sequence sequence) throws ApiException {
         try (final DBBroker broker = server.getBrokerPool().getBroker();
-             final StringWriter writer = new StringWriter()) {
+             final StringBuilderWriter writer = new StringBuilderWriter()) {
             final XQuerySerializer serializer = new XQuerySerializer(broker, new Properties(), writer);
             serializer.serialize(sequence);
             return writer.toString();
-        } catch (final EXistException | IOException | SAXException | XPathException e) {
+        } catch (final EXistException | SAXException | XPathException e) {
             throw new ApiException(e.getMessage(), e);
         }
     }

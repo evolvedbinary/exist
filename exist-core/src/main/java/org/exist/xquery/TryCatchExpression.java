@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -23,15 +32,14 @@ package org.exist.xquery;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.apache.xerces.impl.xpath.XPath;
 import org.exist.Namespaces;
 import org.exist.dom.QName;
 
@@ -494,7 +502,7 @@ public class TryCatchExpression extends AbstractExpression {
             return null;
         }
 
-        try(final StringWriter sw = new StringWriter();
+        try(final StringBuilderWriter sw = new StringBuilderWriter();
             final PrintWriter pw = new PrintWriter(sw)) {
 
             t.printStackTrace(pw);

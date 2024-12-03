@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,7 +31,6 @@
 package org.exist.storage.serializers;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -45,6 +53,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import com.evolvedbinary.j8fu.lazy.LazyVal;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.exist.Namespaces;
@@ -453,9 +462,10 @@ public abstract class Serializer implements XMLReader {
     }
 
     public String serialize(final DocumentImpl doc) throws SAXException {
-        final StringWriter writer = new StringWriter();
-        serialize(doc, writer);
-        return writer.toString();
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+            serialize(doc, writer);
+            return writer.toString();
+        }
     }
 
     /**
@@ -496,9 +506,10 @@ public abstract class Serializer implements XMLReader {
     }
 
     public String serialize(final NodeValue n) throws SAXException {
-        final StringWriter out = new StringWriter();
-        serialize(n, out);
-        return out.toString();
+        try (final StringBuilderWriter out = new StringBuilderWriter()) {
+            serialize(n, out);
+            return out.toString();
+        }
     }
 
     public void serialize(final NodeValue n, final Writer out) throws SAXException {
@@ -547,9 +558,10 @@ public abstract class Serializer implements XMLReader {
      * @throws SAXException if a SAX error occurs
      */
     public String serialize(final NodeProxy p) throws SAXException {
-        final StringWriter out = new StringWriter();
-        serialize(p, out);
-        return out.toString();
+        try (final StringBuilderWriter out = new StringBuilderWriter()) {
+            serialize(p, out);
+            return out.toString();
+        }
     }
 
     public void serialize(final NodeProxy p, final Writer out) throws SAXException {

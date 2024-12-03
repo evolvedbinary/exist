@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,8 +30,7 @@
  */
 package org.exist.util.serializer;
 
-import java.io.StringWriter;
-
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.dom.QName;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,11 +40,11 @@ import static org.junit.Assert.assertEquals;
 public class HTML5WriterTest {
 
     private HTML5Writer writer;
-    private StringWriter targetWriter;
+    private StringBuilderWriter targetWriter;
     
     @Before
     public void setUp() throws Exception {
-        targetWriter = new StringWriter();
+        targetWriter = new StringBuilderWriter();
         writer = new HTML5Writer(targetWriter);
     }
 

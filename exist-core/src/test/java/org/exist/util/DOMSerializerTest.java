@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -23,7 +32,6 @@ package org.exist.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -31,6 +39,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.util.serializer.DOMSerializer;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -56,7 +65,7 @@ public class DOMSerializerTest {
 		try (final InputStream is = SAMPLES.getBiblioSample()) {
 			Document doc = builder.parse(new InputSource(is));
 			assertNotNull(doc);
-			try (final StringWriter writer = new StringWriter()) {
+			try (final StringBuilderWriter writer = new StringBuilderWriter()) {
 				DOMSerializer serializer = new DOMSerializer(writer, null);
 				serializer.serialize(doc.getDocumentElement());
 			}

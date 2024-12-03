@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,8 +30,9 @@
  */
 package org.exist.xmldb.concurrent;
 
+import org.apache.commons.io.output.StringBuilderWriter;
+
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Random;
 
@@ -58,9 +68,10 @@ public class XMLGenerator {
     }
     
     public String generateElement() throws IOException {
-        StringWriter writer = new StringWriter();
-        writeElement(writer, 0);
-        return writer.toString();
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+            writeElement(writer, 0);
+            return writer.toString();
+        }
     }
     
     protected void writeElement(final Writer writer, final int level) throws IOException {

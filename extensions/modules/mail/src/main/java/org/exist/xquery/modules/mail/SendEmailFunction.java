@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 package org.exist.xquery.modules.mail;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -676,7 +686,7 @@ public class SendEmailFunction extends BasicFunction {
                                         //Convert everything inside <xhtml></xhtml> to text
                                         final Transformer transformer = TRANSFORMER_FACTORY.newTransformer();
                                         final DOMSource source = new DOMSource(bodyPart.getFirstChild());
-                                        try (final StringWriter strWriter = new StringWriter()) {
+                                        try (final StringBuilderWriter strWriter = new StringBuilderWriter()) {
                                             final StreamResult result = new StreamResult(strWriter);
                                             transformer.transform(source, result);
                                             mail.setXHTML(strWriter.toString());
@@ -815,7 +825,7 @@ public class SendEmailFunction extends BasicFunction {
                                             //Convert everything inside <xhtml></xhtml> to text
                                             final Transformer transformer = TRANSFORMER_FACTORY.newTransformer();
                                             final DOMSource source = new DOMSource(bodyPart.getFirstChild());
-                                            try (final StringWriter strWriter = new StringWriter()) {
+                                            try (final StringBuilderWriter strWriter = new StringBuilderWriter()) {
                                                 final StreamResult result = new StreamResult(strWriter);
                                                 transformer.transform(source, result);
                                                 content = strWriter.toString();
@@ -882,7 +892,7 @@ public class SendEmailFunction extends BasicFunction {
                                     if (Node.ELEMENT_NODE == attachChild.getNodeType()) {
                                         final Transformer transformer = TRANSFORMER_FACTORY.newTransformer();
                                         final DOMSource source = new DOMSource(attachChild);
-                                        try (final StringWriter strWriter = new StringWriter()) {
+                                        try (final StringBuilderWriter strWriter = new StringBuilderWriter()) {
                                             final StreamResult result = new StreamResult(strWriter);
                                             transformer.transform(source, result);
                                             content.append(strWriter);

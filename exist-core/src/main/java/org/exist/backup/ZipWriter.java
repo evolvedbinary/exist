@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,8 @@
  */
 package org.exist.backup;
 
+import org.apache.commons.io.output.StringBuilderWriter;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -38,7 +49,7 @@ public class ZipWriter implements BackupWriter
 {
     private String currentPath;
     private final ZipOutputStream out;
-    private StringWriter contents;
+    private StringBuilderWriter contents;
     private boolean dataWritten = false;
 
     public ZipWriter(final String zipFile, final String collection) throws IOException
@@ -55,7 +66,7 @@ public class ZipWriter implements BackupWriter
 
     public Writer newContents() throws IOException
     {
-        contents = new StringWriter();
+        contents = new StringBuilderWriter();
         return( contents );
     }
 

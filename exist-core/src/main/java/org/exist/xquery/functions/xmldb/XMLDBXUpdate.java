@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.xquery.functions.xmldb;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,7 +54,6 @@ import org.xmldb.api.modules.XUpdateQueryService;
 
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerException;
-import java.io.StringWriter;
 import java.util.Properties;
 
 /**
@@ -79,28 +88,29 @@ public class XMLDBXUpdate extends XMLDBAbstractCollectionManipulator
 	public Sequence evalWithCollection(Collection c, Sequence[] args, Sequence contextSequence)
         throws XPathException {
 		final NodeValue data = (NodeValue) args[1].itemAt(0);
-		final StringWriter writer = new StringWriter();
-		final Properties properties = new Properties();
-		properties.setProperty(OutputKeys.INDENT, "yes");
-        final DOMSerializer serializer = new ExtendedDOMSerializer(context.getBroker(), writer, properties);
-		try {
-			serializer.serialize(data.getNode());
-		} catch(final TransformerException e) {
-			logger.debug("Exception while serializing XUpdate document", e);
-			throw new XPathException(this, "Exception while serializing XUpdate document: " + e.getMessage(), e);
-		}
-		final String xupdate = writer.toString();
+		try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+			final Properties properties = new Properties();
+			properties.setProperty(OutputKeys.INDENT, "yes");
+			final DOMSerializer serializer = new ExtendedDOMSerializer(context.getBroker(), writer, properties);
+			try {
+				serializer.serialize(data.getNode());
+			} catch (final TransformerException e) {
+				logger.debug("Exception while serializing XUpdate document", e);
+				throw new XPathException(this, "Exception while serializing XUpdate document: " + e.getMessage(), e);
+			}
+			final String xupdate = writer.toString();
 
-		long modifications = 0;
-		try {
-			final XUpdateQueryService service = (XUpdateQueryService)c.getService("XUpdateQueryService", "1.0");
-			logger.debug("Processing XUpdate request: {}", xupdate);
-			modifications = service.update(xupdate);
-		} catch(final XMLDBException e) {
-			throw new XPathException(this, "Exception while processing xupdate: " + e.getMessage(), e);
+			long modifications = 0;
+			try {
+				final XUpdateQueryService service = (XUpdateQueryService) c.getService("XUpdateQueryService", "1.0");
+				logger.debug("Processing XUpdate request: {}", xupdate);
+				modifications = service.update(xupdate);
+			} catch (final XMLDBException e) {
+				throw new XPathException(this, "Exception while processing xupdate: " + e.getMessage(), e);
+			}
+
+			context.getRootExpression().resetState(false);
+			return new IntegerValue(this, modifications);
 		}
-		
-		context.getRootExpression().resetState(false);
-		return new IntegerValue(this, modifications);
 	}
 }

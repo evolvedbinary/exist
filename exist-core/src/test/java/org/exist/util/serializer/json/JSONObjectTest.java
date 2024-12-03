@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,7 +31,8 @@
 package org.exist.util.serializer.json;
 
 import java.io.IOException;
-import java.io.StringWriter;
+
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
@@ -38,7 +48,7 @@ public class JSONObjectTest {
         node.addObject(new JSONValue("adam"));
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{\"hello\":\"adam\"}", writer.toString());
         }
@@ -53,7 +63,7 @@ public class JSONObjectTest {
         node.addObject(new JSONValue("adam"));
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{ \"hello\" : \"adam\" }", writer.toString());
         }
@@ -68,7 +78,7 @@ public class JSONObjectTest {
         node.addObject(literalValue);
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{\"hello\":1}", writer.toString());
         }
@@ -85,7 +95,7 @@ public class JSONObjectTest {
         node.addObject(literalValue);
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{ \"hello\" : 1 }", writer.toString());
         }
@@ -103,7 +113,7 @@ public class JSONObjectTest {
         node2.addObject(new JSONValue("wolfgang"));
         root.addObject(node2);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{\"hello\":[\"adam\",\"wolfgang\"]}", writer.toString());
         }
@@ -124,7 +134,7 @@ public class JSONObjectTest {
         node2.addObject(new JSONValue("wolfgang"));
         root.addObject(node2);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{ \"hello\" : [\"adam\", \"wolfgang\"] }", writer.toString());
         }
@@ -146,7 +156,7 @@ public class JSONObjectTest {
         node2.addObject(literalValue2);
         root.addObject(node2);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{\"hello\":[1,2]}", writer.toString());
         }
@@ -171,7 +181,7 @@ public class JSONObjectTest {
         node2.addObject(literalValue2);
         root.addObject(node2);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{ \"hello\" : [1, 2] }", writer.toString());
         }
@@ -186,7 +196,7 @@ public class JSONObjectTest {
         node.addObject(new JSONValue("adam"));
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{\"hello\":[\"adam\"]}", writer.toString());
         }
@@ -203,7 +213,7 @@ public class JSONObjectTest {
         node.addObject(new JSONValue("adam"));
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{ \"hello\" : [\"adam\"] }", writer.toString());
         }
@@ -223,7 +233,7 @@ public class JSONObjectTest {
         node2.addObject(new JSONValue("wolfgang"));
         root.addObject(node2);
 
-        try (final StringWriter writer = new StringWriter()) {
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{\"hello\":[\"adam\",\"wolfgang\"]}", writer.toString());
         }
@@ -246,7 +256,7 @@ public class JSONObjectTest {
         node2.addObject(new JSONValue("wolfgang"));
         root.addObject(node2);
 
-        try (final StringWriter writer = new StringWriter()) {
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{ \"hello\" : [\"adam\", \"wolfgang\"] }", writer.toString());
         }
@@ -263,7 +273,7 @@ public class JSONObjectTest {
         node.addObject(value);
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{\"intarray\":[1]}", writer.toString());
         }
@@ -282,7 +292,7 @@ public class JSONObjectTest {
         node.addObject(value);
         root.addObject(node);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("{ \"intarray\" : [1] }", writer.toString());
         }
@@ -297,7 +307,7 @@ public class JSONObjectTest {
         value.setSerializationDataType(JSONNode.SerializationDataType.AS_LITERAL);
         root.addObject(value);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("[1]", writer.toString());
         }
@@ -313,7 +323,7 @@ public class JSONObjectTest {
         value.setSerializationDataType(JSONNode.SerializationDataType.AS_LITERAL);
         root.addObject(value);
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             root.serialize(writer, true);
             assertEquals("[1]", writer.toString());
         }

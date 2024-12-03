@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,12 +31,12 @@
 package org.exist.dom.memtree;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Optional;
 import java.util.Properties;
 import javax.xml.transform.OutputKeys;
 
 import com.googlecode.junittoolbox.ParallelRunner;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 
 import org.exist.collections.Collection;
@@ -120,7 +129,7 @@ public class DOMIndexerTest {
     public void xQuery() throws EXistException, PermissionDeniedException, SAXException, XPathException, IOException {
         final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         try(final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
-                final StringWriter out = new StringWriter()) {
+                final StringBuilderWriter out = new StringBuilderWriter()) {
             final XQuery xquery = pool.getXQueryService();
             final Sequence result = xquery.execute(broker, XQUERY, null);
             final int count = result.getItemCount();

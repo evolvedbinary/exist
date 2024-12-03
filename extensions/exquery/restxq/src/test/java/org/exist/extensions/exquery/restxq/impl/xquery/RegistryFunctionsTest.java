@@ -1,4 +1,10 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * Copyright © 2001, Adam Retter
  * All rights reserved.
  *
@@ -26,6 +32,7 @@
  */
 package org.exist.extensions.exquery.restxq.impl.xquery;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.dom.memtree.MemTreeBuilder;
 import org.exquery.serialization.annotation.MediaTypeAnnotation;
 import org.exquery.serialization.annotation.MethodAnnotation;
@@ -44,7 +51,6 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.Override;
 import java.net.URISyntaxException;
@@ -148,7 +154,7 @@ public class RegistryFunctionsTest {
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-        try(final Writer sw = new StringWriter()) {
+        try(final Writer sw = new StringBuilderWriter()) {
             final Result sr = new StreamResult(sw);
             transformer.transform(new DOMSource(doc), sr);
             return sw.toString();

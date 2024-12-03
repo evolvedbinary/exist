@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -25,13 +34,13 @@ package org.exist.validation.resolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.xerces.xni.XMLResourceIdentifier;
@@ -202,7 +211,7 @@ public class SearchResourceResolver implements XMLEntityResolver {
             }
             final DocumentImpl doc = lockedDocument.getDocument();
 
-            try (final StringWriter stringWriter = new StringWriter()) {
+            try (final StringBuilderWriter stringWriter = new StringBuilderWriter()) {
                 final Properties outputProperties = new Properties();
                 outputProperties.setProperty(OutputKeys.METHOD, "XML");
                 outputProperties.setProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");

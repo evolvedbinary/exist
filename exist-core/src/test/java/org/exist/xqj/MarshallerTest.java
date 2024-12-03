@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 package org.exist.xqj;
 
 import com.googlecode.junittoolbox.ParallelRunner;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.collections.triggers.TriggerException;
 import org.exist.security.PermissionDeniedException;
@@ -55,7 +65,6 @@ import org.xml.sax.SAXException;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.StringReader;
 import java.util.Optional;
 import java.util.Properties;
@@ -97,17 +106,18 @@ public class MarshallerTest {
             values.add(new BooleanValue(false));
             values.add(new DoubleValue(1000.1));
 
-            StringWriter writer = new StringWriter();
-            SAXSerializer serializer = new SAXSerializer(writer, new Properties());
-            Marshaller.marshall(broker, values, serializer);
-            String serialized = writer.toString();
+            try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+                SAXSerializer serializer = new SAXSerializer(writer, new Properties());
+                Marshaller.marshall(broker, values, serializer);
+                String serialized = writer.toString();
 
-            Sequence seq = Marshaller.demarshall(broker, new StringReader(serialized));
-            assertEquals(seq.itemAt(0).getStringValue(), "foo");
-            assertEquals(seq.itemAt(1).getStringValue(), "2000");
-            assertEquals(seq.itemAt(2).getStringValue(), "1000");
-            assertEquals(seq.itemAt(3).getStringValue(), "false");
-            assertEquals(seq.itemAt(4).getStringValue(), "1000.1");
+                Sequence seq = Marshaller.demarshall(broker, new StringReader(serialized));
+                assertEquals(seq.itemAt(0).getStringValue(), "foo");
+                assertEquals(seq.itemAt(1).getStringValue(), "2000");
+                assertEquals(seq.itemAt(2).getStringValue(), "1000");
+                assertEquals(seq.itemAt(3).getStringValue(), "false");
+                assertEquals(seq.itemAt(4).getStringValue(), "1000.1");
+            }
         }
     }
     
@@ -120,31 +130,34 @@ public class MarshallerTest {
             DocumentImpl doc = (DocumentImpl) broker.getXMLResource(TEST_COLLECTION_URI.append("test.xml"));
             NodeProxy p = new NodeProxy(null, doc, pool.getNodeFactory().createFromString("1.1"));
 
-            StringWriter writer = new StringWriter();
-            SAXSerializer serializer = new SAXSerializer(writer, new Properties());
-            Marshaller.marshall(broker, p, serializer);
-            String serialized = writer.toString();
+            try (final StringBuilderWriter writer1 = new StringBuilderWriter()) {
+                SAXSerializer serializer = new SAXSerializer(writer1, new Properties());
+                Marshaller.marshall(broker, p, serializer);
+                String serialized = writer1.toString();
 
-            Sequence seq = Marshaller.demarshall(broker, new StringReader(serialized));
-            assertTrue(Type.subTypeOf(seq.getItemType(), Type.NODE));
-            NodeValue n = (NodeValue) seq.itemAt(0);
+                Sequence seq = Marshaller.demarshall(broker, new StringReader(serialized));
+                assertTrue(Type.subTypeOf(seq.getItemType(), Type.NODE));
+                NodeValue n = (NodeValue) seq.itemAt(0);
 
-            writer = new StringWriter();
-            serializer.reset();
-            serializer.setOutput(writer, new Properties());
-            n.toSAX(broker, serializer, new Properties());
+                try (final StringBuilderWriter writer2 = new StringBuilderWriter()) {
+                    serializer.reset();
+                    serializer.setOutput(writer2, new Properties());
+                    n.toSAX(broker, serializer, new Properties());
+                }
+            }
         }
     }
     
     @Test
     public void streamToNodeTest() throws XMLStreamException {
         Node n = Marshaller.streamToNode(TEST_DOC);
-        StringWriter writer = new StringWriter();
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
 //            SAXSerializer serializer = 
-                new SAXSerializer(writer, new Properties());
-        //n.toSAX(null, serializer, new Properties());
+            new SAXSerializer(writer, new Properties());
+            //n.toSAX(null, serializer, new Properties());
 
-        assertEquals("test",n.getLocalName());
+            assertEquals("test", n.getLocalName());
+        }
     }
 
     @ClassRule

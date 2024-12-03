@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,10 +31,10 @@
 package org.exist.storage;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Optional;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.storage.btree.BTreeException;
 import org.exist.storage.btree.Value;
@@ -77,7 +86,7 @@ public class BFileRecoverTest {
                 mgr.commit(txn);
             }
             
-            Writer writer = new StringWriter();
+            Writer writer = new StringBuilderWriter();
             collectionsDb.dump(writer);
         }
     }
@@ -88,7 +97,7 @@ public class BFileRecoverTest {
         BrokerPool.FORCE_CORRUPTION = false;
         try(final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()))) {
             BFile collectionsDb = (BFile)((NativeBroker)broker).getStorage(NativeBroker.COLLECTIONS_DBX_ID);
-            Writer writer = new StringWriter();
+            Writer writer = new StringBuilderWriter();
             collectionsDb.dump(writer);
 
             for (int i = 1; i < 1001; i++) {

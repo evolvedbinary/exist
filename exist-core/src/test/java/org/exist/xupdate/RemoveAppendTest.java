@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,10 +31,10 @@
 package org.exist.xupdate;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Random;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.TestUtils;
 
@@ -111,27 +120,29 @@ public class RemoveAppendTest {
     }
     
     protected void append(final XUpdateQueryService service, final int id) throws IOException, XMLDBException {
-        StringWriter out = new StringWriter();
-        out.write("<xu:modifications xmlns:xu=\"http://www.xmldb.org/xupdate\" version=\"1.0\">");
-        out.write("<xu:append select=\"/test\">");
-        createItem(id, out);
-        out.write("</xu:append>");
-        out.write("</xu:modifications>");
-        final long mods = service.update(out.toString());
-        assertEquals(mods, 1);
+        try (final StringBuilderWriter out = new StringBuilderWriter()) {
+            out.write("<xu:modifications xmlns:xu=\"http://www.xmldb.org/xupdate\" version=\"1.0\">");
+            out.write("<xu:append select=\"/test\">");
+            createItem(id, out);
+            out.write("</xu:append>");
+            out.write("</xu:modifications>");
+            final long mods = service.update(out.toString());
+            assertEquals(mods, 1);
+        }
     }
     
     protected void insert(final XUpdateQueryService service, final int id) throws IOException, XMLDBException {
-        StringWriter out = new StringWriter();
-        out.write("<xu:modifications xmlns:xu=\"http://www.xmldb.org/xupdate\" version=\"1.0\">");
-        out.write("<xu:insert-before select=\"/test/item[@id='");
-        out.write(Integer.toString(id));
-        out.write("']\">");
-        createItem(5, out);
-        out.write("</xu:insert-before>");
-        out.write("</xu:modifications>");
-         long mods = service.update(out.toString());
-         assertEquals(mods, 1);
+        try (final StringBuilderWriter out = new StringBuilderWriter()) {
+            out.write("<xu:modifications xmlns:xu=\"http://www.xmldb.org/xupdate\" version=\"1.0\">");
+            out.write("<xu:insert-before select=\"/test/item[@id='");
+            out.write(Integer.toString(id));
+            out.write("']\">");
+            createItem(5, out);
+            out.write("</xu:insert-before>");
+            out.write("</xu:modifications>");
+            long mods = service.update(out.toString());
+            assertEquals(mods, 1);
+        }
     }
     
     protected void remove(final XUpdateQueryService service, final int id) throws XMLDBException {

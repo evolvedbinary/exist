@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -32,6 +41,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.OutputKeys;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.custommonkey.xmlunit.exceptions.XpathException;
 import org.exist.dom.QName;
 import org.exist.security.Account;
@@ -101,7 +111,7 @@ public class ResourceTest {
         final XMLResource doc = (XMLResource) testCollection.getResource(resources[0]);
         assertNotNull(doc);
 
-        try(final StringWriter sout = new StringWriter()) {
+        try(final StringBuilderWriter sout = new StringBuilderWriter()) {
             final Properties outputProperties = new Properties();
             outputProperties.put(OutputKeys.METHOD, "xml");
             outputProperties.put(OutputKeys.ENCODING, "ISO-8859-1");
@@ -129,7 +139,7 @@ public class ResourceTest {
         final Collection testCollection = DatabaseManager.getCollection(XmldbURI.LOCAL_DB + "/" + TEST_COLLECTION);
         assertNotNull(testCollection);
 
-        try(final StringWriter sout = new StringWriter()) {
+        try(final StringBuilderWriter sout = new StringBuilderWriter()) {
             final Properties outputProperties = new Properties();
             outputProperties.put(OutputKeys.METHOD, "xml");
             outputProperties.put(OutputKeys.ENCODING, "UTF-8");
@@ -139,7 +149,7 @@ public class ResourceTest {
             final ContentHandler importHandler = new ImportingContentHandler(sout, outputProperties);
             resource1.getContentAsSAX(importHandler);
 
-            final String result = sout.getBuffer().toString();
+            final String result = sout.toString();
             assertEquals(
                     "<test>" +
                     "<title>Title</title>" +

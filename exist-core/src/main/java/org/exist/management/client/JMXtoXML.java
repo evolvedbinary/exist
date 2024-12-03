@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,7 +31,6 @@
 package org.exist.management.client;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 
 import static java.lang.management.ManagementFactory.CLASS_LOADING_MXBEAN_NAME;
@@ -45,6 +53,7 @@ import javax.xml.XMLConstants;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.exist.dom.QName;
@@ -183,7 +192,7 @@ public class JMXtoXML {
      */
     public String generateReport(final String categories[]) throws TransformerException {
         final Element root = generateXMLReport(null, categories);
-        final StringWriter writer = new StringWriter();
+        final StringBuilderWriter writer = new StringBuilderWriter();
         final DOMSerializer streamer = new DOMSerializer(writer, defaultProperties);
         streamer.serialize(root);
         return writer.toString();
