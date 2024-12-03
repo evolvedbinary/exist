@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.indexing.ngram;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.collections.Collection;
 import org.exist.collections.CollectionConfigurationException;
@@ -56,7 +66,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.Properties;
@@ -579,17 +588,18 @@ public class CustomIndexTest {
             seq = xquery.execute(broker, query, null);
             assertNotNull(seq);
             //TODO : check cardinality
-            StringWriter out = new StringWriter();
-            Properties props = new Properties();
-            props.setProperty(OutputKeys.INDENT, "yes");
-            SAXSerializer serializer = new SAXSerializer(out, props);
-            serializer.startDocument();
-            for (SequenceIterator i = seq.iterate(); i.hasNext(); ) {
-                Item next = i.nextItem();
-                next.toSAX(broker, serializer, props);
+            try (final StringBuilderWriter out = new StringBuilderWriter()) {
+                Properties props = new Properties();
+                props.setProperty(OutputKeys.INDENT, "yes");
+                SAXSerializer serializer = new SAXSerializer(out, props);
+                serializer.startDocument();
+                for (SequenceIterator i = seq.iterate(); i.hasNext(); ) {
+                    Item next = i.nextItem();
+                    next.toSAX(broker, serializer, props);
+                }
+                serializer.endDocument();
+                //TODO : check content
             }
-            serializer.endDocument();
-            //TODO : check content
 
 
         }

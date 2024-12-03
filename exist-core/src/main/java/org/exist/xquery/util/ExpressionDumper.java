@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -25,6 +34,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.xquery.Expression;
 
 /**
@@ -37,10 +47,11 @@ public class ExpressionDumper {
     public static String dump(Expression expr) {
         if (expr == null)
             {return "";}
-        final StringWriter writer = new StringWriter();
-        final ExpressionDumper dumper = new ExpressionDumper(writer);
-        expr.dump(dumper);
-        return writer.toString();
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+            final ExpressionDumper dumper = new ExpressionDumper(writer);
+            expr.dump(dumper);
+            return writer.toString();
+        }
     }
     
     private PrintWriter out;

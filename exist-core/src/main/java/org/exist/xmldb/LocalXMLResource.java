@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -27,7 +36,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,6 +53,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.dom.memtree.DocumentImpl;
 import org.exist.dom.memtree.NodeImpl;
 import org.exist.dom.persistent.NodeProxy;
@@ -120,18 +129,15 @@ public class LocalXMLResource extends AbstractEXistResource implements XMLResour
 
         // Case 1: content is an external DOM node
         else if (root != null && !(root instanceof NodeValue)) {
-            try(final StringWriter writer = new StringWriter()) {
-                final DOMSerializer serializer = new DOMSerializer(writer, getProperties());
-                try {
-                    serializer.serialize(root);
-                    content = writer.toString();
-                } catch (final TransformerException e) {
-                    throw new XMLDBException(ErrorCodes.INVALID_RESOURCE, e.getMessage(), e);
-                }
-                return content;
-            } catch(final IOException e) {
-                throw new XMLDBException(ErrorCodes.UNKNOWN_ERROR, e.getMessage(), e);
+            final StringBuilderWriter writer = new StringBuilderWriter();
+            final DOMSerializer serializer = new DOMSerializer(writer, getProperties());
+            try {
+                serializer.serialize(root);
+                content = writer.toString();
+            } catch (final TransformerException e) {
+                throw new XMLDBException(ErrorCodes.INVALID_RESOURCE, e.getMessage(), e);
             }
+            return content;
 
         // Case 2: content is an atomic value
         } else if (value != null) {
@@ -272,7 +278,7 @@ public class LocalXMLResource extends AbstractEXistResource implements XMLResour
             serializer.setProperties(getProperties());
             saxSerializer = (SAXSerializer) SerializerPool.getInstance().borrowObject(SAXSerializer.class);
 
-            try (final StringWriter writer = new StringWriter()) {
+            try (final StringBuilderWriter writer = new StringBuilderWriter()) {
                 saxSerializer.setOutput(writer, getProperties());
                 serializer.setSAXHandlers(saxSerializer, saxSerializer);
 
@@ -663,7 +669,7 @@ public class LocalXMLResource extends AbstractEXistResource implements XMLResour
         
     private class InternalXMLSerializer extends SAXSerializer {
         public InternalXMLSerializer() {
-            super(new StringWriter(), null);
+            super(new StringBuilderWriter(), null);
         }
 
         @Override

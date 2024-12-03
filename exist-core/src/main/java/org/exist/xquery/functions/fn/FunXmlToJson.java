@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 package org.exist.xquery.functions.fn;
 
 import com.fasterxml.jackson.core.*;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.exist.dom.QName;
@@ -32,7 +42,6 @@ import org.exist.xquery.value.*;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -78,10 +87,11 @@ public class FunXmlToJson extends BasicFunction {
                 throw new XPathException(this, ErrorCodes.FOJS0006, "Invalid XML representation of JSON.");
             }
             final NodeValue nodeValue = (NodeValue) item;
-            final StringWriter stringWriter = new StringWriter();
-            nodeValueToJson(nodeValue, stringWriter);
-            final String jsonString = stringWriter.toString();
-            result.add(new StringValue(this, jsonString));
+            try (final StringBuilderWriter stringWriter = new StringBuilderWriter()) {
+                nodeValueToJson(nodeValue, stringWriter);
+                final String jsonString = stringWriter.toString();
+                result.add(new StringValue(this, jsonString));
+            }
         }
         return result;
     }

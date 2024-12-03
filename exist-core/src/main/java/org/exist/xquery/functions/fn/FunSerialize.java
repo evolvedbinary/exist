@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.xquery.functions.fn;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.dom.QName;
 import org.exist.dom.memtree.DocumentBuilderReceiver;
 import org.exist.dom.memtree.DocumentImpl;
@@ -35,8 +45,6 @@ import org.exist.xquery.value.*;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Properties;
 
 import static org.exist.Namespaces.XSLT_XQUERY_SERIALIZATION_NS;
@@ -80,7 +88,7 @@ public class FunSerialize extends BasicFunction {
             outputProperties = new Properties();
         }
 
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             final XQuerySerializer xqSerializer = new XQuerySerializer(context.getBroker(), outputProperties, writer);
 
             final Sequence input = args[0];
@@ -94,7 +102,7 @@ public class FunSerialize extends BasicFunction {
             }
 
             return new StringValue(this, writer.toString());
-        } catch (final IOException | SAXException e) {
+        } catch (final SAXException e) {
             throw new XPathException(this, FnModule.SENR0001, e.getMessage());
         }
     }

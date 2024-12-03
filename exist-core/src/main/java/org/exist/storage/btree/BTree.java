@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * NOTE: This file is in part based on code from The dbXML Group.
  * The original license statement is also included below.
  *
@@ -72,6 +81,7 @@
  */
 package org.exist.storage.btree;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -810,14 +820,13 @@ public class BTree extends Paged implements Lockable {
         if (!node.page.getPageHeader().getLsn().equals(Lsn.LSN_INVALID) && requiresRedo(loggable, node.page)) {
             if (loggable.idx > node.ptrs.length) {
                 LOG.warn("{}; loggable.idx = {}; node.ptrs.length = {}", node.page.getPageInfo(), loggable.idx, node.ptrs.length);
-                final StringWriter writer = new StringWriter();
-                try {
+                try (final StringBuilderWriter writer = new StringBuilderWriter()) {
                     dump(writer);
+                    LOG.warn(writer.toString());
                 } catch (final Exception e) {
                     LOG.warn(e);
                     e.printStackTrace();
                 }
-                LOG.warn(writer.toString());
                 throw new LogException("Critical error during recovery");
             }
             node.ptrs[loggable.idx] = loggable.pointer;
@@ -1687,7 +1696,7 @@ public class BTree extends Paged implements Lockable {
 
         @Override
         public String toString() {
-            final StringWriter writer = new StringWriter();
+            final StringBuilderWriter writer = new StringBuilderWriter();
             try {
                 dump(writer);
             } catch (final Exception e) {

@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -24,6 +33,7 @@ package org.exist.xquery.functions.fn.transform;
 
 import net.sf.saxon.s9api.*;
 import net.sf.saxon.serialize.SerializationProperties;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.dom.memtree.DocumentBuilderReceiver;
 import org.exist.dom.memtree.DocumentImpl;
 import org.exist.dom.memtree.MemTreeBuilder;
@@ -32,7 +42,6 @@ import org.exist.xquery.XQueryContext;
 import org.exist.xquery.value.Sequence;
 import org.exist.xquery.value.StringValue;
 
-import java.io.StringWriter;
 import java.util.Objects;
 
 class Delivery {
@@ -47,7 +56,7 @@ class Delivery {
     final Format format;
     final SerializationProperties serializationProperties;
     MemTreeBuilder builder;
-    StringWriter stringWriter;
+    StringBuilderWriter stringWriter;
 
     RawDestination rawDestination;
 
@@ -77,7 +86,7 @@ class Delivery {
                                 serializationProperties);
 
                 serializer.setOutputProperties(combinedProperties);
-                stringWriter = new StringWriter();
+                stringWriter = new StringBuilderWriter();
                 serializer.setOutputWriter(stringWriter);
                 return serializer;
             case RAW:
@@ -93,7 +102,7 @@ class Delivery {
         if (stringWriter == null) {
             return null;
         }
-        return stringWriter.getBuffer().toString();
+        return stringWriter.toString();
     }
 
     private DocumentImpl getDocument() {

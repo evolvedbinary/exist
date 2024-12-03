@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.xmldb;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.security.Account;
 import org.exist.test.ExistXmldbEmbeddedServer;
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
@@ -174,7 +184,7 @@ public class TestEXistXMLSerialize {
         assertNotNull(resource);
         Node node = resource.getContentAsDOM();
 
-        StringWriter writer = new StringWriter();
+        StringBuilderWriter writer = new StringBuilderWriter();
         Properties outputProperties = new Properties();
         outputProperties.setProperty("indent", "yes");
         DOMSerializer serializer = new DOMSerializer(writer, outputProperties);
@@ -195,11 +205,12 @@ public class TestEXistXMLSerialize {
         assertNotNull(resource);
         @SuppressWarnings("unused")
                 Node node = resource.getContentAsDOM();
-        StringWriter writer = new StringWriter();
-        Properties outputProperties = new Properties();
-        outputProperties.setProperty("indent", "yes");
-        SAXSerializer serializer = new SAXSerializer(writer, outputProperties);
-        resource.getContentAsSAX(serializer);
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+            Properties outputProperties = new Properties();
+            outputProperties.setProperty("indent", "yes");
+            SAXSerializer serializer = new SAXSerializer(writer, outputProperties);
+            resource.getContentAsSAX(serializer);
+        }
     }
 
     @Test
@@ -218,8 +229,9 @@ public class TestEXistXMLSerialize {
         outputProperties.setProperty("indent", "yes");
         testCollection.setProperty("stylesheet", "test.xsl");
         testCollection.setProperty("stylesheet-param.testparam", "TEST");
-        StringWriter writer = new StringWriter();
-        SAXSerializer serializer = new SAXSerializer(writer, outputProperties);
-        resource.getContentAsSAX(serializer);
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+            SAXSerializer serializer = new SAXSerializer(writer, outputProperties);
+            resource.getContentAsSAX(serializer);
+        }
     }
 }

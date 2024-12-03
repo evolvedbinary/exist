@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -24,13 +33,12 @@ package org.exist.xquery;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.dom.QName;
 import org.exist.dom.memtree.MemTreeBuilder;
 import org.xml.sax.helpers.AttributesImpl;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -338,17 +346,14 @@ public class PerformanceStatsImpl implements PerformanceStats {
 
     @Override
     public String toString() {
-        try (final StringWriter sw = new StringWriter();
-            final PrintWriter pw = new PrintWriter(sw)) {
+        try (final StringBuilderWriter sw = new StringBuilderWriter();
+             final PrintWriter pw = new PrintWriter(sw)) {
             final FunctionStats[] stats = sort();
             for (final FunctionStats stat : stats) {
                 pw.format("\n%30s %8.3f %8d", stat.qname, stat.executionTime / 1000.0, stat.callCount);
             }
             pw.flush();
             return sw.toString();
-        } catch (final IOException e) {
-            // no-op
-            return "";
         }
     }
 

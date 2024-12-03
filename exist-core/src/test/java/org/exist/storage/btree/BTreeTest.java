@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.storage.btree;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.storage.BrokerPool;
 import org.exist.test.ExistEmbeddedServer;
@@ -34,7 +44,6 @@ import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -104,7 +113,7 @@ public class BTreeTest {
 
             btree.flush();
 
-            try(final StringWriter writer = new StringWriter()) {
+            try(final StringBuilderWriter writer = new StringBuilderWriter()) {
                 btree.dump(writer);
             }
 

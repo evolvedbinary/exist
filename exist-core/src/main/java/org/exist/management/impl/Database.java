@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,13 +30,14 @@
  */
 package org.exist.management.impl;
 
-import java.io.StringWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
 
@@ -128,11 +138,15 @@ public class Database implements DatabaseMXBean {
 
     public String printStackTrace(final Thread thread) {
         final StackTraceElement[] stackElements = thread.getStackTrace();
-        final StringWriter writer = new StringWriter();
-        final int showItems = stackElements.length > 20 ? 20 : stackElements.length;
-        for (int i = 0; i < showItems; i++) {
-            writer.append(stackElements[i].toString()).append('\n');
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
+            final int showItems = stackElements.length > 20 ? 20 : stackElements.length;
+            for (int i = 0; i < showItems; i++) {
+                writer.append(stackElements[i].toString()).append('\n');
+            }
+            return writer.toString();
+        } catch (final IOException e) {
+            e.printStackTrace();
+            return null;
         }
-        return writer.toString();
     }
 }

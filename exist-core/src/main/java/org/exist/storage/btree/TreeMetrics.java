@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,8 +30,9 @@
  */
 package org.exist.storage.btree;
 
+import org.apache.commons.io.output.StringBuilderWriter;
+
 import java.io.PrintWriter;
-import java.io.StringWriter;
 
 /**
  *
@@ -65,10 +75,12 @@ public class TreeMetrics {
     }
 
     public void toLogger() {
-        final StringWriter sw = new StringWriter();
-        final PrintWriter writer = new PrintWriter(sw);
-        print(writer);
-        if (BTree.LOG.isDebugEnabled())
-            {BTree.LOG.debug(sw.toString());}
+        try (final StringBuilderWriter sw = new StringBuilderWriter();
+             final PrintWriter writer = new PrintWriter(sw)) {
+            print(writer);
+            if (BTree.LOG.isDebugEnabled()) {
+                BTree.LOG.debug(sw.toString());
+            }
+        }
     }
 }
