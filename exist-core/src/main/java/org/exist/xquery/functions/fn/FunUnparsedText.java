@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 package org.exist.xquery.functions.fn;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.dom.QName;
 import org.exist.security.PermissionDeniedException;
 import org.exist.source.FileSource;
@@ -149,7 +159,7 @@ public class FunUnparsedText extends BasicFunction {
     private String readContent(final Source source, final String encoding) throws XPathException {
         try {
             final Charset charset = getCharset(encoding, source);
-            final StringWriter output = new StringWriter();
+            final StringBuilderWriter output = new StringBuilderWriter();
             try (final InputStream is = source.getInputStream()) {
                 // InputStream can have value NULL for data retrieved from URL
                 IOUtils.copy(is, output, charset);

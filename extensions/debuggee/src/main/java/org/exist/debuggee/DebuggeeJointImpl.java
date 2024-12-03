@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,7 +30,6 @@
  */
 package org.exist.debuggee;
 
-import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -473,10 +481,9 @@ public class DebuggeeJointImpl implements DebuggeeJoint, Status {
 	        SAXSerializer sax = null;
 	        Serializer serializer = broker.getSerializer();
 			serializer.reset();
-	        try {
+	        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
 	            sax = (SAXSerializer) SerializerPool.getInstance().borrowObject(SAXSerializer.class);
 	            Properties outputProps = new Properties();
-	            StringWriter writer = new StringWriter();
 	            sax.setOutput(writer, outputProps);
 	            serializer.setSAXHandlers(sax, sax);
 	            for (SequenceIterator i = resultSequence.iterate(); i.hasNext();) {

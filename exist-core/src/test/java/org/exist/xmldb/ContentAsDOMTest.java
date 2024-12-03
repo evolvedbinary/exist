@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,8 @@
 package org.exist.xmldb;
 
 import javax.xml.transform.TransformerException;
+
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.security.Permission;
 import org.exist.security.Account;
 import org.exist.test.ExistXmldbEmbeddedServer;
@@ -46,7 +57,6 @@ import org.xmldb.api.modules.XMLResource;
 import org.xmldb.api.modules.XQueryService;
 
 import java.io.IOException;
-import java.io.StringWriter;
 
 import static org.exist.TestUtils.*;
 
@@ -86,7 +96,7 @@ public class ContentAsDOMTest {
             t.setOutputProperty(OutputKeys.INDENT, "yes");
             t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             DOMSource source = new DOMSource(node);
-            try (final StringWriter writer = new StringWriter()) {
+            try (final StringBuilderWriter writer = new StringBuilderWriter()) {
                 StreamResult output = new StreamResult(writer);
                 t.transform(source, output);
             }

@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 
 package org.exist.util.serializer.json;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.storage.serializers.EXistOutputKeys;
 import org.apache.commons.io.input.UnsynchronizedByteArrayInputStream;
 import org.exist.util.serializer.SAXSerializer;
@@ -38,7 +48,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXResult;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.Properties;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -75,7 +84,7 @@ public class JSONWriterTest {
         properties.setProperty(OutputKeys.INDENT, "no");
 
         final SAXSerializer serializer = new SAXSerializer();
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             serializer.setOutput(writer, properties);
             final Transformer transformer = transformerFactory.newTransformer();
             final SAXResult saxResult = new SAXResult(serializer);
@@ -104,7 +113,7 @@ public class JSONWriterTest {
         properties.setProperty(OutputKeys.INDENT, "no");
 
         final SAXSerializer serializer = new SAXSerializer();
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             serializer.setOutput(writer, properties);
             final Transformer transformer = transformerFactory.newTransformer();
             final SAXResult saxResult = new SAXResult(serializer);
@@ -130,7 +139,7 @@ public class JSONWriterTest {
         properties.setProperty(OutputKeys.INDENT, "no");
 
         final SAXSerializer serializer = new SAXSerializer();
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             serializer.setOutput(writer, properties);
             final Transformer transformer = transformerFactory.newTransformer();
             final SAXResult saxResult = new SAXResult(serializer);
@@ -156,7 +165,7 @@ public class JSONWriterTest {
         properties.setProperty(OutputKeys.INDENT, "no");
 
         final SAXSerializer serializer = new SAXSerializer();
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             serializer.setOutput(writer, properties);
             final Transformer transformer = transformerFactory.newTransformer();
             final SAXResult saxResult = new SAXResult(serializer);

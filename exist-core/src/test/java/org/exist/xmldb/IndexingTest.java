@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -23,7 +32,6 @@ package org.exist.xmldb;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Random;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -34,6 +42,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXResult;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.test.ExistXmldbEmbeddedServer;
 import org.apache.commons.io.input.UnsynchronizedByteArrayInputStream;
 import org.junit.Before;
@@ -299,7 +308,7 @@ public class IndexingTest {
     }
 
     class SAXHandler implements ContentHandler {
-        private final PrintWriter writer = new PrintWriter(new StringWriter());
+        private final PrintWriter writer = new PrintWriter(new StringBuilderWriter());
         SAXHandler() {
         }
 

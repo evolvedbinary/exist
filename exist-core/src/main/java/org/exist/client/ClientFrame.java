@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.client;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.SystemProperties;
 import org.exist.backup.Backup;
 import org.exist.backup.CreateBackupDialog;
@@ -1752,7 +1762,7 @@ public class ClientFrame extends JFrame implements WindowFocusListener, KeyListe
         msgArea.setEditable(false);
         msgArea.setBackground(null);
         if (t != null) {
-            final StringWriter out = new StringWriter();
+            final StringBuilderWriter out = new StringBuilderWriter();
             final PrintWriter writer = new PrintWriter(out);
             t.printStackTrace(writer);
             final JTextArea stacktrace = new JTextArea(out.toString(), 20, 50);
@@ -1785,7 +1795,7 @@ public class ClientFrame extends JFrame implements WindowFocusListener, KeyListe
 
         JScrollPane scrollStacktrace = null;
         if (t != null) {
-            try (final StringWriter out = new StringWriter();
+            try (final StringBuilderWriter out = new StringBuilderWriter();
                  final PrintWriter writer = new PrintWriter(out)) {
                 t.printStackTrace(writer);
                 final JTextArea stacktrace = new JTextArea(out.toString(), 20, 50);
@@ -1797,8 +1807,6 @@ public class ClientFrame extends JFrame implements WindowFocusListener, KeyListe
                 scrollStacktrace.setPreferredSize(new Dimension(600, 300));
                 scrollStacktrace.setBorder(BorderFactory
                         .createTitledBorder(Messages.getString("ClientFrame.218"))); //$NON-NLS-1$
-            } catch (final IOException ioe) {
-                ioe.printStackTrace();
             }
         }
 

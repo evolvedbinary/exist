@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,12 +31,12 @@
 package org.exist.storage;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.numbering.NodeId;
 import org.exist.numbering.NodeIdFactory;
@@ -139,7 +148,7 @@ public class DOMFileRecoverTest {
             }
             pool.getJournalManager().get().flush(true, false);
 
-            Writer writer = new StringWriter();
+            Writer writer = new StringBuilderWriter();
             domDb.dump(writer);
 	    }
 	}
@@ -170,7 +179,7 @@ public class DOMFileRecoverTest {
                 assertNotNull(value);
             }
             
-            Writer writer = new StringWriter();
+            Writer writer = new StringBuilderWriter();
             domDb.dump(writer);
 	    }
     }

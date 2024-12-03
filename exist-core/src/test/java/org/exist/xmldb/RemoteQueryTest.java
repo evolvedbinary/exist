@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -64,8 +73,13 @@ public class RemoteQueryTest extends RemoteDBTest {
 		assertEquals(result.getSize(), 359);
 
 		for (int i = 0; i < result.getSize(); i++) {
-			XMLResource r = (XMLResource) result.getResource(i);
-			Node node = r.getContentAsDOM().getFirstChild();
+            try {
+                XMLResource r = (XMLResource) result.getResource(i);
+                Node node = r.getContentAsDOM().getFirstChild();
+            } catch (final XMLDBException e) {
+                System.out.println("LINE=" + i);
+                throw e;
+            }
 		}
 	}
 

@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -157,7 +166,7 @@ public abstract class TestCase {
 			for(SequenceIterator i = result.iterate(); i.hasNext(); ) {
 				Resource xmldbResource = getResource(i.nextItem());
 				
-//		        StringWriter writer = new StringWriter();
+//		        StringBuilderWriter writer = new StringbuilderWriter();
 //		        Properties outputProperties = new Properties();
 //		        outputProperties.setProperty("indent", "yes");
 //		        SAXSerializer serializer = new SAXSerializer(writer, outputProperties);

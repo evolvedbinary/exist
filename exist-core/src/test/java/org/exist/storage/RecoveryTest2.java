@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -29,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.collections.Collection;
 import org.exist.dom.persistent.LockedDocument;
@@ -93,7 +103,7 @@ public class RecoveryTest2 {
 
             DOMFile domDb = ((NativeBroker) broker).getDOMFile();
             assertNotNull(domDb);
-            try(final Writer writer = new StringWriter()) {
+            try(final Writer writer = new StringBuilderWriter()) {
                 domDb.dump(writer);
             }
 

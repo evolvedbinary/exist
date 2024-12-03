@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,18 +30,16 @@
  */
 package org.exist.xquery.functions.util;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.exist.dom.QName;
-import org.exist.source.StringSource;
 import org.exist.util.serializer.XQuerySerializer;
 import org.exist.xquery.*;
 import org.exist.xquery.value.*;
 import org.xml.sax.SAXException;
 
 import javax.xml.transform.OutputKeys;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Properties;
 
 
@@ -144,12 +151,12 @@ public class LogFunction extends BasicFunction {
 
             } else {
                 // Serialize data
-                try (StringWriter writer = new StringWriter()) {
+                try (final StringBuilderWriter writer = new StringBuilderWriter()) {
                     XQuerySerializer xqs = new XQuerySerializer(context.getBroker(), props, writer);
                     xqs.serialize(next.toSequence());
-                    buf.append(writer.toString());
+                    buf.append(writer.getBuilder());
 
-                } catch (IOException | SAXException e) {
+                } catch (SAXException e) {
                     throw new XPathException(this, e.getMessage());
                 }
             }

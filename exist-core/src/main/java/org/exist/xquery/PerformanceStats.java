@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 
 package org.exist.xquery;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.Database;
 import org.exist.dom.QName;
 import org.exist.dom.memtree.MemTreeBuilder;
@@ -31,7 +41,6 @@ import org.xml.sax.helpers.AttributesImpl;
 import java.util.HashMap;
 import java.util.Comparator;
 import java.util.Arrays;
-import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.util.HashSet;
 
@@ -295,14 +304,15 @@ public class PerformanceStats implements BrokerPoolService {
     }
     
     public synchronized String toString() {
-        final StringWriter sw = new StringWriter();
-        final PrintWriter pw = new PrintWriter(sw);
-        final FunctionStats[] stats = sort();
-        for (FunctionStats stat : stats) {
-            pw.format("\n%30s %8.3f %8d", stat.qname, stat.executionTime / 1000.0, stat.callCount);
+        try (final StringBuilderWriter sw = new StringBuilderWriter();
+             final PrintWriter pw = new PrintWriter(sw)) {
+            final FunctionStats[] stats = sort();
+            for (FunctionStats stat : stats) {
+                pw.format("\n%30s %8.3f %8d", stat.qname, stat.executionTime / 1000.0, stat.callCount);
+            }
+            pw.flush();
+            return sw.toString();
         }
-        pw.flush();
-        return sw.toString();
     }
 
     private FunctionStats[] sort() {

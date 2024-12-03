@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.security;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.collections.Collection;
 import org.exist.collections.triggers.TriggerException;
@@ -47,7 +57,6 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -271,7 +280,7 @@ public class FnDocSecurityTest {
     }
 
     private String serialize(final DBBroker broker, final Sequence sequence) throws IOException, XPathException, SAXException {
-        try (final StringWriter writer = new StringWriter()) {
+        try (final StringBuilderWriter writer = new StringBuilderWriter()) {
             final XQuerySerializer serializer = new XQuerySerializer(broker, new Properties(), writer);
             serializer.serialize(sequence);
             return writer.toString();

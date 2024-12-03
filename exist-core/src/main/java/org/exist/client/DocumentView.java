@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -25,8 +34,6 @@ import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -61,6 +68,7 @@ import javax.swing.KeyStroke;
 import javax.swing.border.BevelBorder;
 import javax.xml.transform.OutputKeys;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.security.Account;
 import org.exist.storage.ElementIndex;
 import org.exist.util.ProgressIndicator;
@@ -74,8 +82,6 @@ import org.xmldb.api.base.Collection;
 import org.xmldb.api.base.Resource;
 import org.xmldb.api.base.XMLDBException;
 import org.xmldb.api.modules.XMLResource;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 class DocumentView extends JFrame {
 
@@ -162,7 +168,7 @@ class DocumentView extends JFrame {
         msgArea.setEditable(false);
         msgArea.setBackground(null);
         if (t != null) {
-            final StringWriter out = new StringWriter();
+            final StringBuilderWriter out = new StringBuilderWriter();
             final PrintWriter writer = new PrintWriter(out);
             t.printStackTrace(writer);
             final JTextArea stacktrace = new JTextArea(out.toString(), 20, 50);

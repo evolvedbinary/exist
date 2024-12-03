@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,6 +31,7 @@
 
 package org.exist.test.runner;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.util.serializer.XQuerySerializer;
 import org.exist.xquery.XPathException;
 import org.exist.xquery.XQueryContext;
@@ -38,7 +48,6 @@ import org.xml.sax.SAXException;
 
 import javax.xml.transform.OutputKeys;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Properties;
 
 import static org.exist.xquery.FunctionDSL.param;
@@ -118,7 +127,7 @@ public class ExtTestFailureFunction extends JUnitIntegrationFunction {
     }
 
     private String seqToString(final Sequence seq) throws IOException, XPathException, SAXException {
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             final XQuerySerializer xquerySerializer = new XQuerySerializer(context.getBroker(), new Properties(), writer);
             xquerySerializer.serialize(seq);
             return writer.toString();
@@ -126,7 +135,7 @@ public class ExtTestFailureFunction extends JUnitIntegrationFunction {
     }
 
     private String errorMapToString(final Sequence seqErrorMap) throws IOException, XPathException, SAXException {
-        try(final StringWriter writer = new StringWriter()) {
+        try(final StringBuilderWriter writer = new StringBuilderWriter()) {
             final Properties properties = new Properties();
             properties.setProperty(OutputKeys.METHOD, "adaptive");
 

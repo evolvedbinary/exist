@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -23,7 +32,6 @@ package org.exist.xquery.functions.validation;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,6 +53,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import com.evolvedbinary.j8fu.tuple.Tuple2;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.exist.Namespaces;
 import org.exist.dom.QName;
@@ -395,7 +404,7 @@ public class Jaxp extends BasicFunction {
 
             final DocumentImpl doc = lockedDocument.getDocument();
 
-            try (final StringWriter stringWriter = new StringWriter()) {
+            try (final StringBuilderWriter stringWriter = new StringBuilderWriter()) {
                 final Properties outputProperties = new Properties();
                 outputProperties.setProperty(OutputKeys.METHOD, "XML");
                 outputProperties.setProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");

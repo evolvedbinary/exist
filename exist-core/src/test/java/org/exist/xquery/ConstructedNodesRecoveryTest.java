@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -21,6 +30,7 @@
  */
 package org.exist.xquery;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.EXistException;
 import org.exist.collections.Collection;
 import org.exist.collections.triggers.TriggerException;
@@ -50,7 +60,6 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Optional;
 import java.util.Properties;
 import javax.xml.transform.OutputKeys;
@@ -174,7 +183,7 @@ public class ConstructedNodesRecoveryTest {
 	private String serialize(final DBBroker broker, final DocumentImpl doc) throws IOException, SAXException {
 		final Serializer serializer = broker.borrowSerializer();
 		SAXSerializer sax = null;
-		try (final StringWriter writer = new StringWriter()) {
+		try (final StringBuilderWriter writer = new StringBuilderWriter()) {
 			sax = (SAXSerializer) SerializerPool.getInstance().borrowObject(SAXSerializer.class);
 
 			final Properties outputProperties = new Properties();

@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -22,8 +31,9 @@
 package org.exist.util.serializer.json;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
+
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -200,12 +210,12 @@ public class JSONObject extends JSONNode {
 
     @Override
     public String toString() {
-        final StringWriter writer = new StringWriter();
-        try {
+        try (final StringBuilderWriter writer = new StringBuilderWriter();) {
             serialize(writer, false);
+            return writer.toString();
         } catch(final IOException e) {
             LOG.warn(e);
+            return null;
         }
-        return writer.toString();
     }
 }

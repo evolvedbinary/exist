@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -62,6 +71,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.xml.transform.OutputKeys;
 
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.exist.security.PermissionDeniedException;
 import org.exist.util.Holder;
 import org.exist.xmldb.EXistXQueryService;
@@ -510,7 +520,7 @@ public class QueryDialog extends JFrame {
                 tCompiled = t1 - t0;
 
                 // In this way we can see the parsed structure meanwhile the query is
-                final StringWriter writer = new StringWriter();
+                final StringBuilderWriter writer = new StringBuilderWriter();
                 service.dump(compiled, writer);
                 exprDisplay.setText(writer.toString());
                 resultTabs.setSelectedComponent(exprDisplayScrollPane);
@@ -584,7 +594,7 @@ public class QueryDialog extends JFrame {
                 tCompiled = t1 - t0;
 
                 // In this way we can see the parsed structure meanwhile the query is
-                StringWriter writer = new StringWriter();
+                StringBuilderWriter writer = new StringBuilderWriter();
                 service.dump(compiled, writer);
                 exprDisplay.setText(writer.toString());
 
@@ -597,7 +607,7 @@ public class QueryDialog extends JFrame {
                 }
 
                 // jmfg: Is this still needed? I don't think so
-                writer = new StringWriter();
+                writer = new StringBuilderWriter();
                 service.dump(compiled, writer);
                 exprDisplay.setText(writer.toString());
 
