@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -172,9 +181,9 @@ public class RangeIndexConfigElement {
                 case Type.DATE_TIME:
                     DateTimeValue dtv = new DateTimeValue(content);
                     String dateStr = dateTimeToString(dtv);
-                    return new TextField(fieldName, dateStr, Field.Store.NO);
+                    return new RangeIndexTextField(fieldName, dateStr, Field.Store.NO);
                 default:
-                    return new TextField(fieldName, content, Field.Store.NO);
+                    return new RangeIndexTextField(fieldName, content, Field.Store.NO);
             }
         } catch (NumberFormatException | XPathException e) {
             // wrong type: ignore

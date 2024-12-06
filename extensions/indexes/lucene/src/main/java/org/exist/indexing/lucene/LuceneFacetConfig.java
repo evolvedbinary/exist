@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -115,8 +124,8 @@ public class LuceneFacetConfig extends AbstractFieldConfig {
     @Override
     protected void processText(CharSequence text, Document luceneDoc) {
         if (!text.isEmpty()) {
-            luceneDoc.add(new FacetField(dimension, text.toString()));
-        }
+            luceneDoc.add(new FacetField(dimension, text.toString())); //TODO - Do we need custom analyzer?
+        }                                                              //       Only indexed, not tokenized.
     }
 
     public void build(DBBroker broker, DocumentImpl document, NodeId nodeId, Document luceneDoc, CharSequence text) {

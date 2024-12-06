@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -1412,6 +1421,10 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                         contentField = LuceneUtil.encodeQName(pending.qname, index.getBrokerPool().getSymbols());
 
                     Field fld = new Field(contentField, pending.text.toString(), Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.YES);
+                    if (pending.idxConf.getAnalyzer() != null) {
+                        fld.setTokenStream(pending.idxConf.getAnalyzer().tokenStream(contentField, pending.text.toString()));
+                    }
+
                     if (pending.boost > 0) {
                         fld.setBoost(pending.boost);
                     } else if (config.getBoost() > 0) {
@@ -1424,11 +1437,7 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                 fDocIdIdx.setIntValue(currentDoc.getDocId());
                 doc.add(fDocIdIdx);
 
-                if (pending.idxConf.getAnalyzer() == null) {
-                    writer.addDocument(config.facetsConfig.build(index.getTaxonomyWriter(), doc));
-                } else {
-                    writer.addDocument(config.facetsConfig.build(index.getTaxonomyWriter(), doc), pending.idxConf.getAnalyzer());
-		        }
+                writer.addDocument(config.facetsConfig.build(index.getTaxonomyWriter(), doc));
 	        }
         } catch (final IOException e) {
             LOG.warn("An exception was caught while indexing document: {}", e.getMessage(), e);

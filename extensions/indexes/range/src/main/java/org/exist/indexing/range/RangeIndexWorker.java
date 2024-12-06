@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -461,7 +470,7 @@ public class RangeIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
             IntField fDocIdIdx = new IntField(FIELD_DOC_ID, 0, IntField.TYPE_NOT_STORED);
             for (RangeIndexDoc pending : nodesToWrite) {
                 Document doc = new Document();
-
+                Analyzer analyzer = pending.getConfig().getAnalyzer();
                 fDocId.setIntValue(currentDoc.getDocId());
                 doc.add(fDocId);
 
@@ -494,17 +503,22 @@ public class RangeIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                         contentField = LuceneUtil.encodeQName(pending.getQName(), index.getBrokerPool().getSymbols());
                     Field fld = pending.getConfig().convertToField(contentField, field.getContent().toString());
                     if (fld != null) {
+                        // Set token stream only on String fields which are indexed and tokenized and have String value
+                        if (fld.fieldType().indexed() && fld.fieldType().tokenized() && fld.fieldType().numericType() == null && fld.stringValue() != null) {
+                            if (RangeIndexTextField.class.isInstance(fld)) {
+                                ((RangeIndexTextField)fld).setAnalyzer(analyzer);
+                            } else {
+                                throw new RuntimeException("indexed tokenized string field which is instance of RangeIndexTextField");
+                                // TODO - should I create new instance of RangeIndexTextField and copy all data??
+                            }
+                            //fld.setTokenStream(analyzer.tokenStream(fld.name(), new StringReader(fld.stringValue())));
+                        }
                         doc.add(fld);
                     }
                 }
                 fDocIdIdx.setIntValue(currentDoc.getDocId());
                 doc.add(fDocIdIdx);
-
-                Analyzer analyzer = pending.getConfig().getAnalyzer();
-                if (analyzer == null) {
-                    analyzer = config.getDefaultAnalyzer();
-                }
-                writer.addDocument(doc, analyzer);
+                writer.addDocument(doc);
             }
         } catch (IOException e) {
             LOG.warn("An exception was caught while indexing document: {}", e.getMessage(), e);

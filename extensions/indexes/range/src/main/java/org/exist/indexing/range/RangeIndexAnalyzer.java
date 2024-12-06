@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -27,6 +36,11 @@ import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.core.StopFilter;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardFilter;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.collation.ICUCollationAttributeFactory;
 import org.apache.lucene.util.AttributeFactory;
 import org.exist.util.Collations;
@@ -35,6 +49,7 @@ import org.exist.xquery.ErrorCodes;
 import org.exist.xquery.XPathException;
 import org.w3c.dom.Element;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
@@ -89,6 +104,17 @@ public class RangeIndexAnalyzer extends Analyzer {
     private Collator collator = null;
 
     public RangeIndexAnalyzer() {
+        super();
+//        super(new ReuseStrategy() {
+//            @Override
+//            public TokenStreamComponents getReusableComponents(Analyzer analyzer, String fieldName) {
+//                return null;
+//            }
+//
+//            @Override
+//            public void setReusableComponents(Analyzer analyzer, String fieldName, TokenStreamComponents components) {
+//            }
+//        });
     }
 
     public void addFilter(Element filter) throws DatabaseConfigurationException {
@@ -105,12 +131,26 @@ public class RangeIndexAnalyzer extends Analyzer {
 
     @Override
     protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+
+//        final StandardTokenizer src = new StandardTokenizer(getVersion(), reader);
+//        src.setMaxTokenLength(maxTokenLength);
+//        TokenStream tok = new StandardFilter(getVersion(), src);
+//        tok = new LowerCaseFilter(getVersion(), tok);
+//        tok = new StopFilter(getVersion(), tok, stopwords);
+//        return new TokenStreamComponents(src, tok) {
+//            @Override
+//            protected void setReader(final Reader reader) throws IOException {
+//                src.setMaxTokenLength(StandardAnalyzer.this.maxTokenLength);
+//                super.setReader(reader);
+//            }
+//        };
+
         AttributeFactory factory = AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY;
         if (collator != null) {
             factory = new ICUCollationAttributeFactory(collator);
         }
         final Tokenizer src = new KeywordTokenizer(factory, reader, 256);
-        TokenStream tok = src;
+        TokenStream tok = new StandardFilter(src);
         for (final FilterConfig filter: filterConfigs) {
             tok = filter.constructor.apply(tok);
         }

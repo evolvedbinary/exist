@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -40,6 +49,7 @@ import org.w3c.dom.Element;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -182,6 +192,16 @@ public class LuceneFieldConfig extends AbstractFieldConfig {
             field = convertToDocValue(text.toString());
         } else {
             field = convertToField(text.toString());
+            var fieldType = field.fieldType();
+            if (fieldType.numericType() == null &&
+                    fieldType.tokenized() && fieldType.indexed() &&
+                    field.stringValue() != null) {
+                try {
+                    field.setTokenStream(analyzer.tokenStream(field.name(), field.stringValue()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e); //TODO - Should be propagated
+                }
+            }
         }
         if (field != null) {
             luceneDoc.add(field);
