@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -27,7 +36,7 @@ import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
-import org.apache.lucene.collation.ICUCollationAttributeFactory;
+import org.apache.lucene.analysis.icu.ICUCollationAttributeFactory;
 import org.apache.lucene.util.AttributeFactory;
 import org.exist.util.Collations;
 import org.exist.util.DatabaseConfigurationException;
@@ -104,12 +113,12 @@ public class RangeIndexAnalyzer extends Analyzer {
     }
 
     @Override
-    protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+    protected TokenStreamComponents createComponents(final String fieldName) {
         AttributeFactory factory = AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY;
         if (collator != null) {
             factory = new ICUCollationAttributeFactory(collator);
         }
-        final Tokenizer src = new KeywordTokenizer(factory, reader, 256);
+        final Tokenizer src = new KeywordTokenizer(factory, 256);
         TokenStream tok = src;
         for (final FilterConfig filter: filterConfigs) {
             tok = filter.constructor.apply(tok);

@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -502,7 +511,7 @@ public class AnalyzerConfigTest {
         }
 
         @Override
-        protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+        protected TokenStreamComponents createComponents(String fieldName) {
             throw new UnsupportedOperationException("This analyzer is a mock for testing");
         }
     }
@@ -523,7 +532,7 @@ public class AnalyzerConfigTest {
         }
 
         @Override
-        protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+        protected TokenStreamComponents createComponents(String fieldName) {
             throw new UnsupportedOperationException("This analyzer is a mock for testing");
         }
     }
@@ -544,7 +553,7 @@ public class AnalyzerConfigTest {
         }
 
         @Override
-        protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+        protected TokenStreamComponents createComponents(String fieldName) {
             throw new UnsupportedOperationException("This analyzer is a mock for testing");
         }
     }
@@ -565,7 +574,7 @@ public class AnalyzerConfigTest {
         }
 
         @Override
-        protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+        protected TokenStreamComponents createComponents(String fieldName) {
             throw new UnsupportedOperationException("This analyzer is a mock for testing");
         }
     }
@@ -584,7 +593,7 @@ public class AnalyzerConfigTest {
         }
 
         @Override
-        protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+        protected TokenStreamComponents createComponents(String fieldName) {
             throw new UnsupportedOperationException("This analyzer is a mock for testing");
         }
     }
@@ -603,7 +612,7 @@ public class AnalyzerConfigTest {
         }
 
         @Override
-        protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+        protected TokenStreamComponents createComponents(String fieldName) {
             throw new UnsupportedOperationException("This analyzer is a mock for testing");
         }
     }

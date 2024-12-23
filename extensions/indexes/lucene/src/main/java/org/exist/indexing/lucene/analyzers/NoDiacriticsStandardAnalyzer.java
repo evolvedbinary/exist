@@ -102,11 +102,6 @@ public class NoDiacriticsStandardAnalyzer extends StopwordAnalyzerBase {
         this((CharArraySet)null);
     }
 
-    @Override
-    protected TokenStreamComponents createComponents(String fieldName) {
-        return null;
-    }
-
     /**
      * Builds an analyzer with the default stop words ({@link #STOP_WORDS_SET}).
      *
@@ -153,8 +148,8 @@ public class NoDiacriticsStandardAnalyzer extends StopwordAnalyzerBase {
         return maxTokenLength;
     }
 
-    //@Override
-    protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+    @Override
+    protected TokenStreamComponents createComponents(final String fieldName) {
 
         final StandardTokenizer src = new StandardTokenizer();
         src.setMaxTokenLength(maxTokenLength);
