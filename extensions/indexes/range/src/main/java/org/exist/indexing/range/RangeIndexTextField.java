@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2024 Evolved Binary Ltd
+ *  Copyright (C) 2024 Evolved Binary Ltd
  *
- * This code is proprietary and is not Open Source.
+ *  This code is proprietary and is not Open Source.
  */
 package org.exist.indexing.range;
 

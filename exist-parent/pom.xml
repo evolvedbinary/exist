@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   Copyright (C) 2024 Evolved Binary Ltd
 
-   Changes made by Evolved Binary are proprietary and are not Open Source.
+    Copyright (C) 2024 Evolved Binary Ltd
 
-   NOTE: Parts of this file contain code from The eXist-db Authors.
-         The original license header is included below.
+    Changes made by Evolved Binary are proprietary and are not Open Source.
 
-   =========================================================================
+    NOTE: Parts of this file contain code from The eXist-db Authors.
+          The original license header is included below.
+
+    ======================================================================
 
     eXist-db Open Source Native XML Database
     Copyright (C) 2001 The eXist-db Authors
@@ -995,9 +996,12 @@
                             <excludes>
                                 <exclude>FDB-backport-LGPL-21-ONLY-license.template.txt</exclude>
                                 <exclude>FDB-backport-LGPL-21-ONLY-license.xml.template.txt</exclude>
+                                <exclude>Elemental-licence.template.txt</exclude>
+                                <exclude>Elemental-licence-new-code.template.txt</exclude>
                                 <exclude>LGPL-21-license.template.txt</exclude>                    
                                 <exclude>LGPL-21-license.txt</exclude>
                                 <exclude>LGPL-21-license.template.txt</exclude>
+                                <exclude>pom.xml</exclude>
                                 <exclude>**/README.md</exclude>
                                 <exclude>**/README</exclude>
                                 <exclude>**/LICENSE</exclude>

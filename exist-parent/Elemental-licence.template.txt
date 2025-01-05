@@ -1,0 +1,6 @@
+Copyright (C) 2024 Evolved Binary Ltd
+
+Changes made by Evolved Binary are proprietary and are not Open Source.
+
+NOTE: Parts of this file contain code from The eXist-db Authors.
+      The original license header is included below.
