@@ -30,7 +30,6 @@
  */
 package org.exist.indexing.lucene;
 
-import com.evolvedbinary.j8fu.function.TriFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -39,13 +38,13 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
 import org.exist.xquery.Expression;
 import org.exist.xquery.XPathException;
 
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.util.function.BiFunction;
 
 import static java.lang.invoke.MethodType.methodType;
 
@@ -68,13 +67,13 @@ public class ClassicQueryParserWrapper extends QueryParserWrapper {
             final Class<?> clazz = Class.forName(className);
             if (QueryParserBase.class.isAssignableFrom(clazz)) {
 
-                final MethodHandle methodHandle = LOOKUP.findConstructor(clazz, methodType(void.class, Version.class, String.class, Analyzer.class));
-                final TriFunction<Version, String, Analyzer, QueryParserBase> constructor = (TriFunction<Version, String, Analyzer, QueryParserBase>)
+                final MethodHandle methodHandle = LOOKUP.findConstructor(clazz, methodType(void.class, String.class, Analyzer.class));
+                final BiFunction<String, Analyzer, QueryParserBase> constructor = (BiFunction<String, Analyzer, QueryParserBase>)
                         LambdaMetafactory.metafactory(
-                                LOOKUP, "apply", methodType(TriFunction.class),
+                                LOOKUP, "apply", methodType(BiFunction.class),
                                 methodHandle.type().erase(), methodHandle, methodHandle.type()).getTarget().invokeExact();
 
-                parser = constructor.apply(LuceneIndex.LUCENE_VERSION_IN_USE, field, analyzer);
+                parser = constructor.apply(field, analyzer);
             }
 
         } catch (final Throwable e) {

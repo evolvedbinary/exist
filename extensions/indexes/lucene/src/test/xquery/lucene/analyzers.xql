@@ -29,6 +29,7 @@ declare variable $analyze:XCONF1 :=
     <collection xmlns="http://exist-db.org/collection-config/1.0">
         <index xmlns:xs="http://www.w3.org/2001/XMLSchema">
             <lucene diacritics="no">
+                <!-- This parser doesn't exist in Lucene 9.x but fallback works.  -->
                 <parser class="org.apache.lucene.queryparser.analyzing.AnalyzingQueryParser"/>
                 <text qname="p"/>
             </lucene>

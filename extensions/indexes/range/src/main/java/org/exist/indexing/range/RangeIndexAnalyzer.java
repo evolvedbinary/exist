@@ -112,6 +112,9 @@ public class RangeIndexAnalyzer extends Analyzer {
         }
     }
 
+    //TODO - We need to probably implement method TokenStream normalize(String fieldName, TokenStream in);
+    //     - To filter queries in same way as we filter tokens.
+
     @Override
     protected TokenStreamComponents createComponents(final String fieldName) {
         AttributeFactory factory = AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY;

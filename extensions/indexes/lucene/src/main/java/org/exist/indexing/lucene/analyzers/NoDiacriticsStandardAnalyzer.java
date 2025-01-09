@@ -148,16 +148,25 @@ public class NoDiacriticsStandardAnalyzer extends StopwordAnalyzerBase {
         return maxTokenLength;
     }
 
+
+    @Override
+    protected TokenStream normalize(String fieldName, TokenStream src) {
+        TokenStream tok = src;
+        tok = new ICUFoldingFilter(tok);
+        tok = new LowerCaseFilter(tok);
+        tok = new StopFilter(tok, stopwords);
+        return tok;
+    }
+
     @Override
     protected TokenStreamComponents createComponents(final String fieldName) {
 
         final StandardTokenizer src = new StandardTokenizer();
         src.setMaxTokenLength(maxTokenLength);
 //        src.setReplaceInvalidAcronym(replaceInvalidAcronym);
-        TokenStream tok = src;
-        tok = new ICUFoldingFilter(tok);
-        tok = new LowerCaseFilter(tok);
-        tok = new StopFilter(tok, stopwords);
+
+        TokenStream tok = normalize(fieldName, src);
+
         return new TokenStreamComponents(src, tok);
 //        {
 //            @Override

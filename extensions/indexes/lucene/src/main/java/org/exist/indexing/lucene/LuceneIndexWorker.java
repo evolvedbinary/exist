@@ -679,13 +679,14 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
             // Actual field content ; Store flag can be set in solrField
 //            Field contentField = new Field(contentFieldName, field.getData().toString(),  store, Field.Index.ANALYZED, Field.TermVector.YES);
 
+            //TODO - Refactor this code and create one Field type, maybe reuse what we have.
             var gggg = new org.apache.lucene.document.FieldType();
             gggg.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
             gggg.setStored(store == Field.Store.YES);
             gggg.setTokenized(true);
-            gggg.setStoreTermVectors(true); // Equivalent to TermVector.YES
-            gggg.setStoreTermVectorPositions(true);
-            gggg.setStoreTermVectorOffsets(true);
+            gggg.setStoreTermVectors(false);//TODO - It looks like we should not store term vector // Equivalent to TermVector.YES
+//            gggg.setStoreTermVectorPositions(true);
+//            gggg.setStoreTermVectorOffsets(true);
             Field contentField = new Field(contentFieldName, field.getData(), gggg);
 
             // Extract (document) Boost factor

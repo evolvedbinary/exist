@@ -164,10 +164,18 @@ public class XMLToQuery {
             } catch (IOException e) {
                 throw new XPathException((Expression) null, "Error while parsing phrase query: " + qstr);
             }
-            return new SpanNearQuery(list.toArray(new SpanTermQuery[0]), slop, inOrder);
+            if(list.size() == 1) {
+                return list.get(0); //Min size for SpanNearQuery is 2. https://github.com/elastic/elasticsearch/pull/25856
+            }else {
+                return new SpanNearQuery(list.toArray(new SpanTermQuery[0]), slop, inOrder);
+            }
         }
         SpanQuery[] children = parseSpanChildren(field, node, analyzer);
-        return new SpanNearQuery(children, slop, inOrder);
+        if (children.length == 1) { // Min size for SpanNearQuery is 2. https://github.com/elastic/elasticsearch/pull/25856
+            return children[0];
+        }else {
+            return new SpanNearQuery(children, slop, inOrder);
+        }
     }
 
     private SpanQuery[] parseSpanChildren(String field, Element node, Analyzer analyzer) throws XPathException {
