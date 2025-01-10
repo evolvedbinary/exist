@@ -52,13 +52,13 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.NumericUtils;
 import org.exist.collections.Collection;
 import org.exist.indexing.*;
 import org.exist.indexing.StreamListener.ReindexMode;
 import org.exist.indexing.lucene.BinaryTokenStream;
 import org.exist.indexing.lucene.LuceneIndexWorker;
 import org.exist.indexing.lucene.LuceneUtil;
+import org.exist.indexing.lucene.ExistLuceneTextField;
 import org.exist.numbering.NodeId;
 import org.exist.security.PermissionDeniedException;
 import org.exist.storage.DBBroker;
@@ -522,12 +522,12 @@ public class RangeIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                         contentField = LuceneUtil.encodeQName(pending.getQName(), index.getBrokerPool().getSymbols());
                     Field fld = pending.getConfig().convertToField(contentField, field.getContent().toString());
                     if (fld != null) {
-                        if (fld.fieldType().tokenized() && fld.stringValue() != null && fld instanceof RangeIndexTextField) {
+                        if (fld.fieldType().tokenized() && fld.stringValue() != null && fld instanceof ExistLuceneTextField) {
                             Analyzer analyzer = pending.getConfig().getAnalyzer();
                             if (analyzer == null) {
                                 analyzer = config.getDefaultAnalyzer();
                             }
-                            ((RangeIndexTextField) fld).setAnalyzer(analyzer);
+                            ((ExistLuceneTextField) fld).setAnalyzer(analyzer);
                         }
 
                         doc.add(fld);

@@ -208,9 +208,21 @@
                                     <exclude>src/main/java/org/exist/indexing/lucene/LuceneIndexWorker.java</exclude>
                                     <exclude>src/main/java/org/exist/indexing/lucene/ClassicQueryParserWrapper.java</exclude>
                                     <exclude>src/main/java/org/exist/indexing/lucene/LuceneIndex.java</exclude>
-                                    <exclude>src/test/java/org/exist/indexing/lucene/analyzers/NoDiacriticsStandardAnalyzerTest.java</exclude>
+                                    <exclude>src/main/java/org/exist/indexing/lucene/LuceneIndexConfig.java</exclude>
+                                    <include>src/main/java/org/exist/indexing/lucene/ExistLuceneTextField.java</include>
                                     <exclude>src/main/java/org/exist/xquery/modules/lucene/QueryOptions.java</exclude>
                                     <exclude>src/test/java/org/exist/indexing/lucene/AnalyzerConfigTest.java</exclude>
+                                    <exclude>src/test/java/org/exist/indexing/lucene/analyzers/NoDiacriticsStandardAnalyzerTest.java</exclude>
+                                    <include>src/test/java/org/exist/indexing/lucene/analyzers/AdHocAnalysersTest.java</include>
+                                    <exclude>src/test/xquery/lucene/analyzers.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/FT_AttTest_complex.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/indirectQueriesTest.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/inline.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/LuceneFT+range_indexRetrievalTest.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/matchHighlighting_ftquery_Tests.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/parenthesizedContext_ftquery_Tests.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/queries.xml</exclude>
+                                    <exclude>src/test/xquery/lucene/startOffset.xml</exclude>
                                 </excludes>
                             </licenseSet>
 
@@ -222,6 +234,15 @@
                                 </multi>
                                 <includes>
                                     <include>pom.xml</include>
+                                    <include>src/test/xquery/lucene/analyzers.xml</include>
+                                    <include>src/test/xquery/lucene/FT_AttTest_complex.xml</include>
+                                    <include>src/test/xquery/lucene/indirectQueriesTest.xml</include>
+                                    <include>src/test/xquery/lucene/inline.xml</include>
+                                    <include>src/test/xquery/lucene/LuceneFT+range_indexRetrievalTest.xml</include>
+                                    <include>src/test/xquery/lucene/matchHighlighting_ftquery_Tests.xml</include>
+                                    <include>src/test/xquery/lucene/parenthesizedContext_ftquery_Tests.xml</include>
+                                    <include>src/test/xquery/lucene/queries.xml</include>
+                                    <include>src/test/xquery/lucene/startOffset.xml</include>
                                 </includes>
                             </licenseSet>
 
@@ -241,6 +262,7 @@
                                     <include>src/main/java/org/exist/indexing/lucene/LuceneIndexWorker.java</include>
                                     <include>src/main/java/org/exist/indexing/lucene/ClassicQueryParserWrapper.java</include>
                                     <include>src/main/java/org/exist/indexing/lucene/LuceneIndex.java</include>
+                                    <include>src/main/java/org/exist/indexing/lucene/LuceneIndexConfig.java</include>
                                     <include>src/main/java/org/exist/xquery/modules/lucene/QueryOptions.java</include>
                                     <include>src/test/java/org/exist/indexing/lucene/AnalyzerConfigTest.java</include>
                                 </includes>
@@ -249,7 +271,9 @@
                                 <header>${project.parent.relativePath}/Elemental-licence-new-code.template.txt</header>
                                 <includes>
                                     <include>src/main/java/org/exist/indexing/lucene/ExistFacetsCollector.java</include>
+                                    <include>src/main/java/org/exist/indexing/lucene/ExistLuceneTextField.java</include>
                                     <include>src/test/java/org/exist/indexing/lucene/analyzers/NoDiacriticsStandardAnalyzerTest.java</include>
+                                    <include>src/test/java/org/exist/indexing/lucene/analyzers/AdHocAnalysersTest.java</include>
                                 </includes>
                             </licenseSet>
                         </licenseSets>

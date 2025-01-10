@@ -134,6 +134,10 @@ public class LuceneFieldConfig extends AbstractFieldConfig {
         return analyzer;
     }
 
+    public void setAnalyzer(Analyzer analyzer) {
+        this.analyzer = analyzer;
+    }
+
     @Override
     protected void build(DBBroker broker, DocumentImpl document, NodeId nodeId, Document luceneDoc, CharSequence text) {
         try {
@@ -226,12 +230,18 @@ public class LuceneFieldConfig extends AbstractFieldConfig {
                     TimeValue tv = new TimeValue(content);
                     long tl = timeToLong(tv);
                     return new LongField(fieldName, tl, Field.Store.YES);
-                case Type.DATE_TIME:
+                case Type.DATE_TIME: {
                     DateTimeValue dtv = new DateTimeValue(content);
                     String dateStr = dateTimeToString(dtv);
-                    return new TextField(fieldName, dateStr, Field.Store.YES);
-                default:
-                    return new TextField(fieldName, content, store ? Field.Store.YES : Field.Store.NO);
+                    var textField = new ExistLuceneTextField(fieldName, dateStr, Field.Store.YES);
+                    textField.setAnalyzer(this.getAnalyzer());
+                    return textField;
+                }
+                default: {
+                    var textField = new ExistLuceneTextField(fieldName, content, store ? Field.Store.YES : Field.Store.NO);
+                    textField.setAnalyzer(getAnalyzer());
+                    return textField;
+                }
             }
         } catch (NumberFormatException | XPathException e) {
             // wrong type: ignore

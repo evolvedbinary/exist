@@ -34,6 +34,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.*;
@@ -99,7 +100,7 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
     public static final org.apache.lucene.document.FieldType CONTENT_FIELD_TYPE = new org.apache.lucene.document.FieldType();
 
     static {
-        TYPE_NODE_ID.setIndexOptions(IndexOptions.DOCS);
+        TYPE_NODE_ID.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         TYPE_NODE_ID.setStored(false);
         TYPE_NODE_ID.setOmitNorms(true);
         TYPE_NODE_ID.setStoreTermVectors(false);
@@ -732,7 +733,7 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
 
         return index.withSearcher(searcher -> {
             // Get analyzer : to be retrieved from configuration
-            final Analyzer searchAnalyzer = new StandardAnalyzer();
+            final Analyzer searchAnalyzer = new StandardAnalyzer(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
 
             // Setup query Version, default field, analyzer
             final QueryParserWrapper parser = getQueryParser("", searchAnalyzer, null);
@@ -1095,19 +1096,23 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
     }
 
     private void getDefinedIndexesFor(final QName qname, final List<QName> indexes) throws IOException {
+        Set<QName> indexSet = new HashSet<>();
+
         index.<Void>withReader(reader -> {
             for(LeafReaderContext leafReaderContext : reader.leaves()) {
                 for(FieldInfo info : leafReaderContext.reader().getFieldInfos()) {
                     if (!FIELD_DOC_ID.equals(info.name)) {
                         final QName name = LuceneUtil.decodeQName(info.name, index.getBrokerPool().getSymbols());
                         if (name != null && (qname == null || matchQName(qname, name))) {
-                            indexes.add(name);
+                            indexSet.add(name);
                         }
                     }
                 }
             }
             return null;
         });
+        indexes.addAll(indexSet);
+
     }
 
     private static boolean matchQName(QName qname, QName candidate) {
@@ -1452,9 +1457,11 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                     else
                         contentField = LuceneUtil.encodeQName(pending.qname, index.getBrokerPool().getSymbols());
 
-                    var fld = new Field(contentField, pending.text.toString(), CONTENT_FIELD_TYPE);
+                    //var fld = new Field(contentField, pending.text.toString(), CONTENT_FIELD_TYPE);
+                    var fld = new ExistLuceneTextField(contentField, pending.text.toString(), CONTENT_FIELD_TYPE);
                     if (pending.idxConf.getAnalyzer() != null) {
-                        fld.setTokenStream(pending.idxConf.getAnalyzer().tokenStream(fld.name(), fld.stringValue()));
+                        fld.setAnalyzer(pending.idxConf.getAnalyzer());
+                        //fld.setTokenStream(pending.idxConf.getAnalyzer().tokenStream(fld.name(), fld.stringValue()));
                     }
                     doc.add(fld);
                 }

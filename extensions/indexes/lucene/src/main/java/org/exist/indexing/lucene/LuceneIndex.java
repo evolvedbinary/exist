@@ -35,6 +35,7 @@ import com.evolvedbinary.j8fu.function.FunctionE;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.facet.taxonomy.SearcherTaxonomyManager;
 import org.apache.lucene.facet.taxonomy.TaxonomyWriter;
@@ -114,7 +115,7 @@ public class LuceneIndex extends AbstractIndex implements RawBackupSupport {
         }
 
         if (defaultAnalyzer == null)
-            defaultAnalyzer = new StandardAnalyzer();
+            defaultAnalyzer = new StandardAnalyzer(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
         if (LOG.isDebugEnabled())
             LOG.debug("Using default analyzer: {}", defaultAnalyzer.getClass().getName());
     }

@@ -35,11 +35,9 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefBuilder;
-import org.apache.lucene.util.NumericUtils;
 import org.exist.dom.QName;
 import org.exist.indexing.lucene.LuceneIndexConfig;
+import org.exist.indexing.lucene.ExistLuceneTextField;
 import org.exist.storage.NodePath;
 import org.exist.util.DatabaseConfigurationException;
 import org.exist.util.XMLString;
@@ -184,9 +182,9 @@ public class RangeIndexConfigElement {
                 case Type.DATE_TIME:
                     DateTimeValue dtv = new DateTimeValue(content);
                     String dateStr = dateTimeToString(dtv);
-                    return new RangeIndexTextField(fieldName, dateStr); //TODO - This should be also Long.
+                    return new ExistLuceneTextField(fieldName, dateStr); //TODO - This should be also Long.
                 default:
-                    return new RangeIndexTextField(fieldName, content);
+                    return new ExistLuceneTextField(fieldName, content);
             }
         } catch (NumberFormatException | XPathException e) {
             // wrong type: ignore

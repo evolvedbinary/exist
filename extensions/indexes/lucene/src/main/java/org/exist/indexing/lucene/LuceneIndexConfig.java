@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2024 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ---------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -135,6 +144,10 @@ public class LuceneIndexConfig {
                             facetsAndFields.add(fieldConfig);
                             if (fieldConfig.getAnalyzer() != null) {
                                 type.addAnalzer(fieldConfig.getName(), fieldConfig.getAnalyzer());
+                            } else {
+                                //If field doesn't have analyzer, inherit from current one
+                                //Because if we search on field, then it use analyzer from <text> element where is field present
+                                fieldConfig.setAnalyzer(this.type.getAnalyzer());
                             }
                             break;
                         }

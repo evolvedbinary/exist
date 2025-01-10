@@ -46,6 +46,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.CharArraySet ;
 import org.apache.lucene.util.Version;
@@ -106,7 +107,7 @@ public class AnalyzerConfig {
     private static final String PARAM_ELEMENT_NAME = "param";
 
     private Map<String, Analyzer> analyzers = new TreeMap<>();
-    private Analyzer defaultAnalyzer = new StandardAnalyzer();
+    private Analyzer defaultAnalyzer = new StandardAnalyzer(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
 
     public Analyzer getAnalyzerById(String id) {
         return analyzers.get(id);
@@ -397,7 +398,8 @@ public class AnalyzerConfig {
                         final Field field = fieldClazz.getField(fieldName);
                         field.setAccessible(true);
                         final Object fValue = field.get(fieldClazz.newInstance());
-                        parameter = new KeyTypedValue<>(name, fValue, Object.class);
+
+                        parameter = new KeyTypedValue<Object>(name, fValue, (Class)field.getType());
 
                     } catch (final NoSuchFieldException | ClassNotFoundException | InstantiationException | IllegalAccessException nsfe) {
                         throw new ParameterException(nsfe.getMessage(), nsfe);

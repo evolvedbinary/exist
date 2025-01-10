@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
+    Copyright (C) 2024 Evolved Binary Ltd
+
+    Changes made by Evolved Binary are proprietary and are not Open Source.
+
+    NOTE: Parts of this file contain code from The eXist-db Authors.
+          The original license header is included below.
+
+    ======================================================================
+
     eXist-db Open Source Native XML Database
     Copyright (C) 2001 The eXist-db Authors
 
@@ -37,7 +46,9 @@
                 <index>
                     <!-- Lucene index is configured below -->
                     <lucene>
-                        <analyzer class="org.apache.lucene.analysis.standard.StandardAnalyzer"/>
+                        <analyzer class="org.apache.lucene.analysis.standard.StandardAnalyzer">
+                            <param name="stopwords" type="java.lang.reflect.Field" value="org.apache.lucene.analysis.en.EnglishAnalyzer.ENGLISH_STOP_WORDS_SET"/>
+                        </analyzer>
                         <analyzer id="ws" class="org.apache.lucene.analysis.core.WhitespaceAnalyzer"/>
                         <analyzer id="keyword" class="org.apache.lucene.analysis.core.KeywordAnalyzer"/>
                         <analyzer id="de" class="org.apache.lucene.analysis.de.GermanAnalyzer"/>
