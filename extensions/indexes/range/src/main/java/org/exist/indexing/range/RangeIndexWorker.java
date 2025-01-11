@@ -477,7 +477,7 @@ public class RangeIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
 
             // docId are stored as doc value
             IntPoint fDocId =  new IntPoint(FIELD_DOC_ID, 0);
-            StoredField fDocIdIdx = new StoredField(FIELD_DOC_ID, 0);
+            NumericDocValuesField fDocIdIdx = new NumericDocValuesField(FIELD_DOC_ID, 0);
 
             //TODO - Should we change this to StoredField or to Point?
             BinaryDocValuesField fNodeId = new BinaryDocValuesField(FIELD_NODE_ID, new BytesRef(8));
@@ -490,7 +490,7 @@ public class RangeIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                 fDocId.setIntValue(currentDoc.getDocId());
                 doc.add(fDocId);
 
-                fDocIdIdx.setIntValue(currentDoc.getDocId());
+                fDocIdIdx.setLongValue(currentDoc.getDocId());
                 doc.add(fDocIdIdx);
 
                 // store the node id
