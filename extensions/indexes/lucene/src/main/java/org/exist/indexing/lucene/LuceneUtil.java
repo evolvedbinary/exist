@@ -35,6 +35,7 @@ import java.util.*;
 
 import org.apache.lucene.facet.DrillDownQuery;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queries.function.FunctionScoreQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.util.AttributeSource;
 import org.apache.lucene.util.BytesRef;
@@ -67,17 +68,6 @@ public class LuceneUtil {
         final byte[] data = new byte[nodeId.size()];
         nodeId.serialize(data, 0);
         return data;
-    }
-
-    public static NodeId readNodeId(final int doc, final BinaryDocValues nodeIdValues, final BrokerPool pool) {
-        final BytesRef ref;
-        try {
-            ref = nodeIdValues.binaryValue();
-        } catch (IOException e) {
-            throw new RuntimeException(e); //TODO - Refactor
-        }
-        final int units = ByteConversion.byteToShort(ref.bytes, ref.offset);
-        return pool.getNodeFactory().createFromData(units, ref.bytes, ref.offset + 2);
     }
 
     /**
@@ -164,6 +154,8 @@ public class LuceneUtil {
             extractTermsFromTermRange((TermRangeQuery) query, terms, reader, includeFields);
         } else if (query instanceof DrillDownQuery) {
             extractTermsFromDrillDown((DrillDownQuery) query, terms, reader, includeFields);
+        } else if (query instanceof FunctionScoreQuery) {
+            extractTerms(((FunctionScoreQuery)query).getWrappedQuery(), terms, reader, includeFields);
         } else {
             // fallback to Lucene's Query.extractTerms if none of the
             // above matches

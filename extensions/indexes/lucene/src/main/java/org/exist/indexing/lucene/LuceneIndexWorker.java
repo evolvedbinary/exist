@@ -46,6 +46,7 @@ import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
 import org.apache.lucene.facet.taxonomy.SearcherTaxonomyManager;
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queries.function.FunctionScoreQuery;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.*;
 import org.apache.lucene.util.Bits;
@@ -98,7 +99,8 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
 
     public static final org.apache.lucene.document.FieldType TYPE_NODE_ID = new org.apache.lucene.document.FieldType();
     public static final org.apache.lucene.document.FieldType CONTENT_FIELD_TYPE = new org.apache.lucene.document.FieldType();
-
+    public static final org.apache.lucene.document.FieldType NON_XML_STORED_FIELD_TYPE = new org.apache.lucene.document.FieldType();
+    public static final org.apache.lucene.document.FieldType NON_XML_FIELD_TYPE = new org.apache.lucene.document.FieldType();
     static {
         TYPE_NODE_ID.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         TYPE_NODE_ID.setStored(false);
@@ -111,6 +113,20 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
         CONTENT_FIELD_TYPE.setTokenized(true);
         CONTENT_FIELD_TYPE.setStoreTermVectors(true);
         CONTENT_FIELD_TYPE.freeze();
+
+        NON_XML_FIELD_TYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        NON_XML_FIELD_TYPE.setStored(false);
+        NON_XML_FIELD_TYPE.setTokenized(true);
+        NON_XML_FIELD_TYPE.setStoreTermVectors(false);
+        NON_XML_FIELD_TYPE.freeze();
+
+        NON_XML_STORED_FIELD_TYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        NON_XML_STORED_FIELD_TYPE.setStored(true);
+        NON_XML_STORED_FIELD_TYPE.setTokenized(true);
+        NON_XML_STORED_FIELD_TYPE.setStoreTermVectors(false);
+        NON_XML_STORED_FIELD_TYPE.freeze();
+
+
     }
 
     static final Logger LOG = LogManager.getLogger(LuceneIndexWorker.class);
@@ -400,6 +416,7 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                 int nodeIdLen = nodeId.size();
                 byte[] data = new byte[nodeIdLen + 2];
                 //TODO - Should be rewritten to IntPoint
+                //
                 ByteConversion.shortToByte((short) nodeId.units(), data, 0);
                 nodeId.serialize(data, 2);
                 Term it = new Term(LuceneUtil.FIELD_NODE_ID, new BytesRef(data));
@@ -460,12 +477,43 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                 if (facets.isPresent() && config != null) {
                     query = drilldown(facets.get(), query, config);
                 }
+                query = rewriteBoost(query, field);
+
                 searchAndProcess(contextId, qname, docs, contextSet, resultSet,
                         returnAncestor, searcher, query, config);
             }
             return resultSet;
         });
     }
+
+
+    public Query rewriteBoost(Query q, String field) {
+        if(q instanceof TermQuery) {
+            var query = (TermQuery) q;
+            if (query.getTerm().field().equals(field)) {
+                return new FunctionScoreQuery(query, DoubleValuesSource.fromFloatField(field + "_boost"));
+            }
+        } else if(q instanceof WildcardQuery) {
+            var query = (WildcardQuery) q;
+            if (query.getField().equals(field)) {
+                return new FunctionScoreQuery(query, DoubleValuesSource.fromFloatField(field + "_boost"));
+            }
+        }else if (q instanceof PhraseQuery) {
+            var query = (PhraseQuery) q;
+            if(query.getField().equals(field)) {
+                return new FunctionScoreQuery(query, DoubleValuesSource.fromFloatField(field + "_boost"));
+            }
+        } else if(q instanceof BooleanQuery) {
+            var query = (BooleanQuery) q;
+            BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+            for(BooleanClause c : query.clauses()) {
+                queryBuilder.add(rewriteBoost(c.getQuery(), field), c.getOccur());
+            }
+            return queryBuilder.build();
+        }
+        return q;
+    }
+
 
     /**
      * Query the index. Returns a node set containing all matching nodes. Each node
@@ -676,25 +724,9 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
             
             // Get name from SOLR field
             String contentFieldName = field.getName();
-
-            // Actual field content ; Store flag can be set in solrField
-//            Field contentField = new Field(contentFieldName, field.getData().toString(),  store, Field.Index.ANALYZED, Field.TermVector.YES);
-
-            //TODO - Refactor this code and create one Field type, maybe reuse what we have.
-            var gggg = new org.apache.lucene.document.FieldType();
-            gggg.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-            gggg.setStored(store == Field.Store.YES);
-            gggg.setTokenized(true);
-            gggg.setStoreTermVectors(false);//TODO - It looks like we should not store term vector // Equivalent to TermVector.YES
-//            gggg.setStoreTermVectorPositions(true);
-//            gggg.setStoreTermVectorOffsets(true);
-            Field contentField = new Field(contentFieldName, field.getData(), gggg);
-
-            // Extract (document) Boost factor
-//            if (field.getBoost() > 0) {
-//                    contentField.setBoost(field.getBoost());
-//            }
-
+            Field contentField = new Field(contentFieldName, field.getData(),
+                    store == Field.Store.YES ? NON_XML_STORED_FIELD_TYPE : NON_XML_FIELD_TYPE
+                    );
             pendingDoc.add(contentField);
         }
     }
@@ -1442,7 +1474,6 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                 doc.add(fNodeId);
 
                 // add separate index for node id
-                //TODO : Rewrite to the Point API.
                 BinaryTokenStream bts = new BinaryTokenStream(new BytesRef(data));
                 Field fNodeIdIdx = new Field(LuceneUtil.FIELD_NODE_ID, bts, TYPE_NODE_ID);
                 doc.add(fNodeIdIdx);
@@ -1457,13 +1488,20 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                     else
                         contentField = LuceneUtil.encodeQName(pending.qname, index.getBrokerPool().getSymbols());
 
-                    //var fld = new Field(contentField, pending.text.toString(), CONTENT_FIELD_TYPE);
                     var fld = new ExistLuceneTextField(contentField, pending.text.toString(), CONTENT_FIELD_TYPE);
                     if (pending.idxConf.getAnalyzer() != null) {
                         fld.setAnalyzer(pending.idxConf.getAnalyzer());
-                        //fld.setTokenStream(pending.idxConf.getAnalyzer().tokenStream(fld.name(), fld.stringValue()));
                     }
                     doc.add(fld);
+
+                    float boost = 1.0f; //Default boost for all fields.
+                    if (pending.boost > 0) {
+                        boost = pending.boost;
+                    } else if (config.getBoost() > 0) {
+                        boost = config.getBoost();
+                    }
+                    final var boostField = new BoostField(contentField + "_boost", boost);
+                    doc.add(boostField);
                 }
                 writer.addDocument(config.facetsConfig.build(index.getTaxonomyWriter(), doc));
 	        }
