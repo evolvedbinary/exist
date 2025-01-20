@@ -209,12 +209,13 @@
                                     <exclude>src/main/java/org/exist/indexing/lucene/ClassicQueryParserWrapper.java</exclude>
                                     <exclude>src/main/java/org/exist/indexing/lucene/LuceneIndex.java</exclude>
                                     <exclude>src/main/java/org/exist/indexing/lucene/LuceneIndexConfig.java</exclude>
-                                    <include>src/main/java/org/exist/indexing/lucene/ExistLuceneTextField.java</include>
+                                    <exclude>src/main/java/org/exist/indexing/lucene/ExistLuceneTextField.java</exclude>
                                     <exclude>src/main/java/org/exist/xquery/modules/lucene/QueryOptions.java</exclude>
                                     <exclude>src/main/java/org/exist/indexing/lucene/BoostField.java</exclude>
                                     <exclude>src/test/java/org/exist/indexing/lucene/AnalyzerConfigTest.java</exclude>
                                     <exclude>src/test/java/org/exist/indexing/lucene/analyzers/NoDiacriticsStandardAnalyzerTest.java</exclude>
-                                    <include>src/test/java/org/exist/indexing/lucene/analyzers/AdHocAnalysersTest.java</include>
+                                    <exclude>src/test/java/org/exist/indexing/lucene/analyzers/AdHocAnalysersTest.java</exclude>
+                                    <eclude>src/main/java/org/exist/indexing/lucene/boost/FieldValuesSourceWithFallback.java</eclude>
                                     <exclude>src/test/xquery/lucene/analyzers.xml</exclude>
                                     <exclude>src/test/xquery/lucene/FT_AttTest_complex.xml</exclude>
                                     <exclude>src/test/xquery/lucene/indirectQueriesTest.xml</exclude>
@@ -274,6 +275,7 @@
                                     <include>src/main/java/org/exist/indexing/lucene/ExistFacetsCollector.java</include>
                                     <include>src/main/java/org/exist/indexing/lucene/ExistLuceneTextField.java</include>
                                     <include>src/main/java/org/exist/indexing/lucene/BoostField.java</include>
+                                    <include>src/main/java/org/exist/indexing/lucene/boost/FieldValuesSourceWithFallback.java</include>
                                     <include>src/test/java/org/exist/indexing/lucene/analyzers/NoDiacriticsStandardAnalyzerTest.java</include>
                                     <include>src/test/java/org/exist/indexing/lucene/analyzers/AdHocAnalysersTest.java</include>
                                 </includes>

@@ -60,6 +60,7 @@ import org.exist.indexing.*;
 import org.exist.indexing.StreamListener.ReindexMode;
 import org.exist.indexing.lucene.PlainTextHighlighter.Offset;
 import org.exist.indexing.lucene.PlainTextIndexConfig.PlainTextField;
+import org.exist.indexing.lucene.boost.FieldValuesSourceWithFallback;
 import org.exist.numbering.NodeId;
 import org.exist.security.PermissionDeniedException;
 import org.exist.storage.*;
@@ -477,6 +478,11 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                 if (facets.isPresent() && config != null) {
                     query = drilldown(facets.get(), query, config);
                 }
+
+                //Always rewrite for boost calculation. It's very hard to know if field
+                //  have boost. As it doesn't need to be specified in configuration.
+                //  Check : org.exist.indexing.lucene.LuceneIndexTest.COLLECTION_CONFIG7
+                //          <text qname='c'> <-- No boost on text element, it's somewhere deep in has-attribute
                 query = rewriteBoost(query, field);
 
                 searchAndProcess(contextId, qname, docs, contextSet, resultSet,
@@ -486,22 +492,21 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
         });
     }
 
-
     public Query rewriteBoost(Query q, String field) {
         if(q instanceof TermQuery) {
             var query = (TermQuery) q;
             if (query.getTerm().field().equals(field)) {
-                return new FunctionScoreQuery(query, DoubleValuesSource.fromFloatField(field + "_boost"));
+                return new FunctionScoreQuery(query, FieldValuesSourceWithFallback.newInstance(field + "_boost"));
             }
         } else if(q instanceof WildcardQuery) {
             var query = (WildcardQuery) q;
             if (query.getField().equals(field)) {
-                return new FunctionScoreQuery(query, DoubleValuesSource.fromFloatField(field + "_boost"));
+                return new FunctionScoreQuery(query, FieldValuesSourceWithFallback.newInstance(field + "_boost"));
             }
         }else if (q instanceof PhraseQuery) {
             var query = (PhraseQuery) q;
             if(query.getField().equals(field)) {
-                return new FunctionScoreQuery(query, DoubleValuesSource.fromFloatField(field + "_boost"));
+                return new FunctionScoreQuery(query, FieldValuesSourceWithFallback.newInstance(field + "_boost"));
             }
         } else if(q instanceof BooleanQuery) {
             var query = (BooleanQuery) q;
@@ -510,6 +515,26 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                 queryBuilder.add(rewriteBoost(c.getQuery(), field), c.getOccur());
             }
             return queryBuilder.build();
+        } else if(q instanceof RegexpQuery) {
+            var query = (RegexpQuery) q;
+            if(query.getField().equals(field)) {
+                return new FunctionScoreQuery(query, FieldValuesSourceWithFallback.newInstance(field + "_boost"));
+            }
+        } else if(q instanceof FuzzyQuery) {
+            var query = (FuzzyQuery) q;
+            if(query.getField().equals(field)) {
+                return new FunctionScoreQuery(query, FieldValuesSourceWithFallback.newInstance(field + "_boost"));
+            }
+        } else if (q instanceof PrefixQuery) {
+            var query = (PrefixQuery) q;
+            if(query.getField().equals(field)) {
+                return new FunctionScoreQuery(query, FieldValuesSourceWithFallback.newInstance(field + "_boost"));
+            }
+        } else if(q instanceof TermRangeQuery) {
+            var query = (TermRangeQuery) q;
+            if(query.getField().equals(field)) {
+                return new FunctionScoreQuery(query, FieldValuesSourceWithFallback.newInstance(field + "_boost"));
+            }
         }
         return q;
     }
@@ -1494,14 +1519,15 @@ public class LuceneIndexWorker implements OrderedValuesIndex, QNamedKeysIndex {
                     }
                     doc.add(fld);
 
-                    float boost = 1.0f; //Default boost for all fields.
                     if (pending.boost > 0) {
-                        boost = pending.boost;
+                        float boost = pending.boost;
+                        final var boostField = new BoostField(contentField + "_boost", boost);
+                        doc.add(boostField);
                     } else if (config.getBoost() > 0) {
-                        boost = config.getBoost();
+                        float boost = config.getBoost();
+                        final var boostField = new BoostField(contentField + "_boost", boost);
+                        doc.add(boostField);
                     }
-                    final var boostField = new BoostField(contentField + "_boost", boost);
-                    doc.add(boostField);
                 }
                 writer.addDocument(config.facetsConfig.build(index.getTaxonomyWriter(), doc));
 	        }

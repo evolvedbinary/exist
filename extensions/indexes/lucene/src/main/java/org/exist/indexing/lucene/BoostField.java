@@ -25,6 +25,8 @@ public class BoostField extends Field {
 
     public BoostField(String name, float value) {
         super(name, BOOST_FIELD_TYPE);
-        this.fieldsData = Float.valueOf(value);
+        //NumericDocValues in FieldValuesSourceWithFallback can work only with int/long.
+        // We need to convert to bits and then back. Otherwise, implicit conversion float->int is applied.
+        this.fieldsData = Float.floatToIntBits(value);
     }
 }
