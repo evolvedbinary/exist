@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -205,6 +214,17 @@ public class ArrayType extends FunctionReference implements Lookup.LookupSupport
             result.addAll(vector.nth(i));
         }
         return result;
+    }
+
+    @Override
+    public <T> T toJavaObject(final Class<T> target) throws XPathException {
+        if (target.isAssignableFrom(StringValue.class)) {
+            return (T) this;
+        } else if (target == Sequence[].class) {
+            return (T) toArray();
+        } else {
+           return super.toJavaObject(target);
+        }
     }
 
     public Sequence[] toArray() {

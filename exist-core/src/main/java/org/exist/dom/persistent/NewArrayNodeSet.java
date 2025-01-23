@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -107,7 +116,11 @@ public class NewArrayNodeSet extends AbstractArrayNodeSet implements ExtNodeSet,
     private NodeProxy nodes[];
 
     public NewArrayNodeSet() {
-        nodes = new NodeProxy[INITIAL_SIZE];
+        this.nodes = new NodeProxy[INITIAL_SIZE];
+    }
+
+    public NewArrayNodeSet(final int initialCapacity) {
+        this.nodes = new NodeProxy[initialCapacity];
     }
 
     public NewArrayNodeSet(final NewArrayNodeSet other) {
