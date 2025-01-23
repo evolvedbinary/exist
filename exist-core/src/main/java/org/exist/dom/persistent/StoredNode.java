@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -467,18 +476,22 @@ public abstract class StoredNode<T extends StoredNode> extends NodeImpl<T> imple
     @Override
     public NodePath getPath() {
         final NodePath2 path = new NodePath2();
-        if(getNodeType() == Node.ELEMENT_NODE) {
+        if (getNodeType() == Node.ELEMENT_NODE) {
             path.addNode(this);
         }
 
+        if (getNodeType() == Node.ATTRIBUTE_NODE) {
+            path.addComponent(getQName());
+        }
+
         Node parent;
-        if(getNodeType() == Node.ATTRIBUTE_NODE) {
-            parent = ((Attr)this).getOwnerElement();
+        if (getNodeType() == Node.ATTRIBUTE_NODE) {
+            parent = ((Attr) this).getOwnerElement();
         } else {
             parent = getParentNode();
         }
 
-        while(parent != null && parent.getNodeType() != Node.DOCUMENT_NODE) {
+        while (parent != null && parent.getNodeType() != Node.DOCUMENT_NODE) {
             path.addNode(parent);
             parent = parent.getParentNode();
         }
