@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -1379,12 +1388,6 @@ public class XQueryURLRewrite extends HttpServlet {
         public void setStatus(final int i) {
             this.status = i;
             super.setStatus(i);
-        }
-
-        @Override
-        public void setStatus(final int i, final String msg) {
-            this.status = i;
-            super.setStatus(i, msg);
         }
 
         @Override

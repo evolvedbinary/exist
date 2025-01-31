@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -26,14 +35,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.util.Jetty;
-import org.eclipse.jetty.util.MultiException;
 import org.eclipse.jetty.util.component.LifeCycle;
-import org.eclipse.jetty.util.resource.PathResource;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.exist.SystemProperties;
 import org.exist.http.servlets.ExistExtensionServlet;
@@ -254,14 +261,14 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
             return;
         }
 
-        try {
+        try (final ResourceFactory.Closeable resourceFactory = ResourceFactory.closeable()) {
             // load jetty configurations
             final List<Path> configFiles = getEnabledConfigFiles(jettyConfig);
             final List<Object> configuredObjects = new ArrayList<>();
             XmlConfiguration last = null;
             for(final Path confFile : configFiles) {
                 logger.info("[loading jetty configuration : {}]", confFile.toString());
-                final Resource resource = new PathResource(confFile);
+                final Resource resource = resourceFactory.newResource(confFile);
                 final XmlConfiguration configuration = new XmlConfiguration(resource);
                 if (last != null) {
                     configuration.getIdMap().putAll(last.getIdMap());
@@ -305,23 +312,14 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
             }
             
             //*************************************************************
-            final List<URI> serverUris = getSeverURIs(server);
-            if(!serverUris.isEmpty()) {
-                this.primaryPort = serverUris.get(0).getPort();
-
-            }
-            logger.info("-----------------------------------------------------");
-            logger.info("Server has started, listening on:");
-            for(final URI serverUri : serverUris) {
-                logger.info("{}", serverUri.resolve("/"));
-            }
-
+            final List<URI> serverUris = new ArrayList<>();
             logger.info("Configured contexts:");
             final LinkedHashSet<Handler> handlers = getAllHandlers(server.getHandler());
             for (final Handler handler: handlers) {
                 
                 if (handler instanceof ContextHandler) {
                     final ContextHandler contextHandler = (ContextHandler) handler;
+                    serverUris.addAll(getSeverURIs(contextHandler));
                     logger.info("{} ({})", contextHandler.getContextPath(), contextHandler.getDisplayName());
                 }
 
@@ -346,33 +344,21 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
                 }
             }
 
+            if (!serverUris.isEmpty()) {
+                this.primaryPort = serverUris.get(0).getPort();
+
+            }
+            logger.info("-----------------------------------------------------");
+            logger.info("Server has started, listening on:");
+            for (final URI serverUri : serverUris) {
+                logger.info("{}", serverUri.resolve("/"));
+            }
+
             logger.info("-----------------------------------------------------");
 
             setChanged();
             notifyObservers(SIGNAL_STARTED);
-            
-        } catch (final MultiException e) {
 
-            // Mute the BindExceptions
-
-            boolean hasBindException = false;
-            for (final Throwable t : e.getThrowables()) {
-                if (t instanceof java.net.BindException) {
-                    hasBindException = true;
-                    logger.error("----------------------------------------------------------");
-                    logger.error("ERROR: Could not bind to port because {}", t.getMessage());
-                    logger.error(t.toString());
-                    logger.error("----------------------------------------------------------");
-                }
-            }
-
-            // If it is another error, print stacktrace
-            if (!hasBindException) {
-                e.printStackTrace();
-            }
-            setChanged();
-            notifyObservers(SIGNAL_ERROR);
-            
         } catch (final SocketException e) {
             logger.error("----------------------------------------------------------");
             logger.error("ERROR: Could not bind to port because {}", e.getMessage());
@@ -389,36 +375,25 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
     }
 
     private LinkedHashSet<Handler> getAllHandlers(final Handler handler) {
-        if(handler instanceof HandlerWrapper handlerWrapper) {
-            final LinkedHashSet<Handler> handlers = new LinkedHashSet<>();
-            handlers.add(handlerWrapper);
-            if(handlerWrapper.getHandler() != null) {
-                handlers.addAll(getAllHandlers(handlerWrapper.getHandler()));
-            }
-            return handlers;
-
-        } else if(handler instanceof HandlerContainer handlerContainer) {
-            final LinkedHashSet<Handler> handlers = new LinkedHashSet<>();
-            handlers.add(handler);
-            for(final Handler childHandler : handlerContainer.getChildHandlers()) {
-                handlers.addAll(getAllHandlers(childHandler));
-            }
-            return handlers;
-
+        final LinkedHashSet<Handler> handlersCollector = new LinkedHashSet<>();
+        if (handler instanceof Handler.Wrapper handlerWrapper) {
+            handlersCollector.add(handlerWrapper);
+            handlersCollector.addAll(handlerWrapper.getDescendants());
+        } else if (handler instanceof Handler.Container handlerContainer) {
+            handlersCollector.add(handler);
+            handlersCollector.addAll(handlerContainer.getDescendants());
         } else {
             //assuming just Handler
-            final LinkedHashSet<Handler> handlers = new LinkedHashSet<>();
-            handlers.add(handler);
-            return handlers;
+            handlersCollector.add(handler);
         }
+        return handlersCollector;
     }
 
     /**
      * See {@link Server#getURI()}
      */
-    private List<URI> getSeverURIs(final Server server) {
-        final ContextHandler context = server.getChildHandlerByClass(ContextHandler.class);
-        return Arrays.stream(server.getConnectors())
+    private List<URI> getSeverURIs(final ContextHandler context) {
+        return Arrays.stream(context.getServer().getConnectors())
                 .filter(connector -> connector instanceof NetworkConnector)
                 .map(connector -> (NetworkConnector)connector)
                 .map(networkConnector -> getURI(networkConnector, context))
@@ -440,8 +415,8 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
             }
 
             String host = null;
-            if (context != null && context.getVirtualHosts() != null && context.getVirtualHosts().length > 0) {
-                host = context.getVirtualHosts()[0];
+            if (context != null && context.getVirtualHosts() != null && !context.getVirtualHosts().isEmpty()) {
+                host = context.getVirtualHosts().get(0);
             } else {
                 host = networkConnector.getHost();
             }
