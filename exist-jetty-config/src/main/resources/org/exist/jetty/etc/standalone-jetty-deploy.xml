@@ -4,7 +4,7 @@
 <!-- =============================================================== -->
 <!-- Create the deployment manager                                   -->
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-<!-- The deplyment manager handles the lifecycle of deploying web    -->
+<!-- The deployment manager handles the lifecycle of deploying web   -->
 <!-- applications. Apps are provided by instances of the             -->
 <!-- AppProvider interface.                                          -->
 <!-- =============================================================== -->
@@ -16,10 +16,6 @@
         <Set name="contexts">
           <Ref refid="Contexts" />
         </Set>
-        <Call name="setContextAttribute">
-          <Arg>org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern</Arg>
-          <Arg>.*/[^/]*servlet-api-[^/]*\.jar$|.*/jakarta.servlet.jsp.jstl-.*\.jar$|.*/org.apache.taglibs.taglibs-standard-impl-.*\.jar$</Arg>
-        </Call>
 
         <!-- Add a customize step to the deployment lifecycle -->
         <!-- uncomment and replace DebugBinding with your extended AppLifeCycle.Binding class
@@ -28,35 +24,30 @@
           <Arg>starting</Arg>
           <Arg>customise</Arg>
         </Call>
-        <Call name="addLifeCycleBinding">
-          <Arg>
-            <New class="org.eclipse.jetty.deploy.bindings.DebugBinding">
-              <Arg>customise</Arg>
-            </New>
-          </Arg>
-        </Call> -->
+         -->
 
-        <Call id="webappprovider" name="addAppProvider">
-          <Arg>
-            <New class="org.eclipse.jetty.deploy.providers.WebAppProvider">
-              <Set name="monitoredDirName"><Property name="jetty.base" default="." />/etc/<Property name="jetty.deploy.monitoredDir" deprecated="jetty.deploy.monitoredDirName" default="standalone-webapps"/></Set>
-              <Set name="defaultsDescriptor"><Property name="jetty.home" default="." />/etc/webdefault.xml</Set>
-              <Set name="scanInterval"><Property name="jetty.deploy.scanInterval" default="10"/></Set>
-              <Set name="extractWars"><Property name="jetty.deploy.extractWars" default="true"/></Set>
-              <Set name="configurationManager">
-                <New class="org.eclipse.jetty.deploy.PropertiesConfigurationManager">
-                  <!-- file of context configuration properties
-                  <Set name="file"><SystemProperty name="jetty.base"/>/etc/some.properties</Set>
-                  -->
-                  <!-- set a context configuration property
-                  <Call name="put"><Arg>name</Arg><Arg>value</Arg></Call>
-                  -->
-                </New>
-              </Set>
-            </New>
-          </Arg>
-        </Call>
       </New>
     </Arg>
   </Call>
+  <Ref refid="Environment">
+    <Call name="setAttribute">
+      <Arg>contextHandlerClass</Arg>
+      <Arg>org.eclipse.jetty.ee10.webapp.WebAppContext</Arg>
+    </Call>
+  </Ref>
+  <Ref refid="DeploymentManager">
+    <Call name="addAppProvider">
+      <Arg>
+        <New id="WebAppProvider-ee10" class="org.eclipse.jetty.deploy.providers.ContextProvider">
+          <Set name="environmentName">ee10</Set>
+          <Set name="monitoredDirName"><Property name="jetty.base" default="." />/etc/<Property name="jetty.deploy.monitoredDir" deprecated="jetty.deploy.monitoredDirName" default="standalone-webapps"/></Set>
+          <Set name="defaultsDescriptor"><Property name="jetty.home" default="." />/etc/webdefault.xml</Set>
+          <Set name="deferInitialScan"><Property name="jetty.deploy.deferInitialScan" default="false"/></Set>
+          <Set name="scanInterval"><Property name="jetty.deploy.scanInterval" default="10"/></Set>
+          <Set name="extractWars"><Property name="jetty.deploy.extractWars" default="true"/></Set>
+          <Set name="parentLoaderPriority"><Property name="jetty.deploy.parentLoaderPriority" default="true"/></Set>
+        </New>
+      </Arg>
+    </Call>
+  </Ref>
 </Configure>

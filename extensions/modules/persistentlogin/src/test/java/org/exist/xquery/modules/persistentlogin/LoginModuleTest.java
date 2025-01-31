@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -24,6 +33,8 @@ package org.exist.xquery.modules.persistentlogin;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -73,8 +84,16 @@ public class LoginModuleTest {
         final UserManagementService ums = root.getService(UserManagementService.class);
         ums.chmod(res, 0777);
 
+        // NOTE(AR) Set client-side cookie handling to be RFC 6265 compliant, see: https://github.com/jetty/jetty.project/issues/12771
+        final RequestConfig defaultRequestConfig = RequestConfig.custom()
+            .setCookieSpec(CookieSpecs.STANDARD)
+            .build();
+
         final BasicCookieStore store = new BasicCookieStore();
-        client = HttpClientBuilder.create().setDefaultCookieStore(store).build();
+        client = HttpClientBuilder.create()
+            .setDefaultCookieStore(store)
+            .setDefaultRequestConfig(defaultRequestConfig)
+            .build();
     }
 
     @AfterClass
@@ -86,25 +105,29 @@ public class LoginModuleTest {
     @Test
     public void loginAndLogout() throws IOException {
         // not logged in
-        doGet(null, TestUtils.GUEST_DB_USER);
+        String responseBody = doGet(null);
+        assertEquals(TestUtils.GUEST_DB_USER, responseBody);
 
         // log in as admin
-        doGet("user=" + TestUtils.ADMIN_DB_USER + "&password=" + TestUtils.ADMIN_DB_PWD + "&duration=P1D", TestUtils.ADMIN_DB_USER);
+        responseBody = doGet("user=" + TestUtils.ADMIN_DB_USER + "&password=" + TestUtils.ADMIN_DB_PWD + "&duration=P1D");
+        assertEquals(TestUtils.ADMIN_DB_USER, responseBody);
 
-        // second request should stay logged in
-        doGet(null, TestUtils.ADMIN_DB_USER);
+        // second request, 'admin' should have stayed logged in
+        responseBody = doGet(null);
+        assertEquals(TestUtils.ADMIN_DB_USER, responseBody);
 
-        // log off returns to guest user
-        doGet("logout=true", TestUtils.GUEST_DB_USER);
+        // log off, should return to guest user
+        responseBody = doGet("logout=true");
+        assertEquals(TestUtils.GUEST_DB_USER, responseBody);
     }
 
-    private void doGet(@Nullable String params, String expected) throws IOException {
+    private String doGet(final @Nullable String params) throws IOException {
         final HttpGet httpGet = new HttpGet("http://localhost:" + existWebServer.getPort() + "/rest" + XmldbURI.ROOT_COLLECTION + '/' + XQUERY_FILENAME +
                 (params == null ? "" : "?" + params));
         HttpResponse response = client.execute(httpGet);
         HttpEntity entity = response.getEntity();
         final String responseBody = EntityUtils.toString(entity);
         assertEquals(responseBody, SC_OK, response.getStatusLine().getStatusCode());
-        assertEquals(expected, responseBody);
+        return responseBody;
     }
 }

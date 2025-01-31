@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * Copyright © 2001, Adam Retter
  * All rights reserved.
  *
@@ -51,7 +60,7 @@ public class HttpServletResponseAdapter implements HttpResponse {
 
     @Override
     public void setStatus(final HttpStatus status, final String reason) {
-        response.setStatus(status.getStatus(), reason);
+        response.setStatus(status.getStatus());
     }
 
     @Override

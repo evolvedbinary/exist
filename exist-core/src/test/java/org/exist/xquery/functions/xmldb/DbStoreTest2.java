@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -25,8 +34,8 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
-import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.exist.test.ExistXmldbEmbeddedServer;
 import org.exist.xmldb.concurrent.DBUtils;
 import org.junit.*;
@@ -93,16 +102,14 @@ public class DbStoreTest2 {
 
         jettyServer = new Server(jettyPort);
         final ResourceHandler resource_handler = new ResourceHandler();
-        resource_handler.setDirectoriesListed(true);
-        final String dir = jettyRootDir.toAbsolutePath().toFile().getCanonicalPath();
-        resource_handler.setResourceBase(dir);
+        resource_handler.setDirAllowed(true);
+        try (final ResourceFactory.Closeable resourceFactory = ResourceFactory.closeable()) {
+            resource_handler.setBaseResource(resourceFactory.newResource(jettyRootDir));
+            final Handler.Sequence handlers = new Handler.Sequence(resource_handler, new DefaultHandler());
 
-        final HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[]{resource_handler, new DefaultHandler()});
-
-        jettyServer.setHandler(handlers);
-        jettyServer.start();
-
+            jettyServer.setHandler(handlers);
+            jettyServer.start();
+        }
     }
 
     @AfterClass

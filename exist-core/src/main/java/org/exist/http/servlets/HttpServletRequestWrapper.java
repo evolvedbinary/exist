@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2014 Evolved Binary Ltd
+ *
+ * Changes made by Evolved Binary are proprietary and are not Open Source.
+ *
+ * NOTE: Parts of this file contain code from The eXist-db Authors.
+ *       The original license header is included below.
+ *
+ * ----------------------------------------------------------------------------
+ *
  * eXist-db Open Source Native XML Database
  * Copyright (C) 2001 The eXist-db Authors
  *
@@ -442,12 +451,6 @@ public class HttpServletRequestWrapper implements HttpServletRequest, Closeable 
     }
 
     @Override
-    @Deprecated
-    public boolean isRequestedSessionIdFromUrl() {
-        return request.isRequestedSessionIdFromUrl();
-    }
-
-    @Override
     public boolean authenticate(final HttpServletResponse httpServletResponse) throws IOException, ServletException {
         return request.authenticate(httpServletResponse);
     }
@@ -573,12 +576,6 @@ public class HttpServletRequestWrapper implements HttpServletRequest, Closeable 
     }
 
     @Override
-    @Deprecated
-    public String getRealPath(final String path) {
-        return request.getSession().getServletContext().getRealPath(path);
-    }
-
-    @Override
     public int getRemotePort() {
         return request.getRemotePort();
     }
@@ -637,6 +634,21 @@ public class HttpServletRequestWrapper implements HttpServletRequest, Closeable 
     public void close() throws IOException {
         this.is.close();
         this.cache.close();
+    }
+
+    @Override
+    public String getProtocolRequestId() {
+        return request.getProtocolRequestId();
+    }
+
+    @Override
+    public String getRequestId() {
+        return request.getRequestId();
+    }
+
+    @Override
+    public ServletConnection getServletConnection() {
+        return request.getServletConnection();
     }
 
     private static class ServletInputStreamWrapper extends ServletInputStream {

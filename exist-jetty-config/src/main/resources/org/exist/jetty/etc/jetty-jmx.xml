@@ -22,11 +22,5 @@
     </Arg>
   </Call>
 
-  <!-- Add the static log -->
-  <Call name="addBean">
-    <Arg>
-      <Get class="org.eclipse.jetty.util.log.Log" name="Log" />
-    </Arg>
-  </Call>
 </Configure>
 
