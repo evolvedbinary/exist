@@ -222,19 +222,19 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
             logger.info("Approximate maximum amount of memory for JVM: {}", FileUtils.humanSize(Runtime.getRuntime().maxMemory()));
             logger.info("Number of processors available to JVM: {}", Runtime.getRuntime().availableProcessors());
 
-            logger.info("Running as user '{}'", System.getProperty("user.name", "(unknown user.name)"));
-            logger.info("[eXist Home : {}]", System.getProperty("exist.home", "unknown"));
-            logger.info("[eXist Version : {}]", SystemProperties.getInstance().getSystemProperty("product-version", "unknown"));
-            logger.info("[eXist Build : {}]", SystemProperties.getInstance().getSystemProperty("product-build", "unknown"));
-            logger.info("[Git commit : {}]", SystemProperties.getInstance().getSystemProperty("git-commit", "unknown"));
-            logger.info("[Git commit timestamp : {}]", SystemProperties.getInstance().getSystemProperty("git-commit-timestamp", "unknown"));
+            logger.info("Running as user: {}", System.getProperty("user.name", "(unknown user.name)"));
+            logger.info("[eXist Home: {}]", System.getProperty("exist.home", "unknown"));
+            logger.info("[eXist Version: {}]", SystemProperties.getInstance().getSystemProperty("product-version", "unknown"));
+            logger.info("[eXist Build: {}]", SystemProperties.getInstance().getSystemProperty("product-build", "unknown"));
+            logger.info("[Git commit: {}]", SystemProperties.getInstance().getSystemProperty("git-commit", "unknown"));
+            logger.info("[Git commit timestamp: {}]", SystemProperties.getInstance().getSystemProperty("git-commit-timestamp", "unknown"));
 
-            logger.info("[Operating System : {} {} {}]", System.getProperty("os.name"), System.getProperty("os.version"), System.getProperty("os.arch"));
-            logger.info("[log4j.configurationFile : {}]", System.getProperty("log4j.configurationFile"));
-            logger.info("[jetty Version: {}]", Jetty.VERSION);
-            logger.info("[{} : {}]", JETTY_HOME_PROP, configProperties.get(JETTY_HOME_PROP));
-            logger.info("[{} : {}]", JETTY_BASE_PROP, configProperties.get(JETTY_BASE_PROP));
-            logger.info("[jetty configuration : {}]", jettyConfig.toAbsolutePath().toString());
+            logger.info("[Operating System: {} {} {}]", System.getProperty("os.name"), System.getProperty("os.version"), System.getProperty("os.arch"));
+            logger.info("[log4j.configurationFile: {}]", System.getProperty("log4j.configurationFile"));
+            logger.info("[Jetty Version: {}]", Jetty.VERSION);
+            logger.info("[{}: {}]", JETTY_HOME_PROP, configProperties.get(JETTY_HOME_PROP));
+            logger.info("[{}: {}]", JETTY_BASE_PROP, configProperties.get(JETTY_BASE_PROP));
+            logger.info("[Jetty configuration: {}]", jettyConfig.toAbsolutePath().toString());
 
             // configure the database instance
             SingleInstanceConfiguration config;
@@ -243,7 +243,7 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
             } else {
                 config = new SingleInstanceConfiguration();
             }
-            logger.info("Configuring eXist from {}",
+            logger.info("[eXist-db configuration: {}]",
                     config.getConfigFilePath()
                         .map(Path::normalize).map(Path::toAbsolutePath).map(Path::toString)
                         .orElse("<UNKNOWN>"));
@@ -267,7 +267,7 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
             final List<Object> configuredObjects = new ArrayList<>();
             XmlConfiguration last = null;
             for(final Path confFile : configFiles) {
-                logger.info("[loading jetty configuration : {}]", confFile.toString());
+                logger.info("[Loading Jetty configuration: {}]", confFile.toString());
                 final Resource resource = resourceFactory.newResource(confFile);
                 final XmlConfiguration configuration = new XmlConfiguration(resource);
                 if (last != null) {
@@ -471,7 +471,7 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
 
             if (configuredObject instanceof LifeCycle lc) {
                 if (!lc.isRunning()) {
-                    logger.info("[Starting jetty component : {}]", lc.getClass().getName());
+                    logger.info("[Starting jetty component: {}]", lc.getClass().getName());
                     lc.start();
                 }
             }
