@@ -499,6 +499,13 @@ public class NewArrayNodeSet extends AbstractArrayNodeSet implements ExtNodeSet,
     }
 
     @Override
+    public void setKnownSorted(final boolean mergeContexts) {
+        isSorted = true;
+        removeDuplicates(mergeContexts);
+        updateDocs();
+    }
+
+    @Override
     public void sort(final boolean mergeContexts) {
         if(isSorted) {
             return;
