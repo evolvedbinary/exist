@@ -879,6 +879,7 @@ public class LocationStep extends Step {
                                         + "'");
                     }
                     currentSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), null, this);
+                    currentSet.setKnownSorted(true);
                     currentDocs = docs;
                     registerUpdateListener();
                 }
