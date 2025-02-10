@@ -51,7 +51,7 @@ public class ExtCollection extends BasicFunction {
 
     private static final String FS_COLLECTION_NAME = "collection";
     static final FunctionSignature[] FS_COLLECTION = functionSignatures(
-            new QName(FS_COLLECTION_NAME, Function.BUILTIN_FUNCTION_NS),
+            new QName(FS_COLLECTION_NAME, FnModule.NAMESPACE_URI),
             "Returns the documents contained in the Collection specified in the input sequence. "
                     + XMLDBModule.COLLECTION_URI + " Documents contained in sub-collections are also included. "
                     + "If no value is supplied, the statically know documents are used; for the REST Server this could be the collection in the URI path.",

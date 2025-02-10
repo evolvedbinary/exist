@@ -37,7 +37,7 @@ import org.exist.xquery.value.ValueSequence;
 public class FunHigherOrderFun extends BasicFunction {
 
     public final static FunctionSignature FN_FOR_EACH = new FunctionSignature(
-            new QName("for-each", Function.BUILTIN_FUNCTION_NS),
+            new QName("for-each", FnModule.NAMESPACE_URI),
             "Applies the function item $function to every item from the sequence " +
                     "$sequence in turn, returning the concatenation of the resulting sequences in order.",
             new SequenceType[]{
@@ -48,7 +48,7 @@ public class FunHigherOrderFun extends BasicFunction {
     );
 
     public final static FunctionSignature FN_FOR_EACH_PAIR = new FunctionSignature(
-            new QName("for-each-pair", Function.BUILTIN_FUNCTION_NS),
+            new QName("for-each-pair", FnModule.NAMESPACE_URI),
             "Applies the function item $f to successive pairs of items taken one from $seq1 and one from $seq2, " +
                     "returning the concatenation of the resulting sequences in order.",
             new SequenceType[]{
@@ -60,7 +60,7 @@ public class FunHigherOrderFun extends BasicFunction {
     );
 
     public final static FunctionSignature FN_FILTER = new FunctionSignature(
-            new QName("filter", Function.BUILTIN_FUNCTION_NS),
+            new QName("filter", FnModule.NAMESPACE_URI),
             "Returns those items from the sequence $sequence for which the supplied function $function returns true.",
             new SequenceType[]{
                     new FunctionParameterSequenceType("sequence", Type.ITEM, Cardinality.ZERO_OR_MORE, "the sequence to filter"),
@@ -70,7 +70,7 @@ public class FunHigherOrderFun extends BasicFunction {
     );
 
     public final static FunctionSignature FN_FOLD_LEFT = new FunctionSignature(
-            new QName("fold-left", Function.BUILTIN_FUNCTION_NS),
+            new QName("fold-left", FnModule.NAMESPACE_URI),
             "Processes the supplied sequence from left to right, applying the supplied function repeatedly to each " +
                     "item in turn, together with an accumulated result value.",
             new SequenceType[]{
@@ -82,7 +82,7 @@ public class FunHigherOrderFun extends BasicFunction {
     );
 
     public final static FunctionSignature FN_FOLD_RIGHT = new FunctionSignature(
-            new QName("fold-right", Function.BUILTIN_FUNCTION_NS),
+            new QName("fold-right", FnModule.NAMESPACE_URI),
             "Processes the supplied sequence from right to left, applying the supplied function repeatedly to each " +
                     "item in turn, together with an accumulated result value.",
             new SequenceType[]{
@@ -94,7 +94,7 @@ public class FunHigherOrderFun extends BasicFunction {
     );
 
     public final static FunctionSignature FN_APPLY = new FunctionSignature(
-            new QName("apply", Function.BUILTIN_FUNCTION_NS),
+            new QName("apply", FnModule.NAMESPACE_URI),
             "Processes the supplied sequence from right to left, applying the supplied function repeatedly to each " +
                     "item in turn, together with an accumulated result value.",
             new SequenceType[]{

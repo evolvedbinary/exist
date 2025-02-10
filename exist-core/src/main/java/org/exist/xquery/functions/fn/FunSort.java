@@ -48,7 +48,7 @@ public class FunSort extends BasicFunction {
 
   public final static FunctionSignature[] signatures = {
     new FunctionSignature(
-      new QName("sort", Function.BUILTIN_FUNCTION_NS),
+      new QName("sort", FnModule.NAMESPACE_URI),
         "Sorts a supplied sequence.",
       new SequenceType[] {
         new FunctionParameterSequenceType("input", Type.ITEM, Cardinality.ZERO_OR_MORE, "")
@@ -56,7 +56,7 @@ public class FunSort extends BasicFunction {
       new FunctionReturnSequenceType(Type.ITEM, Cardinality.ZERO_OR_MORE, "the first item or the empty sequence")
     ),
     new FunctionSignature(
-      new QName("sort", Function.BUILTIN_FUNCTION_NS),
+      new QName("sort", FnModule.NAMESPACE_URI),
         "Sorts a supplied sequence, based on the value of a sort key supplied as a function.",
       new SequenceType[] {
           new FunctionParameterSequenceType("input", Type.ITEM, Cardinality.ZERO_OR_MORE, ""),
@@ -65,7 +65,7 @@ public class FunSort extends BasicFunction {
       new FunctionReturnSequenceType(Type.ITEM, Cardinality.ZERO_OR_MORE, "the resulting sequence")
     ),
     new FunctionSignature(
-        new QName("sort", Function.BUILTIN_FUNCTION_NS),
+        new QName("sort", FnModule.NAMESPACE_URI),
         "Sorts a supplied sequence, based on the value of a sort key supplied as a function.",
         new SequenceType[] {
             new FunctionParameterSequenceType("input", Type.ITEM, Cardinality.ZERO_OR_MORE, ""),

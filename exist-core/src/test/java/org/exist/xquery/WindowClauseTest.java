@@ -54,7 +54,7 @@ public class WindowClauseTest {
 
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
-        context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+        context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
         final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
@@ -141,7 +141,7 @@ public class WindowClauseTest {
 
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
-        context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+        context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
         final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
@@ -173,7 +173,7 @@ public class WindowClauseTest {
 
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
-        context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+        context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
         final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
@@ -213,7 +213,7 @@ public class WindowClauseTest {
 
             // parse the query into the internal syntax tree
             final XQueryContext context = new XQueryContext();
-            context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+            context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
             final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
             final XQueryParser xparser = new XQueryParser(lexer);
             xparser.xpath();
@@ -253,7 +253,7 @@ public class WindowClauseTest {
 
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
-        context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+        context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
         final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
@@ -358,7 +358,7 @@ public class WindowClauseTest {
 
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
-        context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+        context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
         final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
@@ -397,7 +397,7 @@ public class WindowClauseTest {
 
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
-        context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+        context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
         final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
@@ -442,7 +442,7 @@ public class WindowClauseTest {
 
         // parse the query into the internal syntax tree
         final XQueryContext context = new XQueryContext();
-        context.importModule(Function.BUILTIN_FUNCTION_NS, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
+        context.importModule(FnModule.NAMESPACE_URI, "fn", new AnyURIValue[] { new AnyURIValue("java:" + FnModule.class.getName()) });
         final XQueryLexer lexer = new XQueryLexer(context, new StringReader(query));
         final XQueryParser xparser = new XQueryParser(lexer);
         xparser.xpath();
