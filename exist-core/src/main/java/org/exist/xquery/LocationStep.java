@@ -46,7 +46,6 @@ import org.exist.xquery.value.*;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.annotation.Nullable;
 import javax.xml.stream.StreamFilter;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -282,7 +281,8 @@ public class LocationStep extends Step {
             case Constants.SELF_AXIS:
                 if (getTest().getType() != Type.NODE) {
                     final Expression contextStep = contextInfo.getContextStep();
-                    if (contextStep instanceof LocationStep cStep) {
+                    if (contextStep instanceof LocationStep) {
+                        final LocationStep cStep = (LocationStep) contextStep;
 
                         // WM: the following checks will only work on simple filters like //a[self::b], so we
                         // have to make sure they are not applied to more complex expression types
@@ -500,37 +500,26 @@ public class LocationStep extends Step {
             final MemoryNodeSet nodes = contextSequence.toMemNodeSet();
             return nodes.getSelf(test);
         }
-
-        if (hasPreloadedData()) {
-            @Nullable final NodeSet ns;
+        if (hasPreloadedData() && !test.isWildcardTest()) {
+            final NodeSet ns;
             if (contextSequence instanceof NodeSet) {
                 ns = (NodeSet) contextSequence;
             } else {
                 ns = null;
             }
 
-            final NewArrayNodeSet newCurrentSet = new NewArrayNodeSet(currentSet.getItemCount());
-            for (NodeProxy p : currentSet) {
-                if (test.isWildcardTest()) {
-                    if (ns != null) {
-                        @Nullable final NodeProxy np = ns.get(p);
-                        if (np != null) {
-                            p = np;
-                        }
-                    }
-                } else {
-                    if (ns != null) {
-                        @Nullable final NodeProxy np = ns.get(p);
-                        if (np != null && np.getMatches() != null) {
-                            p.addMatch(np.getMatches());
-                        }
+            for (final NodeProxy p : currentSet) {
+                p.addContextNode(contextId, p);
+
+                if (ns != null) {
+                    final NodeProxy np = ns.get(p);
+
+                    if (np != null && np.getMatches() != null) {
+                        p.addMatch(np.getMatches());
                     }
                 }
-                p.addContextNode(contextId, p);
-                newCurrentSet.add(p);
             }
-            currentSet = newCurrentSet;
-            return newCurrentSet;
+            return currentSet;
         }
 
         final NodeSet contextSet = contextSequence.toNodeSet();
@@ -625,14 +614,15 @@ public class LocationStep extends Step {
                     currentDocs = docs;
                     registerUpdateListener();
                 }
-                return switch (axis) {
-                    case Constants.ATTRIBUTE_AXIS ->
-                            currentSet.selectParentChild(contextSet, NodeSet.DESCENDANT, contextId);
-                    case Constants.DESCENDANT_ATTRIBUTE_AXIS ->
-                            currentSet.selectAncestorDescendant(contextSet, NodeSet.DESCENDANT, false, contextId,
-                                    true);
-                    default -> throw new IllegalArgumentException("Unsupported axis specified");
-                };
+                switch (axis) {
+                    case Constants.ATTRIBUTE_AXIS:
+                        return currentSet.selectParentChild(contextSet, NodeSet.DESCENDANT, contextId);
+                    case Constants.DESCENDANT_ATTRIBUTE_AXIS:
+                        return currentSet.selectAncestorDescendant(contextSet, NodeSet.DESCENDANT, false, contextId,
+                                true);
+                    default:
+                        throw new IllegalArgumentException("Unsupported axis specified");
+                }
             }
         } else {
             final DocumentSet docs = getDocumentSet(contextSet);
@@ -646,11 +636,17 @@ public class LocationStep extends Step {
                 return index.findDescendantsByTagName(ElementValue.ATTRIBUTE, test.getName(), axis, docs, contextSet,
                         contextId, this);
             } else {
-                final NodeSelector selector = switch (axis) {
-                    case Constants.ATTRIBUTE_AXIS -> new ChildSelector(contextSet, contextId);
-                    case Constants.DESCENDANT_ATTRIBUTE_AXIS -> new DescendantSelector(contextSet, contextId);
-                    default -> throw new IllegalArgumentException("Unsupported axis specified");
-                };
+                final NodeSelector selector;
+                switch (axis) {
+                    case Constants.ATTRIBUTE_AXIS:
+                        selector = new ChildSelector(contextSet, contextId);
+                        break;
+                    case Constants.DESCENDANT_ATTRIBUTE_AXIS:
+                        selector = new DescendantSelector(contextSet, contextId);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported axis specified");
+                }
                 return index.findElementsByTagName(ElementValue.ATTRIBUTE, docs, test.getName(), selector, this);
             }
         }
@@ -771,15 +767,16 @@ public class LocationStep extends Step {
                     registerUpdateListener();
                 }
 
-                return switch (axis) {
-                    case Constants.DESCENDANT_SELF_AXIS ->
-                            currentSet.selectAncestorDescendant(contextSet, NodeSet.DESCENDANT, true, contextId,
-                                    true);
-                    case Constants.DESCENDANT_AXIS ->
-                            currentSet.selectAncestorDescendant(contextSet, NodeSet.DESCENDANT, false, contextId,
-                                    true);
-                    default -> throw new IllegalArgumentException("Unsupported axis specified");
-                };
+                switch (axis) {
+                    case Constants.DESCENDANT_SELF_AXIS:
+                        return currentSet.selectAncestorDescendant(contextSet, NodeSet.DESCENDANT, true, contextId,
+                                true);
+                    case Constants.DESCENDANT_AXIS:
+                        return currentSet.selectAncestorDescendant(contextSet, NodeSet.DESCENDANT, false, contextId,
+                                true);
+                    default:
+                        throw new IllegalArgumentException("Unsupported axis specified");
+                }
             }
         } else {
             final DocumentSet docs = contextSet.getDocumentSet();
@@ -794,11 +791,17 @@ public class LocationStep extends Step {
                 return index.findDescendantsByTagName(ElementValue.ELEMENT, test.getName(), axis, docs, contextSet,
                         contextId, this);
             } else {
-                final NodeSelector selector = switch (axis) {
-                    case Constants.DESCENDANT_SELF_AXIS -> new DescendantOrSelfSelector(contextSet, contextId);
-                    case Constants.DESCENDANT_AXIS -> new DescendantSelector(contextSet, contextId);
-                    default -> throw new IllegalArgumentException("Unsupported axis specified");
-                };
+                final NodeSelector selector;
+                switch (axis) {
+                    case Constants.DESCENDANT_SELF_AXIS:
+                        selector = new DescendantOrSelfSelector(contextSet, contextId);
+                        break;
+                    case Constants.DESCENDANT_AXIS:
+                        selector = new DescendantSelector(contextSet, contextId);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported axis specified");
+                }
                 return index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), selector, this);
             }
 
@@ -874,28 +877,24 @@ public class LocationStep extends Step {
             final DocumentSet docs = getDocumentSet(contextSet);
             final List<DocumentNodeRange> ranges = DocumentNodeRange.fromSiblingContextSet(contextSet);
             synchronized (context) {
-                NodeSet resultSet = null;
-                if (currentSet == null || currentDocs == null || !(docs.equalDocs(currentDocs))) {
-                    final StructuralIndex index = context.getBroker().getStructuralIndex();
-                    if (context.getProfiler().isEnabled()) {
-                        context.getProfiler().message(
-                                this,
-                                Profiler.OPTIMIZATIONS,
-                                "OPTIMIZATION",
-                                "Using structural index '" + index.toString()
-                                        + "'");
-                    }
-                    resultSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, ranges, test.getName(), null, this);
-                    resultSet.setKnownSorted(true);
-                    //currentSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, test.getName(), null, this);
-                    //currentSet.setKnownSorted(true);
-                    //currentDocs = docs;
-                    registerUpdateListener();
+                final StructuralIndex index = context.getBroker().getStructuralIndex();
+                if (context.getProfiler().isEnabled()) {
+                    context.getProfiler().message(
+                      this,
+                      Profiler.OPTIMIZATIONS,
+                      "OPTIMIZATION",
+                      "Using structural index '" + index.toString()
+                        + "'");
                 }
+                final NodeSet resultSet = index.findElementsByTagName(ElementValue.ELEMENT, docs, ranges, test.getName(), null, this);
+                resultSet.setKnownSorted(true);
                 return switch (axis) {
-                    case Constants.PRECEDING_SIBLING_AXIS -> resultSet.selectPrecedingSiblings(contextSet, contextId);
-                    case Constants.FOLLOWING_SIBLING_AXIS -> resultSet.selectFollowingSiblings(contextSet, contextId);
-                    default -> throw new IllegalArgumentException("Unsupported axis specified");
+                    case Constants.PRECEDING_SIBLING_AXIS ->
+                        resultSet.selectPrecedingSiblings(contextSet, contextId);
+                    case Constants.FOLLOWING_SIBLING_AXIS ->
+                        resultSet.selectFollowingSiblings(contextSet, contextId);
+                    default ->
+                        throw new IllegalArgumentException("Unsupported axis specified");
                 };
             }
         }
@@ -1107,11 +1106,14 @@ public class LocationStep extends Step {
                     currentDocs = docs;
                     registerUpdateListener();
                 }
-                return switch (axis) {
-                    case Constants.ANCESTOR_SELF_AXIS -> currentSet.selectAncestors(contextSet, true, contextId);
-                    case Constants.ANCESTOR_AXIS -> currentSet.selectAncestors(contextSet, false, contextId);
-                    default -> throw new IllegalArgumentException("Unsupported axis specified");
-                };
+                switch (axis) {
+                    case Constants.ANCESTOR_SELF_AXIS:
+                        return currentSet.selectAncestors(contextSet, true, contextId);
+                    case Constants.ANCESTOR_AXIS:
+                        return currentSet.selectAncestors(contextSet, false, contextId);
+                    default:
+                        throw new IllegalArgumentException("Unsupported axis specified");
+                }
             }
         } else {
             final DocumentSet docs = getDocumentSet(contextSet);
