@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.exist.Namespaces;
 import org.exist.dom.QName;
 import org.exist.xquery.*;
 import org.exist.xquery.value.FunctionParameterSequenceType;
@@ -38,6 +39,7 @@ import org.exist.xquery.value.FunctionReturnSequenceType;
  */
 public class FnModule extends AbstractInternalModule {
 
+    public static final String NAMESPACE_URI = Namespaces.XPATH_FUNCTIONS_NS;
     public final static String PREFIX = "";
     public final static String INCLUSION_DATE = "2004-01-29";
     public final static String RELEASED_IN_VERSION = "pre eXist-1.0";
@@ -293,7 +295,7 @@ public class FnModule extends AbstractInternalModule {
 
     @Override
     public String getNamespaceURI() {
-        return Function.BUILTIN_FUNCTION_NS;
+        return NAMESPACE_URI;
     }
 
     @Override
@@ -308,13 +310,13 @@ public class FnModule extends AbstractInternalModule {
 
     static FunctionSignature functionSignature(final String name, final String description,
             final FunctionReturnSequenceType returnType, final FunctionParameterSequenceType... paramTypes) {
-        return FunctionDSL.functionSignature(new QName(name, Function.BUILTIN_FUNCTION_NS), description,
+        return FunctionDSL.functionSignature(new QName(name, FnModule.NAMESPACE_URI), description,
                 returnType, paramTypes);
     }
 
     static FunctionSignature[] functionSignatures(final String name, final String description,
             final FunctionReturnSequenceType returnType, final FunctionParameterSequenceType[][] variableParamTypes) {
-        return FunctionDSL.functionSignatures(new QName(name, Function.BUILTIN_FUNCTION_NS), description,
+        return FunctionDSL.functionSignatures(new QName(name, FnModule.NAMESPACE_URI), description,
                 returnType, variableParamTypes);
     }
 }

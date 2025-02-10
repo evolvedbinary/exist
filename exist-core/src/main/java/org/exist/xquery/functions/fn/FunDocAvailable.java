@@ -51,7 +51,7 @@ public class FunDocAvailable extends Function {
 
     public static final FunctionSignature signature =
             new FunctionSignature(
-                    new QName("doc-available", Function.BUILTIN_FUNCTION_NS),
+                    new QName("doc-available", FnModule.NAMESPACE_URI),
                     "Returns whether or not the document, $document-uri, " +
                             "specified in the input sequence is available. " +
                             XMLDBModule.ANY_URI,
