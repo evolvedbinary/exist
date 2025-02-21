@@ -3613,7 +3613,7 @@ public class RpcConnection implements RpcAPI {
     }
 
     @Override
-    public boolean enterServiceMode() throws PermissionDeniedException {
+    public boolean enterServiceMode() throws EXistException, PermissionDeniedException {
         final BrokerPool brokerPool = factory.getBrokerPool();
         brokerPool.enterServiceMode(user);
         return true;
