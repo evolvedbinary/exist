@@ -24,12 +24,13 @@ package org.exist.dom.persistent;
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
 import antlr.collections.AST;
+import com.evolvedbinary.j8cu.list.linked.BoundedDoublyLinkedList;
+import com.evolvedbinary.j8cu.list.linked.OrderedDoublyLinkedList;
 import org.exist.EXistException;
 import org.exist.numbering.NodeId;
 import org.exist.security.Subject;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
-import org.exist.util.OrderedLinkedList;
 import org.exist.xquery.*;
 import org.exist.xquery.parser.XQueryLexer;
 import org.exist.xquery.parser.XQueryParser;
@@ -40,15 +41,16 @@ import org.exist.xquery.value.SequenceIterator;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.annotation.Nullable;
 import java.io.StringReader;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
+
+import static com.evolvedbinary.j8cu.list.linked.Bounded.bound;
 
 
 public class SortedNodeSet extends AbstractNodeSet {
 
-    private final OrderedLinkedList list = new OrderedLinkedList();
+    private final BoundedDoublyLinkedList<IteratorItem> list = bound(new OrderedDoublyLinkedList<IteratorItem>(), Long.MAX_VALUE);
 
     private final String sortExpr;
     private final BrokerPool pool;
@@ -62,7 +64,7 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public boolean isEmpty() {
-        return list.size() == 0;
+        return list.isEmpty();
     }
 
     @Override
@@ -96,27 +98,54 @@ public class SortedNodeSet extends AbstractNodeSet {
             }
             final AST ast = parser.getAST();
             LOG.debug("generated AST: {}", ast.toStringTree());
-            final PathExpr expr = new PathExpr(context);
-            treeParser.xpath(ast, expr);
-            if(treeParser.foundErrors()) {
-                LOG.debug(treeParser.getErrorMessage());
-            }
-            expr.analyze(new AnalyzeContextInfo());
-            for(final SequenceIterator i = other.iterate(); i.hasNext(); ) {
-                final NodeProxy p = (NodeProxy) i.nextItem();
-                final IteratorItem item = new IteratorItem(p, expr);
-                list.add(item);
+            final PathExpr sortExpression = new PathExpr(context);
+            try {
+                treeParser.xpath(ast, sortExpression);
+                if (treeParser.foundErrors()) {
+                    LOG.debug(treeParser.getErrorMessage());
+                }
+                sortExpression.analyze(new AnalyzeContextInfo());
+                for (final SequenceIterator i = other.iterate(); i.hasNext(); ) {
+                    final NodeProxy p = (NodeProxy) i.nextItem();
+                    final IteratorItem item = createIteratorItem(sortExpression, p);
+                    list.add(item);
+                }
+            } finally {
+                sortExpression.getContext().runCleanupTasks();
+                sortExpression.getContext().reset();
             }
         } catch(final RecognitionException | TokenStreamException re) {
             LOG.debug(re); //TODO : throw exception ! -pb
         } catch(final EXistException | XPathException e) {
-            LOG.debug("Exception during sort", e); //TODO : throw exception ! -pb
+            LOG.debug("Exception during sort: " + e.getMessage(), e); //TODO : throw exception ! -pb
         }
         LOG.debug("sort-expression found {} in {}ms.", list.size(), System.currentTimeMillis() - start);
     }
 
+    private IteratorItem createIteratorItem(final Expression sortExpression, final NodeProxy nodeProxy) throws XPathException {
+        final Sequence seq = sortExpression.eval(nodeProxy, null);
+
+        // copy string values of items into an array
+        int sbCapacity = 0;
+        final String[] strings = new String[seq.getItemCount()];
+        for (int i = 0; i < strings.length; i++) {
+            final String strItem = seq.itemAt(i).getStringValue().toUpperCase();
+            sbCapacity += strItem.length();
+            strings[i] = strItem;
+        }
+
+        // sort and then concatenate strings
+        Arrays.sort(strings);
+        final StringBuilder buf = new StringBuilder(sbCapacity);
+        for (int i = 0; i < strings.length; i++) {
+            buf.append(strings[i]);
+        }
+
+        return new IteratorItem(nodeProxy, buf.toString());
+    }
+
     public void addAll(final NodeList other) {
-        if(!(other instanceof NodeSet)) {
+        if (!(other instanceof NodeSet)) {
             throw new RuntimeException("not implemented!");
         }
         addAll((NodeSet) other);
@@ -124,9 +153,9 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public boolean contains(final NodeProxy proxy) {
-        for(final Iterator<IteratorItem> i = list.iterator(); i.hasNext(); ) {
-            final NodeProxy p = (i.next()).proxy;
-            if(p.compareTo(proxy) == 0) {
+        for (final IteratorItem iteratorItem : list) {
+            final NodeProxy p = iteratorItem.proxy;
+            if (p.compareTo(proxy) == 0) {
                 return true;
             }
         }
@@ -135,8 +164,8 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public boolean containsReference(final Item item) {
-        for (final Iterator<IteratorItem> i = list.iterator(); i.hasNext();) {
-            final NodeProxy p = (i.next()).proxy;
+        for (final IteratorItem iteratorItem : list) {
+            final NodeProxy p = iteratorItem.proxy;
             if (p == item) {
                 return true;
             }
@@ -146,8 +175,8 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public boolean contains(final Item item) {
-        for (final Iterator<IteratorItem> i = list.iterator(); i.hasNext();) {
-            final NodeProxy p = (i.next()).proxy;
+        for (final IteratorItem iteratorItem : list) {
+            final NodeProxy p = iteratorItem.proxy;
             if (p.equals(item)) {
                 return true;
             }
@@ -157,15 +186,15 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public NodeProxy get(final int pos) {
-        final IteratorItem item = (IteratorItem) list.get(pos);
+        final IteratorItem item = list.get(pos);
         return item == null ? null : item.proxy;
     }
 
     public NodeProxy get(final DocumentImpl doc, final NodeId nodeId) {
         final NodeProxy proxy = new NodeProxy(null, doc, nodeId);
-        for(final Iterator<IteratorItem> i = list.iterator(); i.hasNext(); ) {
-            final NodeProxy p = (i.next()).proxy;
-            if(p.compareTo(proxy) == 0) {
+        for (final IteratorItem iteratorItem : list) {
+            final NodeProxy p = iteratorItem.proxy;
+            if (p.compareTo(proxy) == 0) {
                 return p;
             }
         }
@@ -174,9 +203,9 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public NodeProxy get(final NodeProxy proxy) {
-        for(final Iterator<IteratorItem> i = list.iterator(); i.hasNext(); ) {
-            final NodeProxy p = (i.next()).proxy;
-            if(p.compareTo(proxy) == 0) {
+        for (final IteratorItem iteratorItem : list) {
+            final NodeProxy p = iteratorItem.proxy;
+            if (p.compareTo(proxy) == 0) {
                 return p;
             }
         }
@@ -185,7 +214,7 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public int getLength() {
-        return list.size();
+        return (int) list.size();
     }
 
     @Override
@@ -195,15 +224,21 @@ public class SortedNodeSet extends AbstractNodeSet {
 
     @Override
     public Node item(final int pos) {
-        final NodeProxy p = ((IteratorItem) list.get(pos)).proxy;
-        return p == null ? null : p.getOwnerDocument().getNode(p);
+        final IteratorItem iteratorItem = list.get(pos);
+        if (iteratorItem != null) {
+            final NodeProxy p = iteratorItem.proxy;
+            if (p != null) {
+                return p.getOwnerDocument().getNode(p);
+            }
+        }
+        return null;
     }
 
     //TODO : evaluate both semantics (item/itemAt)
     @Override
     public Item itemAt(final int pos) {
-        final NodeProxy p = ((IteratorItem) list.get(pos)).proxy;
-        return p == null ? null : p;
+        final IteratorItem iteratorItem = list.get(pos);
+        return iteratorItem == null ? null : iteratorItem.proxy;
     }
 
     @Override
@@ -221,21 +256,20 @@ public class SortedNodeSet extends AbstractNodeSet {
         return new SortedNodeSetIterator(list.iterator());
     }
 
-    private static final class SortedNodeSetIterator implements NodeSetIterator, SequenceIterator {
-
+    private static class SortedNodeSetIterator implements NodeSetIterator, SequenceIterator {
         private final Iterator<IteratorItem> ii;
 
         public SortedNodeSetIterator(final Iterator<IteratorItem> i) {
             ii = i;
         }
 
-        public final boolean hasNext() {
+        public boolean hasNext() {
             return ii.hasNext();
         }
 
         @Override
-        public final NodeProxy next() {
-            if(!ii.hasNext()) {
+        public NodeProxy next() {
+            if (!ii.hasNext()) {
                 throw new NoSuchElementException();
             } else {
                 return ii.next().proxy;
@@ -243,18 +277,18 @@ public class SortedNodeSet extends AbstractNodeSet {
         }
 
         @Override
-        public final void remove() {
+        public void remove() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public final NodeProxy peekNode() {
+        public NodeProxy peekNode() {
             return null;
         }
 
         @Override
-        public final Item nextItem() {
-            if(!ii.hasNext()) {
+        public Item nextItem() {
+            if (!ii.hasNext()) {
                 return null;
             } else {
                 return ii.next().proxy;
@@ -262,54 +296,44 @@ public class SortedNodeSet extends AbstractNodeSet {
         }
 
         @Override
-        public final void setPosition(final NodeProxy proxy) {
+        public void setPosition(final NodeProxy proxy) {
             throw new UnsupportedOperationException("NodeSetIterator.setPosition() is not supported by SortedNodeSetIterator");
         }
     }
 
-    private static final class IteratorItem extends OrderedLinkedList.Node {
+    private static class IteratorItem implements Comparable<IteratorItem> {
         private final NodeProxy proxy;
-        private String value = null;
+        private @Nullable final String value;
 
-        public IteratorItem(final NodeProxy proxy, final PathExpr expr) {
+        public IteratorItem(final NodeProxy proxy, final String value) {
             this.proxy = proxy;
-            try {
-                final Sequence seq = expr.eval(proxy, null);
-                final StringBuilder buf = new StringBuilder();
-                final OrderedLinkedList strings = new OrderedLinkedList();
-                Item item;
-                for(final SequenceIterator i = seq.iterate(); i.hasNext(); ) {
-                    item = i.nextItem();
-                    strings.add(new OrderedLinkedList.SimpleNode(item.getStringValue().toUpperCase()));
-                }
-                for(final Iterator<OrderedLinkedList.SimpleNode> j = strings.iterator(); j.hasNext(); ) {
-                    buf.append((j.next()).getData());
-                }
-                value = buf.toString();
-            } catch(final XPathException e) {
-                LOG.warn(e.getMessage(), e); //TODO : throw exception ! -pb
-            } finally {
-                expr.getContext().runCleanupTasks();
-                expr.getContext().reset();
-            }
+            this.value = value;
         }
 
         @Override
-        public int compareTo(final OrderedLinkedList.Node other) {
-            final IteratorItem o = (IteratorItem) other;
-            if(value == null) {
-                return o.value == null ? Constants.EQUAL : Constants.SUPERIOR;
-            } else if(o.value == null) {
+        public int compareTo(final IteratorItem other) {
+            if (value == null) {
+                return other.value == null ? Constants.EQUAL : Constants.SUPERIOR;
+            } else if (other.value == null) {
                 return Constants.INFERIOR;
             } else {
-                return value.compareTo(o.value);
+                return value.compareTo(other.value);
             }
         }
 
         @Override
-        public boolean equals(final OrderedLinkedList.Node other) {
-            final IteratorItem o = (IteratorItem) other;
-            return value.equals(o.value);
+        public boolean equals(final Object other) {
+            if (!(other instanceof IteratorItem)) {
+                return false;
+            }
+
+            final IteratorItem otherIteratorItem = (IteratorItem) other;
+            return Objects.equals(value, otherIteratorItem.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(value);
         }
     }
 
@@ -317,5 +341,4 @@ public class SortedNodeSet extends AbstractNodeSet {
     public void add(final NodeProxy proxy) {
         LOG.info("Called SortedNodeSet.add()");
     }
-
 }
