@@ -48,8 +48,8 @@ public class TreeMetrics {
         this.btreeName = btreeName;
     }
 
-    public void addPage(final PageStatus pageStatus) {
-        if (pageStatus == PageStatus.BRANCH) {
+    public void addPage(final PageType pageType) {
+        if (pageType == PageType.BRANCH) {
             addInnerPage();
         } else {
             addLeafPage();
