@@ -349,7 +349,7 @@ public class NativeValueIndex implements ContentLoadingObserver {
         } catch (final LockException e) {
             LOG.warn("Failed to acquire lock for '{}'", FileUtils.fileName(dbValues.getFile()), e);
             //TODO : throw an exception ? -pb
-        } catch (final DBException e) {
+        } catch (final IOException e) {
             LOG.error(e.getMessage(), e);
             //TODO : throw an exception ? -pb
         }
@@ -1059,7 +1059,7 @@ public class NativeValueIndex implements ContentLoadingObserver {
     }
 
     @Override
-    public void closeAndRemove() throws DBException {
+    public void closeAndRemove() throws IOException {
         try(final ManagedLock<ReentrantLock> bfileLock = lockManager.acquireBtreeWriteLock(dbValues.getLockName())) {
             config.setProperty(getConfigKeyForFile(), null);
             dbValues.closeAndRemove();
@@ -1069,7 +1069,7 @@ public class NativeValueIndex implements ContentLoadingObserver {
     }
 
     @Override
-    public void close() throws DBException {
+    public void close() throws IOException {
         try(final ManagedLock<ReentrantLock> bfileLock = lockManager.acquireBtreeWriteLock(dbValues.getLockName())) {
             config.setProperty(getConfigKeyForFile(), null);
             dbValues.close();

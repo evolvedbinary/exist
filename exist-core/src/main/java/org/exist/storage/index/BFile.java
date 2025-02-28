@@ -291,7 +291,7 @@ public class BFile extends AbstractBTree<BFileHeader, BFilePageHeader> {
     }
 
     @Override
-    public void close() throws DBException {
+    public void close() throws IOException {
         super.close();
         cacheManager.deregisterCache(dataCache);
     }
@@ -362,19 +362,14 @@ public class BFile extends AbstractBTree<BFileHeader, BFilePageHeader> {
     }
 
     @Override
-    public boolean flush() throws DBException {
-        try {
-            boolean flushed = false;
-            //TODO : consider log operation as a flush ?
-            if (isRecoveryEnabled() && logManager != null) {
-                logManager.flush(true, false);
-            }
-            flushed = dataCache.flush();
-            flushed = flushed | super.flush();
-            return flushed;
-        } catch (final IOException e) {
-            throw new DBException(e.getMessage(), e);
+    public boolean flush() throws IOException {
+        //TODO : consider log operation as a flush ?
+        if (isRecoveryEnabled() && logManager != null) {
+            logManager.flush(true, false);
         }
+        boolean flushed = dataCache.flush();
+        flushed = flushed | super.flush();
+        return flushed;
     }
 
     public BufferStats getDataBufferStats() {
@@ -1014,7 +1009,7 @@ public class BFile extends AbstractBTree<BFileHeader, BFilePageHeader> {
                 storeValueHelper(loggable, loggable.tid, loggable.value, page);
             }
         } catch (final IOException e) {
-            LOG.warn("An IOException occurred during redo: {}", e.getMessage());
+            LOG.error("Failed to redoStoreValue {}: {}", loggable.dump(), e.getMessage(), e);
         }
     }
 
@@ -1023,7 +1018,7 @@ public class BFile extends AbstractBTree<BFileHeader, BFilePageHeader> {
             final SinglePage page = (SinglePage) getDataPage(loggable.page, true);
             removeValueHelper(null, loggable.tid, page);
         } catch (final IOException e) {
-            LOG.warn("An IOException occurred during redo: {}", e.getMessage(), e);
+            LOG.error("Failed to undoStoreValue {}: {}", loggable.dump(), e.getMessage(), e);
         }
     }
 
@@ -1296,22 +1291,26 @@ public class BFile extends AbstractBTree<BFileHeader, BFilePageHeader> {
                 wp.delete();
             }
         } catch (final IOException e) {
-            LOG.warn("An IOException occurred during redo: {}", e.getMessage(), e);
+            LOG.error("Failed to redoRemoveOverflow {}: {}", loggable.dump(), e.getMessage(), e);
         }
     }
 
     protected void undoRemoveOverflow(final OverflowRemoveLoggable loggable) {
-        final AbstractDataPage page = createPageHelper(loggable, loggable.getPageNum(), false);
-        final BFilePageHeader ph = page.getPageHeader();
-        ph.updateType(loggable.getPageType());
-        ph.setDataLength(loggable.getLength());
-        ph.setNextInChain(loggable.getNextInChain());
-        page.setData(loggable.getData());
-        page.setDirty(true);
-        dataCache.add(page);
+        try {
+            final AbstractDataPage page = createPageHelper(loggable, loggable.getPageNum(), false);
+            final BFilePageHeader ph = page.getPageHeader();
+            ph.updateType(loggable.getPageType());
+            ph.setDataLength(loggable.getLength());
+            ph.setNextInChain(loggable.getNextInChain());
+            page.setData(loggable.getData());
+            page.setDirty(true);
+            dataCache.add(page);
+        } catch (final IOException e) {
+            LOG.error("Failed to undoRemoveOverflow {}: {}", loggable.dump(), e.getMessage(), e);
+        }
     }
 
-    private void storeValueHelper(final Loggable loggable, final short tid, final ByteArray value, final SinglePage page) {
+    private void storeValueHelper(final Loggable loggable, final short tid, final ByteArray value, final SinglePage page) throws IOException {
         int len = page.ph.getDataLength();
         // save tid
         ByteConversion.shortToByte(tid, page.data, len);
@@ -1653,9 +1652,8 @@ public class BFile extends AbstractBTree<BFileHeader, BFilePageHeader> {
             } while (next > 0);
         }
 
-        public VariableByteInput getDataStream(final long pointer) {
-            final BFile.MultiPageInput input = new BFile.MultiPageInput(firstPage, pointer);
-            return input;
+        public VariableByteInput getDataStream(final long pointer) throws IOException {
+            return new BFile.MultiPageInput(firstPage, pointer);
         }
 
         @Override
@@ -2069,7 +2067,7 @@ public class BFile extends AbstractBTree<BFileHeader, BFilePageHeader> {
         private short offset = 0;
         private final long address;
 
-        public MultiPageInput(final SinglePage first, final long address) {
+        public MultiPageInput(final SinglePage first, final long address) throws IOException {
             this.nextPage = first;
             this.offset = 6;
             this.pageLen = first.ph.getDataLength();
