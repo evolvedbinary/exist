@@ -1390,7 +1390,7 @@ public class DocumentImpl extends NodeImpl<DocumentImpl> implements Document {
                     attribs = new AttrList();
                     while((attr < document.nextAttr) && (document.attrParent[attr] == nr)) {
                         final QName attrQName = document.attrName[attr];
-                        attribs.addAttributeNoIntern(attrQName, attrValue[attr]);
+                        attribs.addAttribute(attrQName, attrValue[attr]);
                         ++attr;
                     }
                 }
