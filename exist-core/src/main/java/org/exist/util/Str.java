@@ -1,7 +1,5 @@
 package org.exist.util;
 
-import io.lacuna.bifurcan.Rope;
-
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -16,6 +14,18 @@ public final class Str implements Comparable<Str> {
     private Str(final int i, final boolean isEmpty) {
         this.index = i;
         this.isEmpty = isEmpty;
+    }
+
+    private final static StrCache<String> strCache = new StrCache<>();
+
+    public final static Str EMPTY = Str.of("");
+    public final static Str WILDCARD = Str.of("*");
+
+    public static String makeString(final Str str) {
+        if (str == null) {
+            return null;
+        }
+        return str.toString();
     }
 
     /**
@@ -65,8 +75,6 @@ public final class Str implements Comparable<Str> {
     public static String dumpCache() {
         return strCache.dump();
     }
-
-    private final static StrCache<String> strCache = new StrCache<>();
 
     @Override
     public boolean equals(Object o) {
@@ -155,5 +163,13 @@ public final class Str implements Comparable<Str> {
 
             return sb.toString();
         }
+    }
+
+    public static class XMLConstants {
+        public final static Str DEFAULT_NS_PREFIX = Str.of(javax.xml.XMLConstants.DEFAULT_NS_PREFIX);
+        public final static Str XML_NS_PREFIX = Str.of(javax.xml.XMLConstants.XML_NS_PREFIX);
+        public final static Str XMLNS_ATTRIBUTE = Str.of(javax.xml.XMLConstants.XMLNS_ATTRIBUTE);
+        public final static Str NULL_NS_URI = Str.of(javax.xml.XMLConstants.NULL_NS_URI);
+
     }
 }
