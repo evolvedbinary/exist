@@ -72,7 +72,7 @@ import java.util.stream.Stream;
  */
 public class Deployment {
 
-    public final static String PROPERTY_APP_ROOT = "repo.root-collection";
+    public final static Str PROPERTY_APP_ROOT = Str.of("repo.root-collection");
 
     private final static Logger LOG = LogManager.getLogger(Deployment.class);
 
